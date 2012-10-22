@@ -226,7 +226,7 @@ int main()
   mtbuf(p,
            4,//int nfmt,
            4,//int dfmt,
-           TBUFFER_LOAD_FORMAT_X,//int op,
+           TBUFFER_STORE_FORMAT_X,//int op,
            0,//int addr64,
            0,//int glc,
            0,//int idxen,
