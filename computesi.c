@@ -97,7 +97,7 @@ struct compute_context* compute_create_context(const char* drm_devfile)
     return NULL;
   }
   
-  printf("%lx %lx\n", reserved_mem, max_vm_size);
+  printf("reserved mem: 0x%lx vm size: 0x%lx pages\n", reserved_mem, max_vm_size);
   
   ctx->vm_pool = malloc(sizeof(struct pool_node));
   ctx->vm_pool->va = 0;
@@ -229,7 +229,7 @@ int compute_vm_remap(struct gpu_buffer* bo)
 
 static int compute_vm_unmap(struct compute_context* ctx, uint64_t vm_addr, uint32_t handle, int vm_id)
 {
-  return 0; ///WARNING
+  return 0; //WARNING
   struct drm_radeon_gem_va va;
   int r;
   
@@ -395,8 +395,8 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   
   set_compute_reg(R_00B84C_COMPUTE_PGM_RSRC2,
     S_00B84C_SCRATCH_EN(state->scratch_en) | S_00B84C_USER_SGPR(state->user_data_length) |
-    S_00B84C_TGID_X_EN(0) | S_00B84C_TGID_Y_EN(0) | S_00B84C_TGID_Z_EN(0) |
-    S_00B84C_TG_SIZE_EN(0) |
+    S_00B84C_TGID_X_EN(1) | S_00B84C_TGID_Y_EN(1) | S_00B84C_TGID_Z_EN(1) |
+    S_00B84C_TG_SIZE_EN(1) |
     S_00B84C_TIDIG_COMP_CNT(0) |
     S_00B84C_LDS_SIZE(state->lds_size) |
     S_00B84C_EXCP_EN(state->excp_en)
@@ -427,14 +427,22 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
     }
   }
 
+
+  buf[cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
+  buf[cdw++] = S_0085F0_SH_ICACHE_ACTION_ENA(1) |
+               S_0085F0_SH_KCACHE_ACTION_ENA(1) |
+               S_0085F0_TC_ACTION_ENA(1);
+  buf[cdw++] = 0xffffffff;
+  buf[cdw++] = 0;
+  buf[cdw++] = 0xA;
+
   set_compute_reg(R_00B800_COMPUTE_DISPATCH_INITIATOR,
     S_00B800_COMPUTE_SHADER_EN(1) | S_00B800_PARTIAL_TG_EN(0) |
     S_00B800_FORCE_START_AT_000(0) | S_00B800_ORDERED_APPEND_ENBL(0) 
   );
   
   flags[0] = RADEON_CS_USE_VM;
-//  flags[1] = RADEON_CS_RING_COMPUTE;///BUG: this ring hangs!
-   flags[1] = RADEON_CS_RING_GFX;
+  flags[1] = RADEON_CS_RING_COMPUTE;
   
   compute_vm_remap(state->binary);
   

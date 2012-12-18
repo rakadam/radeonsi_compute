@@ -198,7 +198,7 @@ int main()
   
   bufres.base_addr = data_bo->va;
   bufres.stride = 4;
-  bufres.num_records = 16;
+  bufres.num_records = 32;
   bufres.dst_sel_x = 4;
   bufres.dst_sel_y = 4;
   bufres.dst_sel_z = 4;
@@ -207,13 +207,21 @@ int main()
   bufres.data_format = 4;
   bufres.element_size = 1;
   
-  printf("%.8x %.8x %.8x %.8x\n", bufres.data[0], bufres.data[1], bufres.data[2], bufres.data[3]);
+  printf("buf addr%p\n", data_bo->va);
+//  printf("buf addr%p\n", data_bo->va >> 11);
+
+/*
+rak_adam: bit 0-4 are the fault type (bit 0 - range, bit 1 - pde, bit 2 - valid, bit 3 - read, bit 4 - write), 19:12 is the GPU client id, bit 24 is client r/w bit (0 - read, 1 - write), and 28-25 is the vmid
+rak_adam: 0x48 is the TC (texture cache)
+
+*/
+  printf("resource: %.8x %.8x %.8x %.8x\n", bufres.data[0], bufres.data[1], bufres.data[2], bufres.data[3]);
   
-  s_mov_imm32(p, 0, bufres.data[0]);
+/*  s_mov_imm32(p, 0, bufres.data[0]);
   s_mov_imm32(p, 1, bufres.data[1]);
   s_mov_imm32(p, 2, bufres.data[2]);
   s_mov_imm32(p, 3, bufres.data[3]);
-  
+  */
   v_mov_imm32(p, 0, 0x00000000);
   v_mov_imm32(p, 1, 0x00000000);
   v_mov_imm32(p, 2, 0x00000000);
@@ -232,11 +240,11 @@ int main()
            0,//int idxen,
            0,//int offen,
            0,//int offset,
-           0,//int soffset,
+           128,//int soffset,
            0,//int tfe,
            0,//int slc,
            0,//int srsrc,
-           2,//int vdata,
+           4,//int vdata,
            4//int vaddr
           );
   
@@ -249,6 +257,14 @@ int main()
   
   s_endpgm(p);
   
+  printf("code:\n");
+
+  for (unsigned* i = &prog[0]; i != p; i++)
+  {
+    printf(">%.8X\n", *i);
+  }
+
+  compute_copy_to_gpu(code_bo, 0, &prog[0], sizeof(prog));
   compute_copy_to_gpu(code_bo, 0, &prog[0], sizeof(prog));
   
   unsigned test_data[1024];
