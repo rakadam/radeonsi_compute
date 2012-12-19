@@ -85,6 +85,7 @@ enum radeon_bo_domain
 struct compute_context* compute_create_context(const char* drm_devfile);
 void compute_free_context(struct compute_context* ctx);
 
+void compute_flush_caches(const struct compute_context* ctx);
 uint64_t compute_pool_alloc(struct compute_context* ctx, uint64_t size, int alignment, struct gpu_buffer* bo);
 void compute_pool_free(struct compute_context* ctx, uint64_t va);
 

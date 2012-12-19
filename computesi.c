@@ -9,9 +9,11 @@
 #include <string.h>
 #include "computesi.h"
 
+#define PKT3C(a, b, c) (PKT3(a, b, c) | 1 << 1)
+
 #define set_compute_reg(reg, val) do {\
   assert(reg >= SI_SH_REG_OFFSET && reg <= SI_SH_REG_END); \
-  buf[cdw++] = PKT3(PKT3_SET_SH_REG, 1, 0); \
+  buf[cdw++] = PKT3C(PKT3_SET_SH_REG, 1, 0); \
   buf[cdw++] = (reg - SI_SH_REG_OFFSET) >> 2; \
   buf[cdw++] = val; \
   }while (0)
@@ -360,14 +362,71 @@ int compute_bo_wait(struct gpu_buffer *boi)
     return ret;
 }
 
+void compute_flush_caches(const struct compute_context* ctx)
+{
+  struct drm_radeon_cs cs;
+  unsigned buf[1024];
+  int cdw = 0;
+  uint64_t chunk_array[5];
+  struct drm_radeon_cs_chunk chunks[5];
+  uint32_t flags[3];
+  struct cs_reloc_gem* relocs;
+
+  buf[cdw++] = PKT3C(PKT3_SURFACE_SYNC, 3, 0);
+  buf[cdw++] = 0xFFFFFFFF;/*S_0085F0_TCL1_ACTION_ENA(1) |
+               S_0085F0_SH_ICACHE_ACTION_ENA(1) |
+               S_0085F0_SH_KCACHE_ACTION_ENA(1) |
+               S_0085F0_TC_ACTION_ENA(1);*/
+
+  buf[cdw++] = 0xffffffff;
+  buf[cdw++] = 0;
+  buf[cdw++] = 0xA;
+
+  flags[0] = RADEON_CS_USE_VM;
+  flags[1] = RADEON_CS_RING_COMPUTE;
+  
+  chunks[0].chunk_id = RADEON_CHUNK_ID_FLAGS;
+  chunks[0].length_dw = 2;
+  chunks[0].chunk_data =  (uint64_t)(uintptr_t)&flags[0];
+
+  #define RELOC_SIZE (sizeof(struct cs_reloc_gem) / sizeof(uint32_t))
+  
+  int reloc_num = 0;
+  relocs = compute_create_reloc_table(ctx, &reloc_num);
+  
+  chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
+  chunks[1].length_dw = reloc_num*RELOC_SIZE;
+  chunks[1].chunk_data =  (uint64_t)(uintptr_t)relocs;
+
+  chunks[2].chunk_id = RADEON_CHUNK_ID_IB;
+  chunks[2].length_dw = cdw;
+  chunks[2].chunk_data =  (uint64_t)(uintptr_t)&buf[0];  
+
+  printf("cdw: %i\n", cdw);
+
+  chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
+  chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
+  chunk_array[2] = (uint64_t)(uintptr_t)&chunks[2];
+  
+  cs.num_chunks = 3;
+  cs.chunks = (uint64_t)(uintptr_t)chunk_array;
+  cs.cs_id = 1;
+  
+  int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
+
+  printf("ret:%i\n", r);
+
+  free(relocs);
+}
+
 int compute_emit_compute_state(const struct compute_context* ctx, const struct compute_state* state)
 {
   struct drm_radeon_cs cs;
   int i, r;
   unsigned buf[1024];
   int cdw = 0;
-  uint64_t chunk_array[4];
-  struct drm_radeon_cs_chunk chunks[4];
+  uint64_t chunk_array[5];
+  struct drm_radeon_cs_chunk chunks[5];
   uint32_t flags[3];
   struct cs_reloc_gem* relocs;
   
@@ -418,7 +477,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   
   if (state->user_data_length)
   {
-    buf[cdw++] = PKT3(PKT3_SET_SH_REG, state->user_data_length, 0);
+    buf[cdw++] = PKT3C(PKT3_SET_SH_REG, state->user_data_length, 0);
     buf[cdw++] = (R_00B900_COMPUTE_USER_DATA_0 - SI_SH_REG_OFFSET) >> 2;
 
     for (i = 0; i < state->user_data_length; i++)
@@ -428,10 +487,12 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   }
 
 
-  buf[cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-  buf[cdw++] = S_0085F0_SH_ICACHE_ACTION_ENA(1) |
+  buf[cdw++] = PKT3C(PKT3_SURFACE_SYNC, 3, 0);
+  buf[cdw++] = 0xFFFFFFFF;/*S_0085F0_TCL1_ACTION_ENA(1) |
+               S_0085F0_SH_ICACHE_ACTION_ENA(1) |
                S_0085F0_SH_KCACHE_ACTION_ENA(1) |
-               S_0085F0_TC_ACTION_ENA(1);
+               S_0085F0_TC_ACTION_ENA(1);*/
+
   buf[cdw++] = 0xffffffff;
   buf[cdw++] = 0;
   buf[cdw++] = 0xA;
@@ -441,10 +502,11 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
     S_00B800_FORCE_START_AT_000(0) | S_00B800_ORDERED_APPEND_ENBL(0) 
   );
   
+
+  set_compute_reg(R_00B800_COMPUTE_DISPATCH_INITIATOR, 0);
+
   flags[0] = RADEON_CS_USE_VM;
   flags[1] = RADEON_CS_RING_COMPUTE;
-  
-  compute_vm_remap(state->binary);
   
   chunks[0].chunk_id = RADEON_CHUNK_ID_FLAGS;
   chunks[0].length_dw = 2;
@@ -462,8 +524,9 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   chunks[2].chunk_id = RADEON_CHUNK_ID_IB;
   chunks[2].length_dw = cdw;
   chunks[2].chunk_data =  (uint64_t)(uintptr_t)&buf[0];  
-  
-  
+
+  printf("cdw: %i\n", cdw);
+
   chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
   chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
   chunk_array[2] = (uint64_t)(uintptr_t)&chunks[2];

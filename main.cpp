@@ -107,7 +107,7 @@ void s_mov_imm32(unsigned *&p, int sdst, unsigned imm)
   p[0] = 0xBE800000;
   
   unsigned ssrc0 = 255; //literal constant
-  unsigned op = 2; //MOV_B32
+  unsigned op = 3; //MOV_B32
   
   p[0] |= ssrc0;
   p[0] |= op << 8;
@@ -116,6 +116,19 @@ void s_mov_imm32(unsigned *&p, int sdst, unsigned imm)
   p[1] = imm;
   
   p += 2;
+}
+
+void s_getreg_b32(unsigned *&p, int sdst, unsigned size, unsigned offset, unsigned hwregid)
+{
+  p[0] = 0xB0000000;
+  
+  unsigned op = 18;
+  
+  p[0] |= size << 11| offset << 6 | hwregid;
+  p[0] |= op << 23;
+  p[0] |= sdst << 16;
+  
+  p += 1;
 }
 
 void v_mov_b32(unsigned *&p, int vdst, int src0)
@@ -181,24 +194,24 @@ int main()
 //   }
   compute_context* ctx = compute_create_context("/dev/dri/card0");
   
-  gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 4096, RADEON_DOMAIN_VRAM, 4096);
+  gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 1024*1024*5, RADEON_DOMAIN_VRAM, 4096);
   gpu_buffer* data_bo = compute_alloc_gpu_buffer(ctx, 4096, RADEON_DOMAIN_VRAM, 4096);
   
-  unsigned prog[256];
+  unsigned prog[1024*1024];
   
   
-  for (int i = 0; i < 256; i++)
+  for (int i = 0; i < sizeof(prog) / sizeof(prog[0]); i++)
   {
     prog[i] = 0xBF800000; //sopp: NOP
   }
   
-  unsigned *p = &prog[2];
+  unsigned *p = &prog[1024*512];
   
   buffer_resource bufres;
   
   bufres.base_addr = data_bo->va;
   bufres.stride = 4;
-  bufres.num_records = 32;
+  bufres.num_records = 64;
   bufres.dst_sel_x = 4;
   bufres.dst_sel_y = 4;
   bufres.dst_sel_z = 4;
@@ -206,7 +219,8 @@ int main()
   bufres.num_format = 4;
   bufres.data_format = 4;
   bufres.element_size = 1;
-  
+  bufres.add_tid_en = 1;
+
   printf("buf addr%p\n", data_bo->va);
 //  printf("buf addr%p\n", data_bo->va >> 11);
 
@@ -217,13 +231,18 @@ rak_adam: 0x48 is the TC (texture cache)
 */
   printf("resource: %.8x %.8x %.8x %.8x\n", bufres.data[0], bufres.data[1], bufres.data[2], bufres.data[3]);
   
-/*  s_mov_imm32(p, 0, bufres.data[0]);
-  s_mov_imm32(p, 1, bufres.data[1]);
-  s_mov_imm32(p, 2, bufres.data[2]);
-  s_mov_imm32(p, 3, bufres.data[3]);
-  */
-  v_mov_imm32(p, 0, 0x00000000);
-  v_mov_imm32(p, 1, 0x00000000);
+  s_mov_imm32(p, 4, bufres.data[0]);
+  s_mov_imm32(p, 5, bufres.data[1]);
+  s_mov_imm32(p, 6, bufres.data[2]);
+  s_mov_imm32(p, 7, bufres.data[3]);
+  
+//  s_getreg_b32(p, 4, 31, 0, 4);
+
+//  v_mov_imm32(p, 0, 0x00000006);
+//  v_mov_b32(p, 0, 4);
+//  v_mov_b32(p, 0, 1);
+
+  v_mov_imm32(p, 1, 0x00000003);
   v_mov_imm32(p, 2, 0x00000000);
   v_mov_imm32(p, 3, 0x00000000);
   v_mov_imm32(p, 4, 0x00000000);
@@ -244,7 +263,7 @@ rak_adam: 0x48 is the TC (texture cache)
            0,//int tfe,
            0,//int slc,
            0,//int srsrc,
-           4,//int vdata,
+           1,//int vdata,
            4//int vaddr
           );
   
@@ -257,14 +276,13 @@ rak_adam: 0x48 is the TC (texture cache)
   
   s_endpgm(p);
   
-  printf("code:\n");
+/*  printf("code:\n");
 
   for (unsigned* i = &prog[0]; i != p; i++)
   {
     printf(">%.8X\n", *i);
-  }
+  }*/
 
-  compute_copy_to_gpu(code_bo, 0, &prog[0], sizeof(prog));
   compute_copy_to_gpu(code_bo, 0, &prog[0], sizeof(prog));
   
   unsigned test_data[1024];
@@ -279,8 +297,8 @@ rak_adam: 0x48 is the TC (texture cache)
   compute_state state;
   
   printf("%lx\n", code_bo->va);
-  
-  state.id = 1;
+ 
+  state.id = 0;
   state.user_data_length = 4;
   
   state.user_data[0] = bufres.data[0];
@@ -299,16 +317,16 @@ rak_adam: 0x48 is the TC (texture cache)
   state.num_thread[2] = 1;
   
   state.sgpr_num = 16;
-  state.vgpr_num = 32;
+  state.vgpr_num = 16;
   state.priority = 0;
   state.debug_mode = 0;
   state.ieee_mode = 0;
   state.scratch_en = 0;
   state.lds_size = 0;
   state.excp_en = 0;
-  state.waves_per_sh = 1;
+  state.waves_per_sh = 2;
   state.thread_groups_per_cu = 1;
-  state.lock_threshold = 4;
+  state.lock_threshold = 0;
   state.simd_dest_cntl = 0;
   state.se0_sh0_cu_en = 1;
   state.se0_sh1_cu_en = 1;
@@ -318,17 +336,21 @@ rak_adam: 0x48 is the TC (texture cache)
   state.tmpring_wavesize = 0;
   state.binary = code_bo;
 
-  int e = compute_emit_compute_state(ctx, &state);
-  
+  int e;
+
+  e = compute_emit_compute_state(ctx, &state);
+
   cout << e << " " << strerror(errno) << endl;
   
+  compute_flush_caches(ctx);
+
   compute_copy_from_gpu(data_bo, 0, &test_data[0], sizeof(test_data));
   
-  for (int i = 0; i < 16; i++)
+  for (int i = 0; i < 64; i++)
   {
     printf("%i : %.8x\n", i, test_data[i]);
   }
-  
+
   compute_free_context(ctx);
 }
 
