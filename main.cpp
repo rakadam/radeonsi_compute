@@ -165,6 +165,13 @@ void s_endpgm(unsigned*&p)
   p++;
 }
 
+void s_getpc_b64(unsigned*&p, unsigned sdst)
+{
+  unsigned op = 31;
+  p[0] = 0xBE800000 | op << 8 | sdst << 16;
+  p++;
+}
+
 int main()
 {
 //   {
@@ -205,7 +212,7 @@ int main()
     prog[i] = 0xBF800000; //sopp: NOP
   }
   
-  unsigned *p = &prog[1024*512];
+  unsigned *p = &prog[2];
   
   buffer_resource bufres;
   
@@ -221,7 +228,7 @@ int main()
   bufres.element_size = 1;
   bufres.add_tid_en = 1;
 
-  printf("buf addr%p\n", data_bo->va);
+  printf("buf addr%x, code addr: %x\n", data_bo->va, code_bo->va);
 //  printf("buf addr%p\n", data_bo->va >> 11);
 
 /*
@@ -231,16 +238,18 @@ rak_adam: 0x48 is the TC (texture cache)
 */
   printf("resource: %.8x %.8x %.8x %.8x\n", bufres.data[0], bufres.data[1], bufres.data[2], bufres.data[3]);
   
+/*
   s_mov_imm32(p, 4, bufres.data[0]);
   s_mov_imm32(p, 5, bufres.data[1]);
   s_mov_imm32(p, 6, bufres.data[2]);
   s_mov_imm32(p, 7, bufres.data[3]);
-  
+  */
 //  s_getreg_b32(p, 4, 31, 0, 4);
 
 //  v_mov_imm32(p, 0, 0x00000006);
 //  v_mov_b32(p, 0, 4);
-//  v_mov_b32(p, 0, 1);
+  s_getpc_b64(p, 4);
+  v_mov_b32(p, 0, 4);
 
   v_mov_imm32(p, 1, 0x00000003);
   v_mov_imm32(p, 2, 0x00000000);
@@ -263,7 +272,7 @@ rak_adam: 0x48 is the TC (texture cache)
            0,//int tfe,
            0,//int slc,
            0,//int srsrc,
-           1,//int vdata,
+           0,//int vdata,
            4//int vaddr
           );
   
@@ -312,12 +321,12 @@ rak_adam: 0x48 is the TC (texture cache)
   state.start[0] = 0;
   state.start[1] = 0;
   state.start[2] = 0;
-  state.num_thread[0] = 1;
+  state.num_thread[0] = 64;
   state.num_thread[1] = 1;
   state.num_thread[2] = 1;
   
-  state.sgpr_num = 16;
-  state.vgpr_num = 16;
+  state.sgpr_num = 32;
+  state.vgpr_num = 32;
   state.priority = 0;
   state.debug_mode = 0;
   state.ieee_mode = 0;
