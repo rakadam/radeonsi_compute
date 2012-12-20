@@ -172,6 +172,19 @@ void s_getpc_b64(unsigned*&p, unsigned sdst)
   p++;
 }
 
+void s_swappc_b64(unsigned*&p, unsigned sdst, unsigned ssrc0)
+{
+  unsigned op = 33;
+  p[0] = 0xBE800000 | op << 8 | sdst << 16 | ssrc0;
+  p++;
+}
+
+void s_jump(unsigned *&p, int rel)
+{
+  p[0] = 0xBF800000 | (0x2 << 16) | rel;
+  p++;
+}
+
 int main()
 {
 //   {
@@ -212,7 +225,7 @@ int main()
     prog[i] = 0xBF800000; //sopp: NOP
   }
   
-  unsigned *p = &prog[2];
+  unsigned *p = &prog[0];
   
   buffer_resource bufres;
   
@@ -238,6 +251,18 @@ rak_adam: 0x48 is the TC (texture cache)
 */
   printf("resource: %.8x %.8x %.8x %.8x\n", bufres.data[0], bufres.data[1], bufres.data[2], bufres.data[3]);
   
+
+  int start = 1024*8;
+
+  s_jump(p, start+1);
+
+  for (int i = 0; i < start; i++)
+  {
+    s_waitcnt(p);
+  }
+
+  s_swappc_b64(p, 7, 7);
+
 /*
   s_mov_imm32(p, 4, bufres.data[0]);
   s_mov_imm32(p, 5, bufres.data[1]);
@@ -248,32 +273,64 @@ rak_adam: 0x48 is the TC (texture cache)
 
 //  v_mov_imm32(p, 0, 0x00000006);
 //  v_mov_b32(p, 0, 4);
-  s_getpc_b64(p, 4);
-  v_mov_b32(p, 0, 4);
+//  s_getpc_b64(p, 4);
+//  v_mov_b32(p, 0, 4);
 
-  v_mov_imm32(p, 1, 0x00000003);
-  v_mov_imm32(p, 2, 0x00000000);
-  v_mov_imm32(p, 3, 0x00000000);
+  v_mov_imm32(p, 2, 0x00000002);
+  v_mov_imm32(p, 3, 0x00000042);
   v_mov_imm32(p, 4, 0x00000000);
   v_mov_imm32(p, 5, 0x00000000);
   v_mov_imm32(p, 6, 0x00000000);
   v_mov_imm32(p, 7, 0x00000000);
+
+  s_mov_imm32(p, 0, code_bo->va+(1+start+21+1)*4);
 
   mtbuf(p,
            4,//int nfmt,
            4,//int dfmt,
            TBUFFER_STORE_FORMAT_X,//int op,
            0,//int addr64,
-           0,//int glc,
+           1,//int glc,
            0,//int idxen,
            0,//int offen,
            0,//int offset,
-           128,//int soffset,
+           128,//int soffset, set to zero
            0,//int tfe,
-           0,//int slc,
+           1,//int slc,
            0,//int srsrc,
-           0,//int vdata,
-           4//int vaddr
+           3,//int vdata,
+           0//int vaddr
+          );
+
+s_mov_imm32(p, 7, code_bo->va+4);
+s_swappc_b64(p, 7, 7);
+
+for (int i = 0; i < 1; i++)
+{
+  s_waitcnt(p);
+}
+
+  v_mov_imm32(p, 1, 0x0002);
+  v_mov_imm32(p, 2, 0x0001);
+
+  s_mov_imm32(p, 0, data_bo->va);
+//  v_mov_b32(p, 1, 4);
+
+  mtbuf(p,
+           4,//int nfmt,
+           4,//int dfmt,
+           TBUFFER_STORE_FORMAT_X,//int op,
+           0,//int addr64,
+           1,//int glc,
+           0,//int idxen,
+           0,//int offen,
+           0,//int offset,
+           128,//int soffset, set to zero
+           0,//int tfe,
+           1,//int slc,
+           0,//int srsrc,
+           1,//int vdata,
+           0//int vaddr
           );
   
   s_waitcnt(p);
@@ -292,6 +349,11 @@ rak_adam: 0x48 is the TC (texture cache)
     printf(">%.8X\n", *i);
   }*/
 
+/*  for (unsigned *i = &prog[0]; i < p; i++)
+  {
+    printf("%.8x\n", *i);
+  }
+*/
   compute_copy_to_gpu(code_bo, 0, &prog[0], sizeof(prog));
   
   unsigned test_data[1024];
@@ -321,7 +383,7 @@ rak_adam: 0x48 is the TC (texture cache)
   state.start[0] = 0;
   state.start[1] = 0;
   state.start[2] = 0;
-  state.num_thread[0] = 64;
+  state.num_thread[0] = 1;
   state.num_thread[1] = 1;
   state.num_thread[2] = 1;
   

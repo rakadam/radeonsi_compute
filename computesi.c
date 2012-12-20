@@ -373,10 +373,10 @@ void compute_flush_caches(const struct compute_context* ctx)
   struct cs_reloc_gem* relocs;
 
   buf[cdw++] = PKT3C(PKT3_SURFACE_SYNC, 3, 0);
-  buf[cdw++] = 0xFFFFFFFF;/*S_0085F0_TCL1_ACTION_ENA(1) |
+  buf[cdw++] = S_0085F0_TCL1_ACTION_ENA(1) |
                S_0085F0_SH_ICACHE_ACTION_ENA(1) |
                S_0085F0_SH_KCACHE_ACTION_ENA(1) |
-               S_0085F0_TC_ACTION_ENA(1);*/
+               S_0085F0_TC_ACTION_ENA(1);
 
   buf[cdw++] = 0xffffffff;
   buf[cdw++] = 0;
@@ -488,10 +488,10 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
 
 
   buf[cdw++] = PKT3C(PKT3_SURFACE_SYNC, 3, 0);
-  buf[cdw++] = 0xFFFFFFFF;/*S_0085F0_TCL1_ACTION_ENA(1) |
+  buf[cdw++] = S_0085F0_TCL1_ACTION_ENA(1) |
                S_0085F0_SH_ICACHE_ACTION_ENA(1) |
                S_0085F0_SH_KCACHE_ACTION_ENA(1) |
-               S_0085F0_TC_ACTION_ENA(1);*/
+               S_0085F0_TC_ACTION_ENA(1);
 
   buf[cdw++] = 0xffffffff;
   buf[cdw++] = 0;
