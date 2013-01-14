@@ -26,6 +26,8 @@ enum mtbuf_op{
   TBUFFER_STORE_FORMAT_XYZW = 7
 };
 
+#define BUFFER_ATOMIC_ADD 50
+
 struct buffer_resource{
   buffer_resource()
   {
@@ -84,6 +86,31 @@ void mtbuf(unsigned *&p, int nfmt, int dfmt, int op, int addr64, int glc, int id
   p[1] |= tfe << 23;
   p[1] |= soffset << 24; //8bit
   
+  p += 2;
+}
+
+void mubuf(unsigned *&p, int soffset, int tfe, int slc, int srsrc, int vdata, int vaddr, int op, int lds, int addr64, int glc, int idxen, int offen, int offset)
+{
+  p[0] = 0xE0000000;
+  p[1] = 0;
+
+  p[0] |= offset;
+  p[0] |= offen << 12;
+  p[0] |= idxen << 13;
+  p[0] |= glc << 14;
+  p[0] |= addr64 << 15;
+  p[0] |= lds << 16;
+//r
+  p[0] |= op << 18;
+
+  p[1] |= vaddr;
+  p[1] |= vdata << 8;
+  p[1] |= srsrc << 16;
+//r
+  p[1] |= slc << 22;
+  p[1] |= tfe << 23;
+  p[1] |= soffset << 24;
+
   p += 2;
 }
 
@@ -185,6 +212,25 @@ void s_jump(unsigned *&p, int rel)
   p++;
 }
 
+void v_mul_i32_i24(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
+{
+  unsigned op = 9;
+
+  p[0] = 0;
+  p[0] |= src0;
+  p[0] |= vsrc1 << 9;
+  p[0] |= vdst << 17;
+  p[0] |= op << 25;
+  p++;
+}
+
+void v_mul_i32_i24_imm32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned imm32)
+{
+  v_mul_i32_i24(p, vdst, vsrc1, 255);
+  p[0] = imm32;
+  p++;
+}
+
 int main()
 {
 //   {
@@ -214,8 +260,9 @@ int main()
 //   }
   compute_context* ctx = compute_create_context("/dev/dri/card0");
   
+  int test_data_size = 1024*1024;
   gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 1024*1024*5, RADEON_DOMAIN_VRAM, 4096);
-  gpu_buffer* data_bo = compute_alloc_gpu_buffer(ctx, 4096, RADEON_DOMAIN_VRAM, 4096);
+  gpu_buffer* data_bo = compute_alloc_gpu_buffer(ctx, test_data_size*4, RADEON_DOMAIN_VRAM, 4096);
   
   unsigned prog[1024*1024];
   
@@ -231,7 +278,7 @@ int main()
   
   bufres.base_addr = data_bo->va;
   bufres.stride = 4;
-  bufres.num_records = 64;
+  bufres.num_records = 1024*10;
   bufres.dst_sel_x = 4;
   bufres.dst_sel_y = 4;
   bufres.dst_sel_z = 4;
@@ -239,7 +286,7 @@ int main()
   bufres.num_format = 4;
   bufres.data_format = 4;
   bufres.element_size = 1;
-  bufres.add_tid_en = 1;
+  bufres.add_tid_en = 0;
 
   printf("buf addr%x, code addr: %x\n", data_bo->va, code_bo->va);
 //  printf("buf addr%p\n", data_bo->va >> 11);
@@ -251,17 +298,6 @@ rak_adam: 0x48 is the TC (texture cache)
 */
   printf("resource: %.8x %.8x %.8x %.8x\n", bufres.data[0], bufres.data[1], bufres.data[2], bufres.data[3]);
   
-
-  int start = 1024*8;
-
-  s_jump(p, start+1);
-
-  for (int i = 0; i < start; i++)
-  {
-    s_waitcnt(p);
-  }
-
-  s_swappc_b64(p, 7, 7);
 
 /*
   s_mov_imm32(p, 4, bufres.data[0]);
@@ -276,7 +312,7 @@ rak_adam: 0x48 is the TC (texture cache)
 //  s_getpc_b64(p, 4);
 //  v_mov_b32(p, 0, 4);
 
-  v_mov_imm32(p, 2, 0x00000002);
+/*  v_mov_imm32(p, 2, 0x00000002);
   v_mov_imm32(p, 3, 0x00000042);
   v_mov_imm32(p, 4, 0x00000000);
   v_mov_imm32(p, 5, 0x00000000);
@@ -284,57 +320,79 @@ rak_adam: 0x48 is the TC (texture cache)
   v_mov_imm32(p, 7, 0x00000000);
 
   s_mov_imm32(p, 0, code_bo->va+(1+start+21+1)*4);
-
-  mtbuf(p,
-           4,//int nfmt,
-           4,//int dfmt,
-           TBUFFER_STORE_FORMAT_X,//int op,
-           0,//int addr64,
-           1,//int glc,
-           0,//int idxen,
-           0,//int offen,
-           0,//int offset,
-           128,//int soffset, set to zero
-           0,//int tfe,
-           1,//int slc,
-           0,//int srsrc,
-           3,//int vdata,
-           0//int vaddr
-          );
-
-s_mov_imm32(p, 7, code_bo->va+4);
-s_swappc_b64(p, 7, 7);
-
-for (int i = 0; i < 1; i++)
-{
-  s_waitcnt(p);
-}
+*/
 
   v_mov_imm32(p, 1, 0x0002);
   v_mov_imm32(p, 2, 0x0001);
 
-  s_mov_imm32(p, 0, data_bo->va);
-//  v_mov_b32(p, 1, 4);
+//  s_mov_imm32(p, 0, data_bo->va);
+  //s_getreg_b32(p, 4, 3, 0, 4);
+  v_mov_b32(p, 1, 4);
+  v_mov_b32(p, 2, 4);
+  v_mul_i32_i24_imm32(p, 1, 1, 64);
+
+/*
+  mtbuf(p,
+           4,//int nfmt,
+           4,//int dfmt,
+           TBUFFER_STORE_FORMAT_X,//int op,
+           0,//int addr64,
+           0,//int glc,
+           1,//int idxen,
+           0,//int offen,
+           0,//int offset,
+           128,//int soffset, set to zero
+           0,//int tfe,
+           0,//int slc,
+           0,//int srsrc,
+           2,//int vdata,
+           1//int vaddr
+          );
+*/
+
+  v_mov_imm32(p, 1, 0x00000000);
+  v_mov_imm32(p, 2, 0x00000001);
+
+  mubuf(p, 
+    128, //int soffset, 
+    0,//int tfe, 
+    0,//int slc, 
+    0,//int srsrc, 
+    2,//int vdata, 
+    1,//int vaddr,
+    BUFFER_ATOMIC_ADD,//int op, 
+    0, //int lds, 
+    0, //int addr64, 
+    1, //int glc, 
+    0, //int idxen, 
+    0, //int offen, 
+    0 //int offset
+  );
+  
+  s_waitcnt(p);
+
+//  s_getreg_b32(p, 4, 31, 0, 4);
+  v_mov_b32(p, 1, 4);
 
   mtbuf(p,
            4,//int nfmt,
            4,//int dfmt,
            TBUFFER_STORE_FORMAT_X,//int op,
            0,//int addr64,
-           1,//int glc,
-           0,//int idxen,
+           0,//int glc,
+           1,//int idxen,
            0,//int offen,
            0,//int offset,
            128,//int soffset, set to zero
            0,//int tfe,
-           1,//int slc,
+           0,//int slc,
            0,//int srsrc,
            1,//int vdata,
-           0//int vaddr
+           2//int vaddr
           );
-  
+
   s_waitcnt(p);
-  
+
 //  prog[100] = 0xBF800000 | (0x2 << 16) | 0x0001; //sopp: JUMP next
 //  prog[101] = 0xBF800000 | (0x2 << 16) | 0xFFFF; //sopp: JUMP self
   
@@ -356,14 +414,16 @@ for (int i = 0; i < 1; i++)
 */
   compute_copy_to_gpu(code_bo, 0, &prog[0], sizeof(prog));
   
-  unsigned test_data[1024];
+  unsigned* test_data = new unsigned[test_data_size];
   
   for (int i = 0; i < 1024; i++)
   {
     test_data[i] = 0xDEADBEEF;
   }
   
-  compute_copy_to_gpu(data_bo, 0, &test_data[0], sizeof(test_data));
+  test_data[0] = 1;
+
+  compute_copy_to_gpu(data_bo, 0, &test_data[0], test_data_size*4);
   
   compute_state state;
   
@@ -377,13 +437,13 @@ for (int i = 0; i < 1; i++)
   state.user_data[2] = bufres.data[2];
   state.user_data[3] = bufres.data[3];
   
-  state.dim[0] = 1;
+  state.dim[0] = 10;
   state.dim[1] = 1;
   state.dim[2] = 1;
   state.start[0] = 0;
   state.start[1] = 0;
   state.start[2] = 0;
-  state.num_thread[0] = 1;
+  state.num_thread[0] = 256;
   state.num_thread[1] = 1;
   state.num_thread[2] = 1;
   
@@ -395,8 +455,8 @@ for (int i = 0; i < 1; i++)
   state.scratch_en = 0;
   state.lds_size = 0;
   state.excp_en = 0;
-  state.waves_per_sh = 2;
-  state.thread_groups_per_cu = 1;
+  state.waves_per_sh = 4;
+  state.thread_groups_per_cu = 2;
   state.lock_threshold = 0;
   state.simd_dest_cntl = 0;
   state.se0_sh0_cu_en = 1;
@@ -415,9 +475,9 @@ for (int i = 0; i < 1; i++)
   
   compute_flush_caches(ctx);
 
-  compute_copy_from_gpu(data_bo, 0, &test_data[0], sizeof(test_data));
+  compute_copy_from_gpu(data_bo, 0, &test_data[0], test_data_size*4);
   
-  for (int i = 0; i < 64; i++)
+  for (int i = 1; i < 1024*1; i++)
   {
     printf("%i : %.8x\n", i, test_data[i]);
   }
