@@ -12,33 +12,30 @@ class EventDependence
 
 class ComputeInterface
 {
-    std::vector<compute_context*> ctx;
-    bool isDriAvailable(std::string fname);
+	compute_context* context;
 public:
-    ComputeInterface();
-    ~ComputeInterface();
+	ComputeInterface(std::string driName);
+	~ComputeInterface();
 
-    size_t devNum() { return ctx.size(); }
+	gpu_buffer* bufferAlloc(size_t size);
+	void bufferFree(gpu_buffer* buf);
 
-    gpu_buffer* bufferAlloc(size_t size);
-    void bufferFree(gpu_buffer* buf);
+	void transferToGPU(gpu_buffer* buf, size_t offset, void* data, size_t size, EventDependence evd = EventDependence());
+	void transferFromGPU(gpu_buffer* buf, size_t offset, void* data, size_t size, EventDependence evd = EventDependence());
 
-    void transferToGPU(gpu_buffer* buf, void* data, size_t size, EventDependence evd = EventDependence());
-    void transferFromGPU(gpu_buffer* buf, void* data, size_t size, EventDependence evd = EventDependence());
+	template<typename T>
+	void transferToGPU(gpu_buffer* buf, size_t offset, const T& data, EventDependence evd = EventDependence())
+	{
+		transferToGPU(buf, offset, &data[0], data.size()*sizeof(data[0]), evd);
+	}
 
-    template<typename T>
-    void transferToGPU(gpu_buffer* buf, const T& data, EventDependence evd = EventDependence())
-    {
-        transferToGPU(buf, &data[0], data.size()*sizeof(data[0]), evd);
-    }
+	template<typename T>
+	void transferFromGPU(gpu_buffer* buf, size_t offset, const T& data, EventDependence evd = EventDependence())
+	{
+		transferFromGPU(buf, offset, &data[0], data.size()*sizeof(data[0]), evd);
+	}
 
-    template<typename T>
-    void transferFromGPU(gpu_buffer* buf, const T& data, EventDependence evd = EventDependence())
-    {
-        transferFromGPU(buf, &data[0], data.size()*sizeof(data[0]), evd);
-    }
-
-    void launch(const std::vector<uint32_t>& userData, const std::vector<size_t>& threadOffset, const std::vector<size_t>& blockDim, const std::vector<size_t>& localSize, gpu_buffer* code, EventDependence evd = EventDependence());
+	void launch(std::vector<uint32_t> userData, std::vector<size_t> threadOffset, std::vector<size_t> blockDim, std::vector<size_t> localSize, gpu_buffer* code, EventDependence evd = EventDependence());
 };
 
 #endif
