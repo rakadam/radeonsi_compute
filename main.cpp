@@ -6,6 +6,10 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
+#include <map>
+#include <vector>
+#include <set>
+#include <sys/time.h>
 
 extern "C" {
 #include "computesi.h"
@@ -13,6 +17,18 @@ extern "C" {
 
 
 using namespace std;
+unsigned floatconv(float f)
+{
+ union 
+ {
+   float f;
+   uint32_t u;
+ } conv;
+
+ conv.f = f;
+
+ return conv.u;
+}
 
 enum mtbuf_op{
   TBUFFER_LOAD_FORMAT_X     = 0,
@@ -145,6 +161,20 @@ void s_mov_imm32(unsigned *&p, int sdst, unsigned imm)
   p += 2;
 }
 
+void s_mov_b32(unsigned *&p, int sdst, int src)
+{
+  p[0] = 0xBE800000;
+  
+  unsigned ssrc0 = src;
+  unsigned op = 3; //MOV_B32
+  
+  p[0] |= ssrc0;
+  p[0] |= op << 8;
+  p[0] |= sdst << 16;
+  
+  p += 1;
+}
+
 void s_getreg_b32(unsigned *&p, int sdst, unsigned size, unsigned offset, unsigned hwregid)
 {
   p[0] = 0xB0000000;
@@ -163,6 +193,84 @@ void v_mov_b32(unsigned *&p, int vdst, int src0)
   p[0] = 0x7E000000;
   
   unsigned op = 1;
+  
+  p[0] |= src0;
+  p[0] |= op << 9;
+  p[0] |= vdst << 17;
+  
+  p++;
+}
+
+void v_sin_f32(unsigned *&p, int vdst, int src0)
+{
+  p[0] = 0x7E000000;
+  
+  unsigned op = 53;
+  
+  p[0] |= src0;
+  p[0] |= op << 9;
+  p[0] |= vdst << 17;
+  
+  p++;
+}
+
+void v_rcp_f32(unsigned *&p, int vdst, int src0)
+{
+  p[0] = 0x7E000000;
+  
+  unsigned op = 42;
+  
+  p[0] |= src0;
+  p[0] |= op << 9;
+  p[0] |= vdst << 17;
+  
+  p++;
+}
+
+void v_rcp_f64(unsigned *&p, int vdst, int src0)
+{
+  p[0] = 0x7E000000;
+  
+  unsigned op = 47;
+  
+  p[0] |= src0;
+  p[0] |= op << 9;
+  p[0] |= vdst << 17;
+  
+  p++;
+}
+
+void v_sqrt_f32(unsigned *&p, int vdst, int src0)
+{
+  p[0] = 0x7E000000;
+  
+  unsigned op = 51;
+  
+  p[0] |= src0;
+  p[0] |= op << 9;
+  p[0] |= vdst << 17;
+  
+  p++;
+}
+
+void v_sqrt_f64(unsigned *&p, int vdst, int src0)
+{
+  p[0] = 0x7E000000;
+  
+  unsigned op = 52;
+  
+  p[0] |= src0;
+  p[0] |= op << 9;
+  p[0] |= vdst << 17;
+  
+  p++;
+}
+
+void v_bfrev_b32(unsigned *&p, int vdst, int src0)
+{
+  p[0] = 0x7E000000;
+  
+  unsigned op = 56;
   
   p[0] |= src0;
   p[0] |= op << 9;
@@ -212,9 +320,44 @@ void s_jump(unsigned *&p, int rel)
   p++;
 }
 
+void smrd(unsigned *&p, unsigned op, unsigned sdst, unsigned sbase, unsigned imm, unsigned offset)
+{
+  p[0] = 0xC0000000 | (op << 22) | (sdst << 15) | (sbase << 9) | (imm << 8) | (offset << 0);
+  p++;
+}
+
+void s_memtime(unsigned *&p, unsigned sdst)
+{
+  smrd(p, 30, sdst, 0, 0, 0);
+}
+
 void v_mul_i32_i24(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
 {
   unsigned op = 9;
+
+  p[0] = 0;
+  p[0] |= src0;
+  p[0] |= vsrc1 << 9;
+  p[0] |= vdst << 17;
+  p[0] |= op << 25;
+  p++;
+}
+
+void v_mul_f32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
+{
+  unsigned op = 8;
+
+  p[0] = 0;
+  p[0] |= src0;
+  p[0] |= vsrc1 << 9;
+  p[0] |= vdst << 17;
+  p[0] |= op << 25;
+  p++;
+}
+
+void v_add_f32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
+{
+  unsigned op = 3;
 
   p[0] = 0;
   p[0] |= src0;
@@ -230,6 +373,91 @@ void v_mul_i32_i24_imm32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned i
   p[0] = imm32;
   p++;
 }
+
+void v_mul_f32_imm32(unsigned *&p, unsigned vdst, unsigned vsrc1, float f)
+{
+  v_mul_f32(p, vdst, vsrc1, 255);
+  p[0] = floatconv(f);
+  p++;
+}
+
+void v_add_f32_imm32(unsigned *&p, unsigned vdst, unsigned vsrc1, float f)
+{
+  v_add_f32(p, vdst, vsrc1, 255);
+  p[0] = floatconv(f);
+  p++;
+}
+
+void v_add_i32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
+{
+  unsigned op = 37;
+
+  p[0] = 0;
+  p[0] |= src0;
+  p[0] |= vsrc1 << 9;
+  p[0] |= vdst << 17;
+  p[0] |= op << 25;
+  p++;
+}
+
+void v_add_i32_imm32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned imm32)
+{
+  v_add_i32(p, vdst, vsrc1, 255);
+  p[0] = imm32;
+  p++;
+}
+
+void sopc(unsigned *&p, unsigned op, unsigned ssrc1, unsigned ssrc0)
+{
+ p[0] = 0xBF000000 | (ssrc0) | (ssrc1 << 8) | (op << 16);
+ p++;
+}
+
+void s_cmp_lt_i32(unsigned *&p, unsigned ssrc1, unsigned ssrc0)
+{
+ sopc(p, 4, ssrc1, ssrc0);
+}
+
+void s_cmp_gt_i32(unsigned *&p, unsigned ssrc1, unsigned ssrc0)
+{
+ sopc(p, 2, ssrc1, ssrc0);
+}
+
+
+void s_cbranch_scc0(unsigned *&p, int16_t imm)
+{
+ p[0] = 0xBF800000 | (4 << 16) | uint32_t(imm) & 0xFFFF;
+ p++;
+}
+
+void s_branch(unsigned *&p, int16_t imm)
+{
+ p[0] = 0xBF800000 | (2 << 16)| uint32_t(imm) & 0xFFFF;
+ p++;
+}
+
+void sop2(unsigned *&p, unsigned op, unsigned sdst, unsigned ssrc1, unsigned ssrc0)
+{
+ p[0] = 0x80000000 | (op << 23) | (sdst << 16) | (ssrc1 << 8) | (ssrc0 << 0);
+ p++;
+}
+
+void s_add_i32(unsigned *&p, unsigned sdst, unsigned ssrc1, unsigned ssrc0)
+{
+ sop2(p, 2, sdst, ssrc1, ssrc0);
+}
+
+int64_t get_time_usec()
+{
+    struct timeval tv;
+    struct timezone tz;
+
+    gettimeofday(&tv, &tz);
+
+    return int64_t(tv.tv_sec) * 1000000 + int64_t(tv.tv_usec);
+}
+
+
 
 int main()
 {
@@ -260,11 +488,11 @@ int main()
 //   }
   compute_context* ctx = compute_create_context("/dev/dri/card0");
   
-  int test_data_size = 1024*1024;
-  gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 1024*1024*5, RADEON_DOMAIN_VRAM, 4096);
+  int test_data_size = 1024*1024*16;
+  gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 1024*1024*4, RADEON_DOMAIN_VRAM, 4096);
   gpu_buffer* data_bo = compute_alloc_gpu_buffer(ctx, test_data_size*4, RADEON_DOMAIN_VRAM, 4096);
   
-  unsigned prog[1024*1024];
+  unsigned prog[1024*1024*1];
   
   
   for (int i = 0; i < sizeof(prog) / sizeof(prog[0]); i++)
@@ -325,6 +553,9 @@ rak_adam: 0x48 is the TC (texture cache)
   v_mov_imm32(p, 1, 0x0002);
   v_mov_imm32(p, 2, 0x0001);
 
+  s_mov_imm32(p, 126, 0x00000001); //EXECLO
+  s_mov_imm32(p, 127, 0x00000000); //EXECHI
+
 //  s_mov_imm32(p, 0, data_bo->va);
   //s_getreg_b32(p, 4, 3, 0, 4);
   v_mov_b32(p, 1, 4);
@@ -351,7 +582,7 @@ rak_adam: 0x48 is the TC (texture cache)
 */
 
   v_mov_imm32(p, 1, 0x00000000);
-  v_mov_imm32(p, 2, 0x00000001);
+  v_mov_imm32(p, 2, 0x00000006);
 
   mubuf(p, 
     128, //int soffset, 
@@ -374,10 +605,16 @@ rak_adam: 0x48 is the TC (texture cache)
 //  s_getreg_b32(p, 4, 31, 0, 4);
   v_mov_b32(p, 1, 4);
 
+  s_mov_imm32(p, 6, 0x42);
+  s_memtime(p, 6);
+  s_waitcnt(p);
+  v_mov_b32(p, 4, 6);
+  v_mov_b32(p, 5, 7);
+
   mtbuf(p,
            4,//int nfmt,
-           4,//int dfmt,
-           TBUFFER_STORE_FORMAT_X,//int op,
+           11,//int dfmt,
+           TBUFFER_STORE_FORMAT_XY,//int op,
            0,//int addr64,
            0,//int glc,
            1,//int idxen,
@@ -387,7 +624,69 @@ rak_adam: 0x48 is the TC (texture cache)
            0,//int tfe,
            0,//int slc,
            0,//int srsrc,
-           1,//int vdata,
+           4,//int vdata,
+           2//int vaddr
+          );
+  s_waitcnt(p);
+////////////////////////////////////////
+  s_mov_imm32(p, 126, 0xFFFFFFFF); //EXECLO
+  s_mov_imm32(p, 127, 0xFFFFFFFF); //EXECHI
+
+  
+  int iternum = 10000;
+
+  s_mov_imm32(p, 8, 0);
+
+  v_mov_imm32(p, 4, floatconv(2));
+  v_mov_imm32(p, 5, floatconv(1));
+
+  unsigned * eleje = p;
+
+  for (int i = 0; i < 1000; i++)
+  {
+//    s_mov_b32(p, 6, 6);
+//    v_sin_f32(p, 4, 256+4);
+//      v_add_f32(p, 4, 4, 256+4);
+    v_add_f32_imm32(p, 4, 4, 1.1);
+    v_sqrt_f64(p, 4, 256+4);
+//    v_bfrev(p, 4, 256+4);
+    v_rcp_f64(p, 4, 256+4);
+//    v_mov_b32(p, 5, 256+4);
+  }
+
+  s_add_i32(p, 8, 8, 255); p[0] = 1; p++;
+  s_cmp_lt_i32(p, 8, 255); p[0] = iternum; p++;
+
+  s_cbranch_scc0(p, eleje-p);
+
+  s_mov_imm32(p, 126, 0x00000001); //EXECLO
+  s_mov_imm32(p, 127, 0x00000000); //EXECHI
+///////////////////////////////////////
+  s_memtime(p, 6);
+  s_waitcnt(p);
+
+  s_getreg_b32(p, 8, 31, 0, 4);
+
+  v_mov_b32(p, 4, 6);
+  v_mov_b32(p, 5, 7);
+  v_mov_b32(p, 6, 4);
+  v_mov_b32(p, 7, 8);
+  v_add_i32_imm32(p, 2, 2, 2);
+
+  mtbuf(p,
+           4,//int nfmt,
+           14,//int dfmt,
+           TBUFFER_STORE_FORMAT_XYZW,//int op,
+           0,//int addr64,
+           0,//int glc,
+           1,//int idxen,
+           0,//int offen,
+           0,//int offset,
+           128,//int soffset, set to zero
+           0,//int tfe,
+           0,//int slc,
+           0,//int srsrc,
+           4,//int vdata,
            2//int vaddr
           );
 
@@ -407,7 +706,8 @@ rak_adam: 0x48 is the TC (texture cache)
     printf(">%.8X\n", *i);
   }*/
 
-/*  for (unsigned *i = &prog[0]; i < p; i++)
+/*
+  for (unsigned *i = &prog[0]; i < p; i++)
   {
     printf("%.8x\n", *i);
   }
@@ -437,7 +737,7 @@ rak_adam: 0x48 is the TC (texture cache)
   state.user_data[2] = bufres.data[2];
   state.user_data[3] = bufres.data[3];
   
-  state.dim[0] = 10;
+  state.dim[0] = 32;
   state.dim[1] = 1;
   state.dim[2] = 1;
   state.start[0] = 0;
@@ -447,29 +747,33 @@ rak_adam: 0x48 is the TC (texture cache)
   state.num_thread[1] = 1;
   state.num_thread[2] = 1;
   
-  state.sgpr_num = 32;
-  state.vgpr_num = 32;
+  state.sgpr_num = 100;
+  state.vgpr_num = 255;
   state.priority = 0;
   state.debug_mode = 0;
   state.ieee_mode = 0;
   state.scratch_en = 0;
-  state.lds_size = 0;
+  state.lds_size = 128; ///32K
   state.excp_en = 0;
-  state.waves_per_sh = 4;
-  state.thread_groups_per_cu = 2;
+  state.waves_per_sh = 1;
+  state.thread_groups_per_cu = 1;
   state.lock_threshold = 0;
   state.simd_dest_cntl = 0;
-  state.se0_sh0_cu_en = 1;
-  state.se0_sh1_cu_en = 1;
-  state.se1_sh0_cu_en = 1;
-  state.se1_sh1_cu_en = 1;
+  state.se0_sh0_cu_en = 0xFF;
+  state.se0_sh1_cu_en = 0xFF;
+  state.se1_sh0_cu_en = 0xFF;
+  state.se1_sh1_cu_en = 0xFF;
   state.tmpring_waves = 0;
   state.tmpring_wavesize = 0;
   state.binary = code_bo;
 
   int e;
 
+  int64_t start_time = get_time_usec();
+
   e = compute_emit_compute_state(ctx, &state);
+
+  int64_t stop_time = get_time_usec();
 
   cout << e << " " << strerror(errno) << endl;
   
@@ -477,11 +781,62 @@ rak_adam: 0x48 is the TC (texture cache)
 
   compute_copy_from_gpu(data_bo, 0, &test_data[0], test_data_size*4);
   
-  for (int i = 1; i < 1024*1; i++)
+  for (int i = 1; i < 64*4; i++)
   {
     printf("%i : %.8x\n", i, test_data[i]);
   }
 
+
+  int global_size = state.dim[0]*state.dim[1]*state.dim[2]*state.num_thread[0]*state.num_thread[1]*state.num_thread[2];
+  int datalen = global_size / 64 * 6;
+
+  std::cout << test_data[0] << " " << datalen << std::endl;
+
+  datalen = test_data[0];
+
+  uint64_t firststart = *(uint64_t*)&test_data[1];
+
+  uint64_t laststop = firststart;
+
+  for (int i = 1; i < datalen; i += 6)
+  {
+    uint64_t start = *(uint64_t*)&test_data[i];
+    uint64_t stop = *(uint64_t*)&test_data[i+2];
+    int group_id = test_data[i+4];
+
+    firststart = std::min(firststart, start);
+    laststop = std::max(laststop, stop);
+  }
+
+  std::set<std::pair<std::vector<uint32_t>, std::string> > ordered;
+
+  for (int i = 1; i < datalen; i += 6)
+  {
+    uint64_t start = *(uint64_t*)&test_data[i];
+    uint64_t stop = *(uint64_t*)&test_data[i+2];
+    int group_id = test_data[i+4];
+    uint32_t hwid = test_data[i+5];
+
+    int cu_id = (hwid >> 8) & 15;
+    int sh_id = (hwid >> 12) & 1;
+    int se_id = (hwid >> 13) & 3;
+
+    char buf[64*1024];
+    sprintf(buf, "start: %10lu diff:%10lu clocks gid:%3i wave_id: %i simd_id: %i cu_id: %i, sh_id: %i se_id: %i cu_num:%3i tg_id: %i hwid:%08X\n", 
+            start-firststart, stop-start, group_id, hwid & 15, (hwid >> 4) & 3, cu_id, sh_id, se_id,  cu_id+sh_id*8+se_id*16, (hwid >> 16) & 15, hwid);
+    ordered.insert(make_pair(vector<uint32_t>{(hwid >> 13) & 3, (hwid >> 12) & 1, (hwid >> 8) & 15, (hwid >> 4) & 3}, std::string(buf)));
+  }
+
+  for (auto n : ordered)
+  {
+    cout << n.second;
+  }
+
+  cout << "run time: " << double(stop_time-start_time)/1000.0 << "ms" << endl;
+  cout << "run cycles: " << double(laststop - firststart) << endl;
+  cout << "Core freq: " << double(laststop - firststart)/double(stop_time-start_time) << "MHz" << endl;
+  cout << double(1000*iternum)*global_size / double(stop_time-start_time) * 1E-3 << "Giter/s" << endl;
+  cout << double(laststop - firststart) / double(1000*iternum) << " cycles / iter" << endl;
   compute_free_context(ctx);
 }
 
