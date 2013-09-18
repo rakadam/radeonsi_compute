@@ -1,0 +1,6 @@
+#!/bin/bash
+
+git commit -a -m "*auto ..."
+git push sun master
+
+ssh piedone3 "cd ~/Projects/radeonsi_compute; git pull sun; if make; then ./test; fi"
