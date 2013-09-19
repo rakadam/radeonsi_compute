@@ -777,7 +777,7 @@ rak_adam: 0x48 is the TC (texture cache)
 
   int64_t start_time = get_time_usec();
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 1000; i++)
   e = compute_emit_compute_state(ctx, &state);
 
   int64_t stop_time = get_time_usec();
