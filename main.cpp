@@ -743,13 +743,13 @@ rak_adam: 0x48 is the TC (texture cache)
   state.user_data[2] = bufres.data[2];
   state.user_data[3] = bufres.data[3];
   
-  state.dim[0] = 32*2;
+  state.dim[0] = 32;
   state.dim[1] = 1;
   state.dim[2] = 1;
   state.start[0] = 0;
   state.start[1] = 0;
   state.start[2] = 0;
-  state.num_thread[0] = 64*4;
+  state.num_thread[0] = 64*4*4;
   state.num_thread[1] = 1;
   state.num_thread[2] = 1;
   
@@ -761,8 +761,8 @@ rak_adam: 0x48 is the TC (texture cache)
   state.scratch_en = 0;
   state.lds_size = 128; ///32K
   state.excp_en = 0;
-  state.waves_per_sh = 2;//256 / ((state.vgpr_num+1)*4);
-  state.thread_groups_per_cu = 2;
+  state.waves_per_sh = 8;//256 / ((state.vgpr_num+1)*4);
+  state.thread_groups_per_cu = 1;
   state.lock_threshold = 0;
   state.simd_dest_cntl = 0;
   state.se0_sh0_cu_en = 0xFF;
