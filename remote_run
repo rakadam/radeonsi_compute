@@ -1,7 +1,13 @@
 #!/bin/bash
 
+#Auto commit:
 git commit -a -m "*auto ..."
-git push sun master
+SYNC_SERVER_NAME="sun"
+REMOTE_MACHINE_NAME="piedone3"
+DIRNAME=`pwd`
+BRANCHNAME="master"
+
+git push sun ${BRANCHNAME}
 
 
-ssh piedone3 "cd ~/Projects/radeonsi_compute; git fetch sun; if git pull --ff-only sun master; then if make; then ./test; fi; fi"
+ssh ${REMOTE_MACHINE_NAME} "cd ${DIRNAME}; git fetch ${SYNC_SERVER_NAME}; if git pull --ff-only ${SYNC_SERVER_NAME} ${BRANCHNAME}; then if make; then ./test; fi; fi"
