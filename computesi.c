@@ -449,7 +449,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   set_compute_reg(R_00B848_COMPUTE_PGM_RSRC1,
     S_00B848_VGPRS(state->vgpr_num) |  S_00B848_SGPRS(state->sgpr_num) |  S_00B848_PRIORITY(state->priority) |
     S_00B848_FLOAT_MODE(0) | S_00B848_PRIV(state->priv_mode) | S_00B848_DX10_CLAMP(0) |
-    S_00B848_DEBUG_MODE(state->debug_mode) | S_00B848_IEEE_MODE(state->ieee_mode) | (0x1 << 30)
+    S_00B848_DEBUG_MODE(state->debug_mode) | S_00B848_IEEE_MODE(state->ieee_mode) | (0x1 << 31)
   );
   
   set_compute_reg(R_00B84C_COMPUTE_PGM_RSRC2,
