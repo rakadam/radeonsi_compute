@@ -642,7 +642,7 @@ rak_adam: 0x48 is the TC (texture cache)
 
   unsigned * eleje = p;
 
-  int ii2 = 1024*(8)*0.25;
+  int ii2 = 1;//1024*(8)*0.25;
 
   for (int i = 0; i < ii2; i++)
   {
