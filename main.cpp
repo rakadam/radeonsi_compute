@@ -506,7 +506,7 @@ int main()
   
   bufres.base_addr = data_bo->va;
   bufres.stride = 4;
-  bufres.num_records = 1024*10;
+  bufres.num_records = 1024*100;
   bufres.dst_sel_x = 4;
   bufres.dst_sel_y = 4;
   bufres.dst_sel_z = 4;
@@ -642,7 +642,7 @@ rak_adam: 0x48 is the TC (texture cache)
 
   unsigned * eleje = p;
 
-  int ii2 = 1024*(8)*200;
+  int ii2 = 1024*(8)*100;
 
   for (int i = 0; i < ii2; i++)
   {
