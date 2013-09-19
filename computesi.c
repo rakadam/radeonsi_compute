@@ -441,7 +441,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   set_compute_reg(R_00B820_COMPUTE_NUM_THREAD_Y,  S_00B820_NUM_THREAD_FULL(state->num_thread[1]));
   set_compute_reg(R_00B824_COMPUTE_NUM_THREAD_Z,  S_00B824_NUM_THREAD_FULL(state->num_thread[2]));
   
-  set_compute_reg(R_00B82C_COMPUTE_MAX_WAVE_ID,   S_00B82C_MAX_WAVE_ID(0x100));
+  set_compute_reg(R_00B82C_COMPUTE_MAX_WAVE_ID,   S_00B82C_MAX_WAVE_ID(0xF00));
   
   set_compute_reg(R_00B830_COMPUTE_PGM_LO,        state->binary->va >> 8);
   set_compute_reg(R_00B834_COMPUTE_PGM_HI,        state->binary->va >> 40);
@@ -454,6 +454,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   
   set_compute_reg(R_00B84C_COMPUTE_PGM_RSRC2,
     S_00B84C_SCRATCH_EN(state->scratch_en) | S_00B84C_USER_SGPR(state->user_data_length) |
+    (0x1 << 6) |
     S_00B84C_TGID_X_EN(1) | S_00B84C_TGID_Y_EN(1) | S_00B84C_TGID_Z_EN(1) |
     S_00B84C_TG_SIZE_EN(1) |
     S_00B84C_TIDIG_COMP_CNT(0) |
