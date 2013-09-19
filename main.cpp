@@ -633,7 +633,7 @@ rak_adam: 0x48 is the TC (texture cache)
   s_mov_imm32(p, 127, 0xFFFFFFFF); //EXECHI
 
   
-  int iternum = 10000;
+  int iternum = 2000;
 
   s_mov_imm32(p, 8, 0);
 
@@ -642,15 +642,17 @@ rak_adam: 0x48 is the TC (texture cache)
 
   unsigned * eleje = p;
 
-  for (int i = 0; i < 1000; i++)
+  int ii2 = 1024*(8);
+
+  for (int i = 0; i < ii2; i++)
   {
 //    s_mov_b32(p, 6, 6);
 //    v_sin_f32(p, 4, 256+4);
-//      v_add_f32(p, 4, 4, 256+4);
-    v_add_f32_imm32(p, 4, 4, 1.1);
-    v_sqrt_f64(p, 4, 256+4);
+      v_add_f32(p, 4, 4, 256+4);
+//    v_add_f32_imm32(p, 4, 4, 1.1);
+//    v_sqrt_f64(p, 4, 256+4);
 //    v_bfrev(p, 4, 256+4);
-    v_rcp_f64(p, 4, 256+4);
+//    v_rcp_f64(p, 4, 256+4);
 //    v_mov_b32(p, 5, 256+4);
   }
 
@@ -666,6 +668,7 @@ rak_adam: 0x48 is the TC (texture cache)
   s_waitcnt(p);
 
   s_getreg_b32(p, 8, 31, 0, 4);
+  printf("getreg: %08X\n", p[-1]);
 
   v_mov_b32(p, 4, 6);
   v_mov_b32(p, 5, 7);
@@ -737,7 +740,7 @@ rak_adam: 0x48 is the TC (texture cache)
   state.user_data[2] = bufres.data[2];
   state.user_data[3] = bufres.data[3];
   
-  state.dim[0] = 32;
+  state.dim[0] = 10;
   state.dim[1] = 1;
   state.dim[2] = 1;
   state.start[0] = 0;
@@ -835,8 +838,8 @@ rak_adam: 0x48 is the TC (texture cache)
   cout << "run time: " << double(stop_time-start_time)/1000.0 << "ms" << endl;
   cout << "run cycles: " << double(laststop - firststart) << endl;
   cout << "Core freq: " << double(laststop - firststart)/double(stop_time-start_time) << "MHz" << endl;
-  cout << double(1000*iternum)*global_size / double(stop_time-start_time) * 1E-3 << "Giter/s" << endl;
-  cout << double(laststop - firststart) / double(1000*iternum) << " cycles / iter" << endl;
+  cout << double(ii2*iternum)*global_size / double(stop_time-start_time) * 1E-3 << "Giter/s" << endl;
+  cout << double(laststop - firststart) / double(ii2*iternum) << " cycles / iter" << endl;
   compute_free_context(ctx);
 }
 
