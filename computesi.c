@@ -502,7 +502,6 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
     S_00B800_FORCE_START_AT_000(0) | S_00B800_ORDERED_APPEND_ENBL(0) 
   );
   
-
   set_compute_reg(R_00B800_COMPUTE_DISPATCH_INITIATOR, 0);
 
   flags[0] = RADEON_CS_USE_VM;
@@ -525,7 +524,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   chunks[2].length_dw = cdw;
   chunks[2].chunk_data =  (uint64_t)(uintptr_t)&buf[0];  
 
-  printf("cdw: %i\n", cdw);
+//   printf("cdw: %i\n", cdw);
 
   chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
   chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
@@ -537,7 +536,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   
   r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
 
-  printf("ret:%i\n", r);
+//   printf("ret:%i\n", r);
   
   compute_bo_wait(state->binary); ///to see if it hangs
   
