@@ -757,7 +757,7 @@ rak_adam: 0x48 is the TC (texture cache)
   state.sgpr_num = 11;
   state.vgpr_num = 10;
   state.priority = 0;
-  state.debug_mode = 0;
+  state.debug_mode = 1;
 	state.priv_mode = 0;
   state.ieee_mode = 0;
   state.scratch_en = 0;
