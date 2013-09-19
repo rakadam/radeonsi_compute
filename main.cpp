@@ -765,10 +765,10 @@ rak_adam: 0x48 is the TC (texture cache)
   state.thread_groups_per_cu = 1;
   state.lock_threshold = 0;
   state.simd_dest_cntl = 0;
-  state.se0_sh0_cu_en = 0xFF;
-  state.se0_sh1_cu_en = 0xFF;
-  state.se1_sh0_cu_en = 0xFF;
-  state.se1_sh1_cu_en = 0xFF;
+  state.se0_sh0_cu_en = 1;0xFF;
+  state.se0_sh1_cu_en = 1;0xFF;
+  state.se1_sh0_cu_en = 1;0xFF;
+  state.se1_sh1_cu_en = 1;0xFF;
   state.tmpring_waves = 0;
   state.tmpring_wavesize = 0;
   state.binary = code_bo;
