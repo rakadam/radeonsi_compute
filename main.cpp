@@ -671,7 +671,7 @@ rak_adam: 0x48 is the TC (texture cache)
   s_waitcnt(p);
 
   s_getreg_b32(p, 8, 31, 0, 4); //hwid
-  s_getreg_b32(p, 8, 31, 0, 2); //status
+//   s_getreg_b32(p, 8, 31, 0, 2); //status
 //   printf("getreg: %08X\n", p[-1]);
 
   v_mov_b32(p, 4, 6);
@@ -754,8 +754,8 @@ rak_adam: 0x48 is the TC (texture cache)
   state.num_thread[1] = 1;
   state.num_thread[2] = 1;
   
-  state.sgpr_num = 11;
-  state.vgpr_num = 10;
+  state.sgpr_num = 11; //8x
+  state.vgpr_num = 10; //4x
   state.priority = 0;
   state.debug_mode = 0;
 	state.priv_mode = 0;
@@ -763,7 +763,7 @@ rak_adam: 0x48 is the TC (texture cache)
   state.scratch_en = 0;
   state.lds_size = 128; ///32K
   state.excp_en = 0;
-  state.waves_per_sh = 0;//256 / ((state.vgpr_num+1)*4);
+  state.waves_per_sh = 4;//256 / ((state.vgpr_num+1)*4);
   state.thread_groups_per_cu = 1;
   state.lock_threshold = 0;
   state.simd_dest_cntl = 0;
