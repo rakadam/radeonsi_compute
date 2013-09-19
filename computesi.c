@@ -38,9 +38,6 @@
 #define RADEON_CS_RING_GFX          0
 #define RADEON_CS_RING_COMPUTE      1
 
-///it was really elusive, took random bit flips to find it!!!
-#define S_00B84C_TRAP_EN(x) (((x) & 0x1) << 6)
-#define G_00B84C_TRAP_EN(x) (((x) >> 6) & 0x1)
 
 struct drm_radeon_gem_va {
     uint32_t    handle;
@@ -456,6 +453,10 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
     S_00B848_DEBUG_MODE(state->debug_mode) | S_00B848_IEEE_MODE(state->ieee_mode)
   );
   
+	///it was really elusive, took random bit flips to find it!!!
+	#define S_00B84C_TRAP_EN(x) (((x) & 0x1) << 6)
+	#define G_00B84C_TRAP_EN(x) (((x) >> 6) & 0x1)
+
   set_compute_reg(R_00B84C_COMPUTE_PGM_RSRC2,
     S_00B84C_SCRATCH_EN(state->scratch_en) | S_00B84C_USER_SGPR(state->user_data_length) |
     S_00B84C_TRAP_EN(state->trap_en) |
