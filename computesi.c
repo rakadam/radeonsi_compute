@@ -39,7 +39,7 @@
 #define RADEON_CS_RING_COMPUTE      1
 
 ///it was really elusive, took random bit flips to find it!!!
-#define S_00B84C_TRAP_EN(x) 0
+#define S_00B84C_TRAP_EN(x) (((x) & 0x1) << 6)
 #define G_00B84C_TRAP_EN(x) (((x) >> 6) & 0x1)
 
 struct drm_radeon_gem_va {
