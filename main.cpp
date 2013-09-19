@@ -759,7 +759,7 @@ rak_adam: 0x48 is the TC (texture cache)
   state.priority = 0;
   state.debug_mode = 0;
 	state.priv_mode = 0;
-	state.trap_en = 1;
+	state.trap_en = 0;
   state.ieee_mode = 0;
   state.scratch_en = 0;
   state.lds_size = 128; ///32K
