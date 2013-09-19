@@ -749,7 +749,7 @@ rak_adam: 0x48 is the TC (texture cache)
   state.start[0] = 0;
   state.start[1] = 0;
   state.start[2] = 0;
-  state.num_thread[0] = 256*5;
+  state.num_thread[0] = 256*6;
   state.num_thread[1] = 1;
   state.num_thread[2] = 1;
   
@@ -761,7 +761,7 @@ rak_adam: 0x48 is the TC (texture cache)
   state.scratch_en = 0;
   state.lds_size = 128; ///32K
   state.excp_en = 0;
-  state.waves_per_sh = 5;
+  state.waves_per_sh = 6;
   state.thread_groups_per_cu = 1;
   state.lock_threshold = 0;
   state.simd_dest_cntl = 0;
