@@ -633,7 +633,7 @@ rak_adam: 0x48 is the TC (texture cache)
   s_mov_imm32(p, 127, 0xFFFFFFFF); //EXECHI
 
   
-  int iternum = 100;
+  int iternum = 1;
 
   s_mov_imm32(p, 8, 0);
 
@@ -642,12 +642,12 @@ rak_adam: 0x48 is the TC (texture cache)
 
   unsigned * eleje = p;
 
-  int ii2 = 1024*(8);
+  int ii2 = 1024*(8)*100;
 
   for (int i = 0; i < ii2; i++)
   {
 		
-   s_mov_b32(p, 6, 6);
+//    s_mov_b32(p, 6, 6);
 //    v_sin_f32(p, 4, 256+4);
       v_add_f32(p, 4, 4, 256+4);
 //    v_add_f32_imm32(p, 4, 4, 1.1);
