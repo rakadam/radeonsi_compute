@@ -646,6 +646,7 @@ rak_adam: 0x48 is the TC (texture cache)
 
   for (int i = 0; i < ii2; i++)
   {
+		
 //    s_mov_b32(p, 6, 6);
 //    v_sin_f32(p, 4, 256+4);
       v_add_f32(p, 4, 4, 256+4);
