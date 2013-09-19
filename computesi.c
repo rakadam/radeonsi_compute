@@ -458,7 +458,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   
   set_compute_reg(R_00B84C_COMPUTE_PGM_RSRC2,
     S_00B84C_SCRATCH_EN(state->scratch_en) | S_00B84C_USER_SGPR(state->user_data_length) |
-//     S_00B84C_TRAP_EN(state->trap_en) |
+    S_00B84C_TRAP_EN(state->trap_en) |
     S_00B84C_TGID_X_EN(1) | S_00B84C_TGID_Y_EN(1) | S_00B84C_TGID_Z_EN(1) |
     S_00B84C_TG_SIZE_EN(1) |
     S_00B84C_TIDIG_COMP_CNT(0) |
