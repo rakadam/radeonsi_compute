@@ -53,7 +53,9 @@ struct compute_state
   int vgpr_num;
   int priority;
   
-  int debug_mode;
+  int debug_mode; ///BOOL
+	int priv_mode; ///BOOL
+	
   int ieee_mode;
   
   int scratch_en;
