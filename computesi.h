@@ -55,6 +55,7 @@ struct compute_state
   
   int debug_mode; ///BOOL
 	int priv_mode; ///BOOL
+	int trap_en; ///BOOL
 	
   int ieee_mode;
   
