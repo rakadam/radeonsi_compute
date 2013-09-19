@@ -633,7 +633,7 @@ rak_adam: 0x48 is the TC (texture cache)
   s_mov_imm32(p, 127, 0xFFFFFFFF); //EXECHI
 
   
-  int iternum = 1;
+  int iternum = 1000;
 
   s_mov_imm32(p, 8, 0);
 
