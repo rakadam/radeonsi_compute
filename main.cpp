@@ -590,7 +590,7 @@ rak_adam: 0x48 is the TC (texture cache)
     0,//int slc, 
     0,//int srsrc, 
     2,//int vdata, 
-    1,//int vaddr,
+    0,//int vaddr,
     BUFFER_ATOMIC_ADD,//int op, 
     0, //int lds, 
     0, //int addr64, 
