@@ -431,20 +431,20 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   uint32_t flags[3];
   struct cs_reloc_gem* relocs;
   
-  set_compute_reg(R_00B804_COMPUTE_DIM_X,         state->dim[0]);
+  set_compute_reg(R_00B804_COMPUTE_DIM_X,         state->dim[0]); ///global_size/local_size
   set_compute_reg(R_00B808_COMPUTE_DIM_Y,         state->dim[1]);
   set_compute_reg(R_00B80C_COMPUTE_DIM_Z,         state->dim[2]);
-  set_compute_reg(R_00B810_COMPUTE_START_X,       state->start[0]);
+  set_compute_reg(R_00B810_COMPUTE_START_X,       state->start[0]); ///UNKNOWN kind of offset
   set_compute_reg(R_00B814_COMPUTE_START_Y,       state->start[1]);
   set_compute_reg(R_00B818_COMPUTE_START_Z,       state->start[2]);
   
-  set_compute_reg(R_00B81C_COMPUTE_NUM_THREAD_X,  S_00B81C_NUM_THREAD_FULL(state->num_thread[0]));
+  set_compute_reg(R_00B81C_COMPUTE_NUM_THREAD_X,  S_00B81C_NUM_THREAD_FULL(state->num_thread[0])); ///local_size
   set_compute_reg(R_00B820_COMPUTE_NUM_THREAD_Y,  S_00B820_NUM_THREAD_FULL(state->num_thread[1]));
   set_compute_reg(R_00B824_COMPUTE_NUM_THREAD_Z,  S_00B824_NUM_THREAD_FULL(state->num_thread[2]));
   
-  set_compute_reg(R_00B82C_COMPUTE_MAX_WAVE_ID,   S_00B82C_MAX_WAVE_ID(0xF00));
+  set_compute_reg(R_00B82C_COMPUTE_MAX_WAVE_ID,   S_00B82C_MAX_WAVE_ID(0xF00)); ///WTF is this field?
   
-  set_compute_reg(R_00B830_COMPUTE_PGM_LO,        state->binary->va >> 8);
+  set_compute_reg(R_00B830_COMPUTE_PGM_LO,        state->binary->va >> 8); ///compute code start address
   set_compute_reg(R_00B834_COMPUTE_PGM_HI,        state->binary->va >> 40);
   
   set_compute_reg(R_00B848_COMPUTE_PGM_RSRC1,
@@ -493,6 +493,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   }
 
 
+  ///This is a cache flush
   buf[cdw++] = PKT3C(PKT3_SURFACE_SYNC, 3, 0);
   buf[cdw++] = S_0085F0_TCL1_ACTION_ENA(1) |
                S_0085F0_SH_ICACHE_ACTION_ENA(1) |
@@ -502,10 +503,11 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   buf[cdw++] = 0xffffffff;
   buf[cdw++] = 0;
   buf[cdw++] = 0xA;
-
+  ///end cache flush
+	
   set_compute_reg(R_00B800_COMPUTE_DISPATCH_INITIATOR,
     S_00B800_COMPUTE_SHADER_EN(1) | S_00B800_PARTIAL_TG_EN(0) |
-    S_00B800_FORCE_START_AT_000(0) | S_00B800_ORDERED_APPEND_ENBL(0) 
+    S_00B800_FORCE_START_AT_000(0) | S_00B800_ORDERED_APPEND_ENBL(1) 
   );
   
   set_compute_reg(R_00B800_COMPUTE_DISPATCH_INITIATOR, 0);
