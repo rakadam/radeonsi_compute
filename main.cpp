@@ -732,6 +732,27 @@ rak_adam: 0x48 is the TC (texture cache)
           );
 
   s_waitcnt(p);
+	
+	v_mov_imm32(p, 4, 0x42);
+	
+  mtbuf(p,
+           4,//int nfmt,
+           4,//int dfmt,
+           TBUFFER_STORE_FORMAT_X,//int op,
+           0,//int addr64,
+           0,//int glc,
+           1,//int idxen,
+           0,//int offen,
+           0,//int offset,
+           128,//int soffset, set to zero
+           0,//int tfe,
+           0,//int slc,
+           0,//int srsrc,
+           4,//int vdata,
+           2//int vaddr
+          );
+
+  s_waitcnt(p);
 
 //  prog[100] = 0xBF800000 | (0x2 << 16) | 0x0001; //sopp: JUMP next
 //  prog[101] = 0xBF800000 | (0x2 << 16) | 0xFFFF; //sopp: JUMP self
