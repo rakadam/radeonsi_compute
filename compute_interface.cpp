@@ -89,8 +89,8 @@ void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t
   state.scratch_en = 0;
   state.lds_size = (localMemSize+255) / 256;
   state.excp_en = 0;
-	state.waves_per_sh = 0;
-	state.thread_groups_per_cu = state.lds_size ? (32*1024/256) / state.lds_size : 0;
+	state.waves_per_sh = 0; ///zero means automatic maximum, practically limited by registers
+	state.thread_groups_per_cu = 0; ///zero means automatic maximum, practically limited by local memory and registers
 	state.lock_threshold = 0;
 	state.simd_dest_cntl = 0;
 	state.se0_sh0_cu_en = 0xFF;
