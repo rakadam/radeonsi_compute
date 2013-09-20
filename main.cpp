@@ -553,7 +553,7 @@ int main()
           );
   s_waitcnt(p);
 
-	s_rfe_b64(p);
+// 	s_rfe_b64(p);
 	s_endpgm(p);
 	s_endpgm(p);
 	s_endpgm(p);
