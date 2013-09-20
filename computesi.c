@@ -90,7 +90,7 @@ struct compute_context* compute_create_context(const char* drm_devfile)
 
 	if ((ret=drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo))))
 	{
-		printf("Failed to perform DRM_RADEON_INFO on %s, error: %s\n", drm_devfile, strerror(ret));
+		printf("Failed to perform DRM_RADEON_INFO on %s, error: %s\n", drm_devfile, strerror(-ret));
 		close(ctx->fd);
 		free(ctx);
 		return NULL;
