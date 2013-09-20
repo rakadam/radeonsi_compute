@@ -638,7 +638,7 @@ rak_adam: 0x48 is the TC (texture cache)
   s_mov_imm32(p, 127, 0xFFFFFFFF); //EXECHI
 
   
-  int iternum = 100000;
+  int iternum = 100;
 
   s_mov_imm32(p, 8, 0);
 
@@ -733,7 +733,6 @@ rak_adam: 0x48 is the TC (texture cache)
 
   s_waitcnt(p);
 	
- 	s_trap(p, 0);
 	
 //  prog[100] = 0xBF800000 | (0x2 << 16) | 0x0001; //sopp: JUMP next
 //  prog[101] = 0xBF800000 | (0x2 << 16) | 0xFFFF; //sopp: JUMP self
