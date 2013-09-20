@@ -472,6 +472,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
     S_00B854_LOCK_THRESHOLD(state->lock_threshold) | S_00B854_SIMD_DEST_CNTL(state->simd_dest_cntl) 
   );
   
+	///Activate Compute Units:
   set_compute_reg(R_00B858_COMPUTE_STATIC_THREAD_MGMT_SE0,
     S_00B858_SH0_CU_EN(state->se0_sh0_cu_en) | S_00B858_SH1_CU_EN(state->se0_sh1_cu_en)
   );
@@ -505,9 +506,10 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   buf[cdw++] = 0xA;
   ///end cache flush
 	
+	///launch compute code
   set_compute_reg(R_00B800_COMPUTE_DISPATCH_INITIATOR,
     S_00B800_COMPUTE_SHADER_EN(1) | S_00B800_PARTIAL_TG_EN(0) |
-    S_00B800_FORCE_START_AT_000(0) | S_00B800_ORDERED_APPEND_ENBL(1) 
+    S_00B800_FORCE_START_AT_000(0) | S_00B800_ORDERED_APPEND_ENBL(0) 
   );
   
   set_compute_reg(R_00B800_COMPUTE_DISPATCH_INITIATOR, 0);
@@ -522,7 +524,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
   #define RELOC_SIZE (sizeof(struct cs_reloc_gem) / sizeof(uint32_t))
   
   int reloc_num = 0;
-  relocs = compute_create_reloc_table(ctx, &reloc_num);
+  relocs = compute_create_reloc_table(ctx, &reloc_num); ///dummy reloc table, for the kernel so we can sync with memory, we don't actually have relocs
   
   chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
   chunks[1].length_dw = reloc_num*RELOC_SIZE;

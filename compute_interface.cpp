@@ -41,12 +41,19 @@ void ComputeInterface::transferFromGPU(gpu_buffer* buf, size_t offset, void* dat
 	compute_copy_from_gpu(buf, offset, data, size);
 }
 
-void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t> threadOffset, std::vector<size_t> blockDim, std::vector<size_t> localSize, gpu_buffer* code, EventDependence evd)
+void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t> threadOffset, std::vector<size_t> blockDim, std::vector<size_t> localSize, gpu_buffer* code,
+															int vgprnum, int sgprnum, int localMemSize, EventDependence evd)
 {
+	assert(localMemSize <= 32*1024);
+	assert(vgprnum < 257);
+	assert(sgprnum < 129);
 	assert(localSize.size() == blockDim.size());
 	assert(localSize.size() <= 3);
 	assert(localSize.size() > 0);
 	assert(userData.size() <= 16);
+	
+	vgprnum = vgprnum == 0 ? 256 : vgprnum;
+	sgprnum = sgprnum == 0 ? 104 : sgprnum;
 	
 	localSize.resize(3, 1);
 	blockDim.resize(3, 1);
@@ -72,16 +79,18 @@ void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t
 	state.num_thread[1] = localSize[1];
 	state.num_thread[2] = localSize[2];
 	
-	state.sgpr_num = 105;
-	state.vgpr_num = 255;
-	state.priority = 0;
-	state.debug_mode = 0;
-	state.ieee_mode = 0;
-	state.scratch_en = 0;
-	state.lds_size = 128; ///32K
-	state.excp_en = 0;
-	state.waves_per_sh = 1;
-	state.thread_groups_per_cu = 1;
+	state.sgpr_num = (sgprnum+7)/8-1;
+	state.vgpr_num = (vgprnum+3)/4-1;
+  state.priority = 0;
+  state.debug_mode = 0;
+	state.priv_mode = 0;
+	state.trap_en = 0;
+  state.ieee_mode = 0;
+  state.scratch_en = 0;
+  state.lds_size = (localMemSize+255) / 256;
+  state.excp_en = 0;
+	state.waves_per_sh = 0;
+	state.thread_groups_per_cu = state.lds_size ? (32*1024/256) / state.lds_size : 0;
 	state.lock_threshold = 0;
 	state.simd_dest_cntl = 0;
 	state.se0_sh0_cu_en = 0xFF;
