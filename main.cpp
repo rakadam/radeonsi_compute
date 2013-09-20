@@ -529,6 +529,25 @@ int main()
 	s_nop(p);
 	s_nop(p);
 	s_nop(p);
+	
+  mtbuf(p,
+           4,//int nfmt,
+           4,//int dfmt,
+           TBUFFER_STORE_FORMAT_X,//int op,
+           0,//int addr64,
+           0,//int glc,
+           1,//int idxen,
+           0,//int offen,
+           0,//int offset,
+           128,//int soffset, set to zero
+           0,//int tfe,
+           0,//int slc,
+           0,//int srsrc,
+           4,//int vdata,
+           2//int vaddr
+          );
+  s_waitcnt(p);
+
 // 	s_rfe_b64(p);
 	s_endpgm(p);
 	s_endpgm(p);
@@ -773,7 +792,7 @@ rak_adam: 0x48 is the TC (texture cache)
   
 //   prog[255] = 0xBF800000 | (0x1 << 16); //sopp: ENDPGM
   
-	s_trap(p, 0);
+// 	s_trap(p, 0);
   s_endpgm(p);
   
 /*  printf("code:\n");
