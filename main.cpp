@@ -562,6 +562,7 @@ int main()
 	s_and_b32(p, 113, 113, 255); *p=0xFFFF; p++; ///fix PC, TTMP1 contains more than the PC, this might be rendundant
 	
 // 	s_rfe_b64(p);
+	s_swappc_b64(p, 116, 112);
 	s_endpgm(p);
 	s_endpgm(p);
 	s_endpgm(p);
