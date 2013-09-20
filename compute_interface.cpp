@@ -85,10 +85,10 @@ void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t
   state.debug_mode = 0;
 	state.priv_mode = 0;
 	state.trap_en = 0;
+  state.excp_en = 0;
   state.ieee_mode = 0;
   state.scratch_en = 0;
   state.lds_size = (localMemSize+255) / 256;
-  state.excp_en = 0;
 	state.waves_per_sh = 0; ///zero means automatic maximum, practically limited by registers
 	state.thread_groups_per_cu = 0; ///zero means automatic maximum, practically limited by local memory and registers
 	state.lock_threshold = 0;

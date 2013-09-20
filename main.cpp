@@ -674,6 +674,9 @@ rak_adam: 0x48 is the TC (texture cache)
 //   s_getreg_b32(p, 8, 31, 0, 2); //status
 //   printf("getreg: %08X\n", p[-1]);
 
+	s_mov_b32(p, 8, 108);
+	
+	
   v_mov_b32(p, 4, 6);
   v_mov_b32(p, 5, 7);
   v_mov_b32(p, 6, 4);
