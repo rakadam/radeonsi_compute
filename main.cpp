@@ -529,7 +529,11 @@ int main()
 	s_nop(p);
 	s_nop(p);
 	s_nop(p);
-	s_rfe_b64(p);
+// 	s_rfe_b64(p);
+	s_endpgm(p);
+	s_endpgm(p);
+	s_endpgm(p);
+	
 	
 	p = &prog[0];
   
