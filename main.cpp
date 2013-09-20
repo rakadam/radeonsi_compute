@@ -506,7 +506,7 @@ int main()
   
   bufres.base_addr = data_bo->va;
   bufres.stride = 4;
-  bufres.num_records = 1024*1;
+  bufres.num_records = 1024*100;
   bufres.dst_sel_x = 4;
   bufres.dst_sel_y = 4;
   bufres.dst_sel_z = 4;
