@@ -498,7 +498,7 @@ int main()
   gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 1024*1024*4, RADEON_DOMAIN_VRAM, 4096);
   gpu_buffer* data_bo = compute_alloc_gpu_buffer(ctx, test_data_size*4, RADEON_DOMAIN_VRAM, 4096);
   
-  uint32_t prog[1024*1024*4];
+  uint32_t prog[1024*1024*1];
   uint32_t trap_handler_code[1024*64];
   
   for (int i = 0; i < sizeof(prog) / sizeof(prog[0]); i++)
