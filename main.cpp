@@ -796,6 +796,8 @@ rak_adam: 0x48 is the TC (texture cache)
   
 	s_trap(p, 0);
   s_endpgm(p);
+  s_endpgm(p);
+  s_endpgm(p);
   
 /*  printf("code:\n");
 
