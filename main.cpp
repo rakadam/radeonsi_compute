@@ -581,7 +581,7 @@ rak_adam: 0x48 is the TC (texture cache)
           );
 */
 
-  v_mov_imm32(p, 1, 0x00000000);
+  v_mov_imm32(p, 1, 0x00000010);
   v_mov_imm32(p, 2, 0x00000006);
 
   mubuf(p, 
