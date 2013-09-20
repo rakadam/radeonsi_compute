@@ -429,6 +429,12 @@ void s_trap(unsigned *&p, uint8_t trapID)
 	p++;
 }
 
+void s_nop(unsigned *&p)
+{
+	p[0] = 0xBF800000;
+	p++;
+}
+
 void s_cbranch_scc0(unsigned *&p, int16_t imm)
 {
  p[0] = 0xBF800000 | (4 << 16) | uint32_t(imm) & 0xFFFF;
@@ -450,6 +456,12 @@ void sop2(unsigned *&p, unsigned op, unsigned sdst, unsigned ssrc1, unsigned ssr
 void s_add_i32(unsigned *&p, unsigned sdst, unsigned ssrc1, unsigned ssrc0)
 {
  sop2(p, 2, sdst, ssrc1, ssrc0);
+}
+
+void s_rfe_b64(unsigned *&p)
+{
+	p[0] = 0xBE800000 | (34 << 8);
+	p++;
 }
 
 int64_t get_time_usec()
@@ -496,17 +508,28 @@ int main()
 	
   int test_data_size = 1024*1024*16;
   gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 1024*1024*4, RADEON_DOMAIN_VRAM, 4096);
+  gpu_buffer* trap_code_bo = compute_alloc_gpu_buffer(ctx, 1024*4, RADEON_DOMAIN_VRAM, 4096);
+	
   gpu_buffer* data_bo = compute_alloc_gpu_buffer(ctx, test_data_size*4, RADEON_DOMAIN_VRAM, 4096);
   
   uint32_t prog[1024*1024*1];
-  uint32_t trap_handler_code[1024*64];
-  
+  uint32_t trap_handler_code[1024];
+  unsigned *p;
   for (int i = 0; i < sizeof(prog) / sizeof(prog[0]); i++)
   {
     prog[i] = 0xBF800000; //sopp: NOP
   }
   
-  unsigned *p = &prog[0];
+  p = &trap_handler_code[0];
+  
+	s_nop(p);
+	s_nop(p);
+	s_nop(p);
+	s_nop(p);
+	s_rfe_b64(p);
+	
+  
+  p = &prog[0];
   
   buffer_resource bufres;
   
@@ -757,6 +780,7 @@ rak_adam: 0x48 is the TC (texture cache)
   }
 */
   compute_copy_to_gpu(code_bo, 0, &prog[0], sizeof(prog));
+  compute_copy_to_gpu(trap_code_bo, 0, &trap_handler_code[0], sizeof(trap_handler_code));
   
   unsigned* test_data = new unsigned[test_data_size];
   
