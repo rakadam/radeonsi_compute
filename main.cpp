@@ -423,6 +423,11 @@ void s_cmp_gt_i32(unsigned *&p, unsigned ssrc1, unsigned ssrc0)
  sopc(p, 2, ssrc1, ssrc0);
 }
 
+void s_trap(unsigned *&p, uint8_t trapID)
+{
+	p[0] = 0xBF800000 | trapID;
+	p++;
+}
 
 void s_cbranch_scc0(unsigned *&p, int16_t imm)
 {
@@ -733,6 +738,7 @@ rak_adam: 0x48 is the TC (texture cache)
   
 //   prog[255] = 0xBF800000 | (0x1 << 16); //sopp: ENDPGM
   
+	s_trap(p, 0);
   s_endpgm(p);
   
 /*  printf("code:\n");
