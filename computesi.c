@@ -507,7 +507,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
 	
   set_compute_reg(R_00B800_COMPUTE_DISPATCH_INITIATOR,
     S_00B800_COMPUTE_SHADER_EN(1) | S_00B800_PARTIAL_TG_EN(0) |
-    S_00B800_FORCE_START_AT_000(0) | S_00B800_ORDERED_APPEND_ENBL(1) 
+    S_00B800_FORCE_START_AT_000(0) | S_00B800_ORDERED_APPEND_ENBL(0) 
   );
   
   set_compute_reg(R_00B800_COMPUTE_DISPATCH_INITIATOR, 0);
