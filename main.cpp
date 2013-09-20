@@ -582,7 +582,7 @@ rak_adam: 0x48 is the TC (texture cache)
 */
 
   v_mov_imm32(p, 1, 0x00000000);
-  v_mov_imm32(p, 2, 0x00000006);
+  v_mov_imm32(p, 2, 0x00000007);
 
   mubuf(p, 
     128, //int soffset, 
@@ -703,6 +703,27 @@ rak_adam: 0x48 is the TC (texture cache)
           );
 
   s_waitcnt(p);
+	
+  v_add_i32_imm32(p, 2, 2, 1);
+
+  mtbuf(p,
+           4,//int nfmt,
+           14,//int dfmt,
+           TBUFFER_STORE_FORMAT_X,//int op,
+           0,//int addr64,
+           0,//int glc,
+           1,//int idxen,
+           0,//int offen,
+           0,//int offset,
+           128,//int soffset, set to zero
+           0,//int tfe,
+           0,//int slc,
+           0,//int srsrc,
+           4,//int vdata,
+           2//int vaddr
+          );
+
+  s_waitcnt(p);
 
 //  prog[100] = 0xBF800000 | (0x2 << 16) | 0x0001; //sopp: JUMP next
 //  prog[101] = 0xBF800000 | (0x2 << 16) | 0xFFFF; //sopp: JUMP self
@@ -803,7 +824,7 @@ rak_adam: 0x48 is the TC (texture cache)
 
 
   int global_size = state.dim[0]*state.dim[1]*state.dim[2]*state.num_thread[0]*state.num_thread[1]*state.num_thread[2];
-  int datalen = global_size / 64 * 6;
+  int datalen = global_size / 64 * 7;
 
   std::cout << test_data[0] << " " << datalen << std::endl;
 
@@ -813,7 +834,7 @@ rak_adam: 0x48 is the TC (texture cache)
 
   uint64_t laststop = firststart;
 
-  for (int i = 1; i < datalen; i += 6)
+  for (int i = 1; i < datalen; i += 7)
   {
     uint64_t start = *(uint64_t*)&test_data[i];
     uint64_t stop = *(uint64_t*)&test_data[i+2];
@@ -825,7 +846,7 @@ rak_adam: 0x48 is the TC (texture cache)
 
   std::set<std::pair<std::vector<uint32_t>, std::string> > ordered;
 
-  for (int i = 1; i < datalen; i += 6)
+  for (int i = 1; i < datalen; i += 7)
   {
     uint64_t start = *(uint64_t*)&test_data[i];
     uint64_t stop = *(uint64_t*)&test_data[i+2];
