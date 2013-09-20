@@ -853,14 +853,15 @@ rak_adam: 0x48 is the TC (texture cache)
     uint64_t stop = *(uint64_t*)&test_data[i+2];
     int group_id = test_data[i+4];
     uint32_t hwid = test_data[i+5];
-
+    uint32_t odata = test_data[i+6];
+		
     int cu_id = (hwid >> 8) & 15;
     int sh_id = (hwid >> 12) & 1;
     int se_id = (hwid >> 13) & 3;
 
     char buf[64*1024];
-    sprintf(buf, "start: %10lu diff:%10lu clocks gid:%3i wave_id: %i simd_id: %i cu_id: %i, sh_id: %i se_id: %i cu_num:%3i tg_id: %i hwid:%08X\n", 
-            start-firststart, stop-start, group_id, hwid & 15, (hwid >> 4) & 3, cu_id, sh_id, se_id,  cu_id+sh_id*8+se_id*16, (hwid >> 16) & 15, hwid);
+    sprintf(buf, "start: %10lu diff:%10lu clocks gid:%3i wave_id: %i simd_id: %i cu_id: %i, sh_id: %i se_id: %i cu_num:%3i tg_id: %i hwid:%08X data:%08X\n", 
+            start-firststart, stop-start, group_id, hwid & 15, (hwid >> 4) & 3, cu_id, sh_id, se_id,  cu_id+sh_id*8+se_id*16, (hwid >> 16) & 15, hwid, odata);
     ordered.insert(make_pair(vector<uint32_t>{(hwid >> 13) & 3, (hwid >> 12) & 1, (hwid >> 8) & 15, (hwid >> 4) & 3}, std::string(buf)));
   }
 
