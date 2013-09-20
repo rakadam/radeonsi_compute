@@ -486,7 +486,7 @@ int main()
 // 
 //   return 0;
 //   }
-  compute_context* ctx = compute_create_context("/dev/dri/card1");
+  compute_context* ctx = compute_create_context("/dev/dri/card0");
   
   int test_data_size = 1024*1024*16;
   gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 1024*1024*4, RADEON_DOMAIN_VRAM, 4096);
@@ -581,7 +581,7 @@ rak_adam: 0x48 is the TC (texture cache)
           );
 */
 
-  v_mov_imm32(p, 1, 0x00000010);
+  v_mov_imm32(p, 1, 0x00000000);
   v_mov_imm32(p, 2, 0x00000006);
 
   mubuf(p, 
@@ -590,13 +590,13 @@ rak_adam: 0x48 is the TC (texture cache)
     0,//int slc, 
     0,//int srsrc, 
     2,//int vdata, 
-    0,//int vaddr,
+    0,//int vaddr, UNUSED HERE
     BUFFER_ATOMIC_ADD,//int op, 
     0, //int lds, 
     0, //int addr64, 
     1, //int glc, 
-    0, //int idxen, 
-    0, //int offen, 
+    0, //int idxen, NO index in vaddr
+    0, //int offen, NO offset in vaddr
     0 //int offset
   );
   
