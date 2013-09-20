@@ -38,6 +38,8 @@
 #define RADEON_CS_RING_GFX          0
 #define RADEON_CS_RING_COMPUTE      1
 
+/* query if a RADEON_CS_RING_* submission is supported */
+#define RADEON_INFO_RING_WORKING 0x15
 
 struct drm_radeon_gem_va {
     uint32_t    handle;
@@ -77,9 +79,22 @@ struct compute_context* compute_create_context(const char* drm_devfile)
     return NULL;
   }
 
-  uint64_t reserved_mem = 0;
-  uint64_t max_vm_size = 0;
-  
+	uint64_t reserved_mem = 0;
+	uint64_t max_vm_size = 0;
+  uint64_t ring_working = 0;
+	
+	memset(&ginfo, 0, sizeof(ginfo));
+	ginfo.request = RADEON_INFO_RING_WORKING;
+	ginfo.value = (uintptr_t)&ring_working;
+
+	if (drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo)))
+	{
+		printf("Failed to perform DRM_RADEON_INFO on %s\n", drm_devfile);
+		close(ctx->fd);
+		free(ctx);
+		return NULL;
+	}
+	
   memset(&ginfo, 0, sizeof(ginfo));
   ginfo.request = RADEON_INFO_VA_START;
   ginfo.value = (uintptr_t)&reserved_mem;
