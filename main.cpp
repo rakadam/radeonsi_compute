@@ -536,7 +536,6 @@ int main()
 	s_nop(p);
 	s_add_i32(p, 112, 112, 255); *p=4; p++;
 	
-	s_and_b32(p, 113, 113, 255); *p=0xFFFFFF; p++;
 	
 // 	v_mov_imm32(p, 4, 0x42);
 	v_mov_b32(p, 4, 113);
@@ -560,6 +559,8 @@ int main()
           );
   s_waitcnt(p);
 
+	s_and_b32(p, 113, 113, 255); *p=0xFFFF; p++; ///fix PC, TTMP1 contains more than the PC, this might be rendundant
+	
 // 	s_rfe_b64(p);
 	s_endpgm(p);
 	s_endpgm(p);
