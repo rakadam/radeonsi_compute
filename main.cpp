@@ -486,7 +486,7 @@ int main()
 // 
 //   return 0;
 //   }
-  compute_context* ctx = compute_create_context("/dev/dri/card0");
+  compute_context* ctx = compute_create_context("/dev/dri/card1");
   
   int test_data_size = 1024*1024*16;
   gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 1024*1024*4, RADEON_DOMAIN_VRAM, 4096);
