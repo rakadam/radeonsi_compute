@@ -96,6 +96,12 @@ struct compute_context* compute_create_context(const char* drm_devfile)
 		return NULL;
 	}
 	
+	if (!ring_working)
+	{
+		printf("Compute ring is not ready\n");
+		return NULL;
+	}
+	
   memset(&ginfo, 0, sizeof(ginfo));
   ginfo.request = RADEON_INFO_VA_START;
   ginfo.value = (uintptr_t)&reserved_mem;
