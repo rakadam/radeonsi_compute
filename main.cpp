@@ -533,7 +533,7 @@ int main()
 // 	v_mov_imm32(p, 4, 0x42);
 	v_mov_b32(p, 4, 112);
 	
-	
+	if (0)
   mtbuf(p,
            4,//int nfmt,
            4,//int dfmt,
