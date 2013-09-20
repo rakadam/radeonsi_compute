@@ -841,6 +841,7 @@ rak_adam: 0x48 is the TC (texture cache)
     ordered.insert(make_pair(vector<uint32_t>{(hwid >> 13) & 3, (hwid >> 12) & 1, (hwid >> 8) & 15, (hwid >> 4) & 3}, std::string(buf)));
   }
 
+  if(0)
   for (auto n : ordered)
   {
     cout << n.second;
