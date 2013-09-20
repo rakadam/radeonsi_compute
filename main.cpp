@@ -749,7 +749,7 @@ rak_adam: 0x48 is the TC (texture cache)
   state.user_data[2] = bufres.data[2];
   state.user_data[3] = bufres.data[3];
   
-  state.dim[0] = 32*16;
+  state.dim[0] = 32;
   state.dim[1] = 1;
   state.dim[2] = 1;
   state.start[0] = 0;
@@ -842,7 +842,7 @@ rak_adam: 0x48 is the TC (texture cache)
     ordered.insert(make_pair(vector<uint32_t>{(hwid >> 13) & 3, (hwid >> 12) & 1, (hwid >> 8) & 15, (hwid >> 4) & 3}, std::string(buf)));
   }
 
-  if(0)
+//   if(0)
   for (auto n : ordered)
   {
     cout << n.second;
