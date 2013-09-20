@@ -704,6 +704,7 @@ rak_adam: 0x48 is the TC (texture cache)
 
   s_waitcnt(p);
 	
+  v_mov_b32(p, 4, 9);
   v_add_i32_imm32(p, 2, 2, 4);
 
   mtbuf(p,
