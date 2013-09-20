@@ -72,6 +72,7 @@ struct compute_context* compute_create_context(const char* drm_devfile)
   
   if (ctx->fd < 1)
   {
+		printf("Open Error: %s\n", drm_devfile);
     free(ctx);
     return NULL;
   }
