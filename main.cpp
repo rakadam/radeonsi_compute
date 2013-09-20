@@ -713,7 +713,7 @@ rak_adam: 0x48 is the TC (texture cache)
 
 // 	s_mov_imm32(p, 110, 0x43);
 	
-	s_mov_b32(p, 9, 108);
+// 	s_mov_b32(p, 9, 108);
 	
 // 	s_getpc_b64(p, 9);
 	
@@ -761,7 +761,6 @@ rak_adam: 0x48 is the TC (texture cache)
            4,//int vdata,
            2//int vaddr
           );
-// 	s_trap(p, 0);
   s_waitcnt(p);
 	
 	
@@ -770,6 +769,7 @@ rak_adam: 0x48 is the TC (texture cache)
   
 //   prog[255] = 0xBF800000 | (0x1 << 16); //sopp: ENDPGM
   
+	s_trap(p, 0);
   s_endpgm(p);
   
 /*  printf("code:\n");
