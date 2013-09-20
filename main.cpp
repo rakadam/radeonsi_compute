@@ -492,7 +492,8 @@ int main()
 //   return 0;
 //   }
   compute_context* ctx = compute_create_context("/dev/dri/card0");
-  
+  assert(ctx);
+	
   int test_data_size = 1024*1024*16;
   gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 1024*1024*4, RADEON_DOMAIN_VRAM, 4096);
   gpu_buffer* data_bo = compute_alloc_gpu_buffer(ctx, test_data_size*4, RADEON_DOMAIN_VRAM, 4096);
