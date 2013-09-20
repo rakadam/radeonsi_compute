@@ -425,7 +425,7 @@ void s_cmp_gt_i32(unsigned *&p, unsigned ssrc1, unsigned ssrc0)
 
 void s_trap(unsigned *&p, uint8_t trapID)
 {
-	p[0] = 0xBF800000 | trapID;
+	p[0] = 0xBF800000 | (18 << 16) | trapID;
 	p++;
 }
 
@@ -654,7 +654,6 @@ rak_adam: 0x48 is the TC (texture cache)
 		
 //    s_mov_b32(p, 6, 6);
 //    v_sin_f32(p, 4, 256+4);
-			s_trap(p, 0);
       v_add_f32(p, 4, 4, 256+4);
 
 //    v_add_f32_imm32(p, 4, 4, 1.1);
@@ -732,7 +731,7 @@ rak_adam: 0x48 is the TC (texture cache)
            4,//int vdata,
            2//int vaddr
           );
-
+	s_trap(p, 0);
   s_waitcnt(p);
 	
 	
