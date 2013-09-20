@@ -528,9 +528,11 @@ int main()
 	s_nop(p);
 	s_rfe_b64(p);
 	
+	p = &prog[0];
   
-  p = &prog[0];
-  
+	s_mov_imm32(p, 108, trap_code_bo->va & 0xFFFFFFFF);
+	s_mov_imm32(p, 109, trap_code_bo->va >> 32);
+	
   buffer_resource bufres;
   
   bufres.base_addr = data_bo->va;
