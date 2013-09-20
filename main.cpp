@@ -531,7 +531,7 @@ int main()
 	s_nop(p);
 	
 // 	v_mov_imm32(p, 4, 0x42);
-	v_mov_b32(p, 4, 113);
+	v_mov_b32(p, 4, 112);
 	
 	
   mtbuf(p,
@@ -742,7 +742,7 @@ rak_adam: 0x48 is the TC (texture cache)
 	
 // 	s_mov_b32(p, 9, 109);
 	
-// 	s_getpc_b64(p, 9);
+	s_getpc_b64(p, 9);
 	
   v_mov_b32(p, 4, 6);
   v_mov_b32(p, 5, 7);
