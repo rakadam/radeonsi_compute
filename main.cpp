@@ -531,7 +531,7 @@ int main()
 	s_nop(p);
 	
 // 	v_mov_imm32(p, 4, 0x42);
-	v_mov_b32(p, 4, 112);
+	v_mov_b32(p, 4, 113);
 	
 	
   mtbuf(p,
