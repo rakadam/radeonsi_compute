@@ -159,6 +159,20 @@ void s_mov_b32(unsigned *&p, int sdst, int src)
   p += 1;
 }
 
+void s_mov_b64(unsigned *&p, int sdst, int src)
+{
+  p[0] = 0xBE800000;
+  
+  unsigned ssrc0 = src;
+  unsigned op = 4; //MOV_B32
+  
+  p[0] |= ssrc0;
+  p[0] |= op << 8;
+  p[0] |= sdst << 16;
+  
+  p += 1;
+}
+
 void s_getreg_b32(unsigned *&p, int sdst, unsigned size, unsigned offset, unsigned hwregid)
 {
   p[0] = 0xB0000000;
@@ -462,6 +476,11 @@ void s_add_i32(unsigned *&p, unsigned sdst, unsigned ssrc1, unsigned ssrc0)
 void s_and_b32(unsigned *&p, unsigned sdst, unsigned ssrc1, unsigned ssrc0)
 {
  sop2(p, 14, sdst, ssrc1, ssrc0);
+}
+
+void s_and_b64(unsigned *&p, unsigned sdst, unsigned ssrc1, unsigned ssrc0)
+{
+ sop2(p, 15, sdst, ssrc1, ssrc0);
 }
 
 void s_rfe_b64(unsigned *&p)

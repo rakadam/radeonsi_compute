@@ -74,6 +74,7 @@ void set_program(unsigned* p, int mx, int my)
 	
 	
 	///-------------------
+	s_mov_b64(p, 12, 126); //SAVE exec to s12-s13
 	s_mov_imm32(p, 8, 0); //s8 = 0;
 	v_mov_imm32(p, 10, 0x0);
 	
@@ -84,11 +85,13 @@ void set_program(unsigned* p, int mx, int my)
 	v_add_f32(p, 10, 10, 242); //v10 = v10 + 1;
 	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1;
 	
-// 	v_cmp_lt_f32(p, 10, 255); p[0]=floatconv(7); p++;
+//  	v_cmp_lt_f32(p, 10, 255); p[0]=floatconv(7); p++;
 	
-	s_cbranch_execz(p, 3);
+	s_and_b64(p, 126, 126, 106); //EXEC &= VCC
+	s_cbranch_execz(p, 3);//Exit loop if vector unit is idle
 	s_cmp_lt_i32(p, 8, 255); p[0] = 100; p++;
 	s_cbranch_scc0(p, eleje-p-1); //if (s8 <= 100) goto eleje;
+	s_mov_b64(p, 126, 12); //restore exec from s12-s13
 	
 	
 	v_cvt_i32_f32(p, 10, 256+10);
