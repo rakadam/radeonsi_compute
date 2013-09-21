@@ -474,4 +474,28 @@ void v_cvt_f32_i32(unsigned *&p, unsigned vdst, unsigned src0)
 	sop1(p, 5, vdst, src0);
 }
 
+void vop3a(unsigned *&p, unsigned vdst, unsigned abs, unsigned clamp, unsigned op, unsigned src0, unsigned src1, unsigned src2, unsigned omod, unsigned neg)
+{
+	p[0] = 0xD0000000;
+	p[1] = 0x00000000;
+	
+	p[0] |= vdst << 0;
+	p[0] |= abs << 8;
+	p[0] |= clamp << 11;
+	p[0] |= op << 17;
+	
+	p[1] |= src0 << 0;
+	p[1] |= src1 << 9;
+	p[1] |= src2 << 18;
+	p[1] |= omod << 27;
+	p[1] |= neg << 29;
+
+	p+=2;
+}
+
+void v_mul_lo_i32(unsigned *&p, unsigned vdst, unsigned src0, unsigned src1)
+{
+	vop3a(p, vdst, 0, 0, 363, src0, src1, 0, 0, 0);
+}
+
 #endif
