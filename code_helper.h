@@ -523,4 +523,17 @@ void v_mul_lo_i32(unsigned *&p, unsigned vdst, unsigned src0, unsigned src1)
 	vop3a(p, vdst, 0, 0, 363, src0, src1, 0, 0, 0);
 }
 
+void v_cmp_lt_f32(unsigned *&p, unsigned vsrc1, unsigned src0)
+{
+	unsigned op = 1; //cmp_lt
+	
+	p[0] = 0x7C000000;
+	
+	p[0] |= src0 << 0;
+	p[0] |= vsrc1 << 8;
+	p[0] |= op << 17;
+	
+	p++;
+}
+
 #endif

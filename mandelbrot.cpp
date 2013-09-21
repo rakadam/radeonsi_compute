@@ -95,7 +95,7 @@ void set_program(unsigned* p, int mx, int my)
 	
 	
 	v_cvt_i32_f32(p, 10, 256+10);
-	v_mov_b32(p, 10, 8);
+// 	v_mov_b32(p, 10, 8);
  	//v_mul_lo_i32(p, 10, 256+10, 256+10);
 	
 // 	v_mov_b32(p, 8, 256+9);
