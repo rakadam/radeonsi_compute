@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <string>
 #include <time.h>
+#include <sys/time.h>
 #include <assert.h>
 #include "code_helper.h"
 #include "compute_interface.hpp"
