@@ -135,6 +135,16 @@ void set_program(unsigned* p, int mx, int my)
 	s_endpgm(p);
 }
 
+int64_t get_time_usec()
+{
+    struct timeval tv;
+    struct timezone tz;
+
+    gettimeofday(&tv, &tz);
+
+    return int64_t(tv.tv_sec) * 1000000 + int64_t(tv.tv_usec);
+}
+
 int main()
 {
 	int mx = 1024*4;
@@ -176,7 +186,14 @@ int main()
 	assert(mx > 0 and mx%256 == 0);
 	
 	compute.transferToGPU(program_code, 0, code, code_size_max);
+	
+	int64_t start_time = get_time_usec();
+	
 	compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code);
+	
+	int64_t stop_time = get_time_usec();
+	
+	cout << "Runtime: " << double(stop_time-start_time) / 1000.0 << "ms" << endl;
 	
 	imageToFile(compute, data, mx, my, "ki.ppm");
 	
