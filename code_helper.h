@@ -436,6 +436,12 @@ void s_cbranch_scc0(unsigned *&p, int16_t imm)
  p++;
 }
 
+void s_cbranch_execz(unsigned *&p, int16_t imm)
+{
+ p[0] = 0xBF800000 | (8 << 16) | uint32_t(imm) & 0xFFFF;
+ p++;
+}
+
 void s_branch(unsigned *&p, int16_t imm)
 {
  p[0] = 0xBF800000 | (2 << 16)| uint32_t(imm) & 0xFFFF;
