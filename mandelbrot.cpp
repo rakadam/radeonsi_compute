@@ -72,21 +72,24 @@ void set_program(unsigned* p, int mx, int my)
 	
 	v_mul_f32(p, 10, 10, 255); p[0] = floatconv(float(mx/2)); p++;
 	
-	v_cvt_i32_f32(p, 10, 256+10);
 	
 	///-------------------
 	s_mov_imm32(p, 8, 0); //s8 = 0;
+	v_mov_imm32(p, 10, 0x0000);
 	
 	unsigned* eleje = p; //eleje:
 	
-	v_add_i32(p, 10, 10, 129); //v10 = v10 + 1;
+	v_add_f32(p, 10, 10, 129); //v10 = v10 + 1;
 	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1;
 	
+// 	v_cmp_lt_f32(p, 10, 255); p[0]=floatconv(7); p++;
 	
 	s_cbranch_execz(p, 3);
 	s_cmp_lt_i32(p, 8, 255); p[0] = 100; p++;
 	s_cbranch_scc0(p, eleje-p-1); //if (s8 <= 100) goto eleje;
 	
+	
+	v_cvt_i32_f32(p, 10, 256+10);
 	
  	//v_mul_lo_i32(p, 10, 256+10, 256+10);
 	
