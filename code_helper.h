@@ -525,7 +525,7 @@ void v_mul_lo_i32(unsigned *&p, unsigned vdst, unsigned src0, unsigned src1)
 
 void v_cmp_lt_f32(unsigned *&p, unsigned vsrc1, unsigned src0)
 {
-	unsigned op = 1; //cmp_lt
+	unsigned op = 4; //cmp_lt
 	
 	p[0] = 0x7C000000;
 	
