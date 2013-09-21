@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <assert.h>
+#include <iostream>
 #include "compute_interface.hpp"
 
 extern "C" {
@@ -31,6 +32,11 @@ void ComputeInterface::bufferFree(gpu_buffer* buf)
 	compute_free_gpu_buffer(buf);
 }
 
+uint64_t ComputeInterface::getVirtualAddress(gpu_buffer* buf)
+{
+	return buf->va;
+}
+
 void ComputeInterface::transferToGPU(gpu_buffer* buf, size_t offset, void* data, size_t size, EventDependence evd)
 {
 	compute_copy_to_gpu(buf, offset, data, size);
@@ -42,9 +48,10 @@ void ComputeInterface::transferFromGPU(gpu_buffer* buf, size_t offset, void* dat
 }
 
 void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t> threadOffset, std::vector<size_t> blockDim, std::vector<size_t> localSize, gpu_buffer* code,
-															int vgprnum, int sgprnum, int localMemSize, EventDependence evd)
+															int localMemSize, int vgprnum, int sgprnum, EventDependence evd)
 {
 	assert(localMemSize <= 32*1024);
+	std::cout << vgprnum << std::endl;
 	assert(vgprnum < 257);
 	assert(sgprnum < 129);
 	assert(localSize.size() == blockDim.size());

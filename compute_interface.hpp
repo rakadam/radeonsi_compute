@@ -20,6 +20,7 @@ public:
 	gpu_buffer* bufferAlloc(size_t size);
 	void bufferFree(gpu_buffer* buf);
 
+	uint64_t getVirtualAddress(gpu_buffer* buf);
 	void transferToGPU(gpu_buffer* buf, size_t offset, void* data, size_t size, EventDependence evd = EventDependence());
 	void transferFromGPU(gpu_buffer* buf, size_t offset, void* data, size_t size, EventDependence evd = EventDependence());
 
@@ -30,7 +31,7 @@ public:
 	}
 
 	template<typename T>
-	void transferFromGPU(gpu_buffer* buf, size_t offset, const T& data, EventDependence evd = EventDependence())
+	void transferFromGPU(gpu_buffer* buf, size_t offset, T& data, EventDependence evd = EventDependence())
 	{
 		transferFromGPU(buf, offset, &data[0], data.size()*sizeof(data[0]), evd);
 	}
