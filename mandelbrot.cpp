@@ -85,7 +85,7 @@ void set_program(unsigned* p, int mx, int my)
 	
 	s_cbranch_execz(p, 3);
 	s_cmp_lt_i32(p, 8, 255); p[0] = 100; p++;
-	s_cbranch_scc0(p, eleje-p); //if (s8 <= 100) goto eleje;
+	s_cbranch_scc0(p, eleje-p-1); //if (s8 <= 100) goto eleje;
 	
 	
  	//v_mul_lo_i32(p, 10, 256+10, 256+10);
