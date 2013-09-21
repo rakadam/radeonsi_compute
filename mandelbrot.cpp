@@ -80,23 +80,18 @@ void set_program(unsigned* p, int mx, int my)
 	
 	unsigned* eleje = p; //eleje:
 	
-	s_nop(p);
-	s_nop(p);
-	s_nop(p);
-	
 	v_add_f32(p, 10, 10, 242); //v10 = v10 + 1;
 	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1;
 	
-	v_cmpx_gt_f32(p, 10, 255); p[0]=floatconv(10); p++;
+	v_cmpx_gt_f32(p, 12, 255); p[0]=floatconv(7.0); p++; //while(r10 < 7.0)
 	s_nop(p);
 	
 	s_cbranch_execz(p, 3);//Exit loop if vector unit is idle
+	
 	s_cmp_lt_i32(p, 8, 255); p[0] = 10000; p++;
 	s_cbranch_scc0(p, eleje-p-1); //if (s8 <= 100) goto eleje;
-	s_mov_b64(p, 126, 12); //restore exec from s12-s13
 	
-// 	s_mov_imm32(p, 126, 0xFFFFFFFF);
-// 	s_mov_imm32(p, 127, 0xFFFFFFFF);
+	s_mov_b64(p, 126, 12); //restore exec from s12-s13
 	
 	v_cvt_i32_f32(p, 10, 256+10);
 	v_mov_b32(p, 10, 8);
