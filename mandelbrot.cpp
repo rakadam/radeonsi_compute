@@ -75,7 +75,7 @@ void set_program(unsigned* p, int mx, int my)
 	
 	///-------------------
 	s_mov_imm32(p, 8, 0); //s8 = 0;
-	v_mov_imm32(p, 10, 0x0000);
+	v_mov_imm32(p, 10, 0x0001);
 	
 	unsigned* eleje = p; //eleje:
 	
