@@ -85,7 +85,7 @@ void set_program(unsigned* p, int mx, int my)
 	v_add_f32(p, 10, 10, 242); //v10 = v10 + 1;
 	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1;
 	
-	v_cmpx_lt_f32(p, 10, 255); p[0]=floatconv(7.0); p++;
+	v_cmpx_gt_f32(p, 10, 255); p[0]=floatconv(7.0); p++;
 	
 	s_cbranch_execz(p, 3);//Exit loop if vector unit is idle
 	s_cmp_lt_i32(p, 8, 255); p[0] = 100; p++;
