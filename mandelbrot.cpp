@@ -24,7 +24,7 @@ void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, 
 	
 	for (auto val : image)
 	{
-		cout << *(uint32_t*)&val << endl;
+// 		cout << *(uint32_t*)&val << endl;
 		fwrite(&val.r, 1, 1, f);
 		fwrite(&val.g, 1, 1, f);
 		fwrite(&val.b, 1, 1, f);
