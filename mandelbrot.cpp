@@ -79,7 +79,7 @@ void set_program(unsigned* p, int mx, int my)
 	v_mov_imm32(p, 10, floatconv(0));
 	
 	unsigned* eleje = p; //eleje:
-	
+	s_nop(p);
 	v_add_f32(p, 10, 10, 242); //v10 = v10 + 1;
 	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1;
 	
