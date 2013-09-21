@@ -137,8 +137,8 @@ void set_program(unsigned* p, int mx, int my)
 
 int main()
 {
-	int mx = 1024;
-	int my = 1024;
+	int mx = 1024*2;
+	int my = 1024*2;
 	
 	ComputeInterface compute("/dev/dri/card0");
 	
