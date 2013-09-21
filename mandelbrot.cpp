@@ -79,7 +79,9 @@ void set_program(unsigned* p, int mx, int my)
 	
 	unsigned* eleje = p; //eleje:
 	
-	v_add_f32(p, 10, 10, 129); //v10 = v10 + 1;
+	s_nop(p);
+	
+// 	v_add_f32(p, 10, 10, 129); //v10 = v10 + 1;
 	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1;
 	
 // 	v_cmp_lt_f32(p, 10, 255); p[0]=floatconv(7); p++;
