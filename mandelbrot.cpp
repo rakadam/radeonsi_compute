@@ -61,7 +61,7 @@ void set_program(unsigned* p, int mx, int my)
 	
 	//////////////////////////////////////////////////////////////////////////////
 	///x:v6 y:v8 float32
-	///pixelcolor:v9, 0xBBGGRR
+	///pixelcolor:v10, 0xBBGGRR
 	
 	v_mul_f32(p, 6, 6, 256+6);
 	v_mul_f32(p, 8, 8, 256+8);
