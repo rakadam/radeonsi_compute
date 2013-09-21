@@ -75,7 +75,7 @@ void set_program(unsigned* p, int mx, int my)
 	
 	///-------------------
 	s_mov_imm32(p, 8, 0); //s8 = 0;
-	v_mov_imm32(p, 10, 0x0001);
+	v_mov_imm32(p, 10, 0x0);
 	
 	unsigned* eleje = p; //eleje:
 	
@@ -91,7 +91,7 @@ void set_program(unsigned* p, int mx, int my)
 	s_cbranch_scc0(p, eleje-p-1); //if (s8 <= 100) goto eleje;
 	
 	
-// 	v_cvt_i32_f32(p, 10, 256+10);
+	v_cvt_i32_f32(p, 10, 256+10);
 	
  	//v_mul_lo_i32(p, 10, 256+10, 256+10);
 	
