@@ -101,6 +101,8 @@ void set_program(unsigned* p, int mx, int my)
 	
 	s_mov_b64(p, 126, 12); //restore exec from s12-s13
 	
+
+	v_mul_f32(p, 10, 10, 255); p[0] = floatconv(10); p++;
 	v_cvt_i32_f32(p, 10, 256+10);
 	
 	//////////////////////////////////////////////////////////////////////////////
