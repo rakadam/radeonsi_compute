@@ -63,27 +63,33 @@ void set_program(unsigned* p, int mx, int my)
 	///x:v6 y:v8 float32
 	///pixelcolor:v10, 0xBBGGRR
 	
-	v_mul_f32(p, 6, 6, 256+6);
-	v_mul_f32(p, 8, 8, 256+8);
+// 	v_mul_f32(p, 6, 6, 256+6);
+// 	v_mul_f32(p, 8, 8, 256+8);
+// 	
+//  	v_add_f32(p, 10, 6, 256+8);
+// 	
+// 	v_sqrt_f32(p, 10, 256+10);
+// 	
+// 	v_mul_f32(p, 10, 10, 255); p[0] = floatconv(float(mx/2)); p++;
 	
- 	v_add_f32(p, 10, 6, 256+8);
 	
-	v_sqrt_f32(p, 10, 256+10);
-	
-	v_mul_f32(p, 10, 10, 255); p[0] = floatconv(float(mx/2)); p++;
-	
-	
-	///-------------------
+// 	///-------------------
 	s_mov_b64(p, 12, 126); //SAVE exec to s12-s13
 	s_mov_imm32(p, 8, 0); //s8 = 0;
 	v_mov_imm32(p, 10, floatconv(0));
+	v_mov_imm32(p, 12, floatconv(0));
 	
-	unsigned* eleje = p; //eleje:
+	unsigned* eleje = p; //start label
 	
-	v_add_f32(p, 10, 10, 242); //v10 = v10 + 1;
-	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1;
+	v_add_f32(p, 10, 10, 242); //v10 = v10 + 1; iteration counter for pixel color
+	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1; iteration counter for the scalar unit
 	
-	v_cmpx_gt_f32(p, 10, 255); p[0]=floatconv(7.0); p++; //while(r10 < 7.0)
+	
+	v_add_f32(p, 12, 12, 256+6);
+	v_add_f32(p, 12, 12, 256+8);
+	v_mul_f32(p, 12, 12, 256+12);
+	
+	v_cmpx_gt_f32(p, 12, 255); p[0]=floatconv(7.0); p++; //while(r10 < 7.0)
 	
 	s_cbranch_execz(p, 3);//Exit loop if vector unit is idle
 	
