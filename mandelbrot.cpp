@@ -177,4 +177,10 @@ int main()
 	compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code);
 	
 	imageToFile(compute, data, mx, my, "ki.ppm");
+	
+	{
+		FILE *f = fopen("ki.bin", "w");
+		fwrite(code, 1, code_size_max, f);
+		fclose(f);
+	}
 }
