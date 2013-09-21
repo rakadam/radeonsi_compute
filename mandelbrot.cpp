@@ -79,10 +79,10 @@ void set_program(unsigned* p, int mx, int my)
 	
 	unsigned* eleje = p; //eleje:
 	s_nop(p);
+	
 	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1;
 	
 	v_add_i32(p, 10, 10, 255); p[0]=1; p++;
-	
 	
 	
 	s_cbranch_execz(p, 3);
