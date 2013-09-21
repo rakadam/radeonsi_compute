@@ -79,7 +79,7 @@ void set_program(unsigned* p, int mx, int my)
 	v_mov_imm32(p, 10, floatconv(0));
 	
 	unsigned* eleje = p; //eleje:
-	s_nop(p);
+	
 	v_add_f32(p, 10, 10, 242); //v10 = v10 + 1;
 	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1;
 	
@@ -94,11 +94,6 @@ void set_program(unsigned* p, int mx, int my)
 	s_mov_b64(p, 126, 12); //restore exec from s12-s13
 	
 	v_cvt_i32_f32(p, 10, 256+10);
-	v_mov_b32(p, 10, 8);
- 	//v_mul_lo_i32(p, 10, 256+10, 256+10);
-	
-// 	v_mov_b32(p, 8, 256+9);
-// 	v_mul_i32_i24(p, 8, 8, 255); p[0]=16; p++;
 	
 	//////////////////////////////////////////////////////////////////////////////
 	
