@@ -569,7 +569,7 @@ void v_cmpx_gt_f32(unsigned *&p, unsigned vsrc1, unsigned src0)
 	p[0] = 0x7C000000;
 	
 	p[0] |= src0 << 0;
-	p[0] |= vsrc1 << 8;
+	p[0] |= vsrc1 << 9;
 	p[0] |= op << 17;
 	
 	p++;
