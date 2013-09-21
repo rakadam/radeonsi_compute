@@ -250,6 +250,17 @@ void v_sqrt_f64(unsigned *&p, int vdst, int src0)
   p++;
 }
 
+void sop1(unsigned *&p, unsigned op, int vdst, int src0)
+{
+	p[0] = 0x7E000000;
+
+	p[0] |= src0;
+	p[0] |= op << 9;
+	p[0] |= vdst << 17;
+
+	p++;
+}
+
 void v_bfrev_b32(unsigned *&p, int vdst, int src0)
 {
   p[0] = 0x7E000000;
@@ -451,6 +462,16 @@ void s_rfe_b64(unsigned *&p)
 {
 	p[0] = 0xBE800000 | (34 << 8);
 	p++;
+}
+
+void v_cvt_i32_f32(unsigned *&p, unsigned vdst, unsigned src0)
+{
+	sop1(p, 8, vdst, src0);
+}
+
+void v_cvt_f32_i32(unsigned *&p, unsigned vdst, unsigned src0)
+{
+	sop1(p, 5, vdst, src0);
 }
 
 #endif

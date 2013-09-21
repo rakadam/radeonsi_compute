@@ -24,6 +24,7 @@ void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, 
 	
 	for (auto val : image)
 	{
+		cout << *(uint32_t*)&val << endl;
 		fwrite(&val.r, 1, 1, f);
 		fwrite(&val.g, 1, 1, f);
 		fwrite(&val.b, 1, 1, f);
@@ -46,17 +47,37 @@ void set_program(unsigned* p, int mx, int my)
 	v_mov_b32(p, 5, 4); //s4
 	v_mul_i32_i24(p, 5, 5, 255); p[0]=256; p++;
 	v_add_i32(p, 6/*cx*/, 0, 256+5);
-	
-	v_mov_b32(p, 7/*cy*/, 5); //s5
-	//////////////////////////////////////////////////////////////////////////////
-	///x:v6 y:v7 pixelcolor:v8, 0xBBGGRR
-	
-	v_mov_b32(p, 8, 256+6);
-	v_add_i32(p, 8, 8, 256+7);
-	
-	//////////////////////////////////////////////////////////////////////////////
-	v_mul_i32_i24(p, 0, 7, 255); p[0]=mx; p++;
+	v_mov_b32(p, 8/*cy*/, 5); //s5
+	v_mul_i32_i24(p, 0, 8, 255); p[0]=mx; p++;
 	v_add_i32(p, 0, 0, 256+6);
+	
+	///convert x and y to float
+	v_cvt_f32_i32(p, 6, 256+6);
+	v_cvt_f32_i32(p, 8, 256+8);
+	v_add_f32(p, 6, 6, 255); p[0] = floatconv(-mx/2); p++;
+	v_add_f32(p, 8, 8, 255); p[0] = floatconv(-my/2); p++;
+	v_mul_f32(p, 6, 6, 255); p[0] = floatconv(1.0/float(mx/2)); p++;
+	v_mul_f32(p, 8, 8, 255); p[0] = floatconv(1.0/float(my/2)); p++;
+	
+	//////////////////////////////////////////////////////////////////////////////
+	///x:v6 y:v8 float32
+	///pixelcolor:v9, 0xBBGGRR
+	
+	v_mul_f32(p, 6, 6, 256+6);
+	v_mul_f32(p, 8, 8, 256+8);
+	
+ 	v_add_f32(p, 10, 6, 256+8);
+	
+	v_sqrt_f32(p, 10, 256+10);
+	
+	v_mul_f32(p, 10, 10, 255); p[0] = floatconv(float(mx/2)); p++;
+	
+	v_cvt_i32_f32(p, 10, 256+10);
+	
+// 	v_mov_b32(p, 8, 256+9);
+// 	v_mul_i32_i24(p, 8, 8, 255); p[0]=16; p++;
+	
+	//////////////////////////////////////////////////////////////////////////////
 	
 	mtbuf(p,
 		4,//int nfmt,
@@ -71,7 +92,7 @@ void set_program(unsigned* p, int mx, int my)
 		0,//int tfe,
 		0,//int slc,
 		0,//int srsrc,
-		8,//int vdata,
+		10,//int vdata,
 		0//int vaddr
 	);
 	
@@ -86,8 +107,8 @@ void set_program(unsigned* p, int mx, int my)
 
 int main()
 {
-	int mx = 1024;
-	int my = 1024;
+	int mx = 256;
+	int my = 256;
 	
 	ComputeInterface compute("/dev/dri/card0");
 	

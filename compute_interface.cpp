@@ -93,7 +93,7 @@ void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t
 	state.priv_mode = 0;
 	state.trap_en = 0;
   state.excp_en = 0;
-  state.ieee_mode = 0;
+  state.ieee_mode = 1;
   state.scratch_en = 0;
   state.lds_size = (localMemSize+255) / 256;
 	state.waves_per_sh = 0; ///zero means automatic maximum, practically limited by registers
