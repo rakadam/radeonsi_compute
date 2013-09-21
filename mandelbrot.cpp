@@ -78,10 +78,9 @@ void set_program(unsigned* p, int mx, int my)
 	s_mov_imm32(p, 8, 0); //s8 = 0;
 	
 	unsigned* eleje = p; //eleje:
-	s_nop(p);
 	
-	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1;
 	v_add_i32(p, 10, 10, 129); //v10 = v10 + 1;
+	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1;
 	
 	
 	s_cbranch_execz(p, 3);
