@@ -93,6 +93,8 @@ void set_program(unsigned* p, int mx, int my)
 	s_cbranch_scc0(p, eleje-p-1); //if (s8 <= 100) goto eleje;
 	s_mov_b64(p, 126, 12); //restore exec from s12-s13
 	
+	s_mov_imm32(p, 126, 0xFFFFFF);
+	s_mov_imm32(p, 127, 0xFFFFFF);
 	
 	v_cvt_i32_f32(p, 10, 256+10);
 // 	v_mov_b32(p, 10, 8);
