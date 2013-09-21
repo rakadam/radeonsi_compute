@@ -37,7 +37,7 @@ uint64_t ComputeInterface::getVirtualAddress(gpu_buffer* buf)
 	return buf->va;
 }
 
-void ComputeInterface::transferToGPU(gpu_buffer* buf, size_t offset, void* data, size_t size, EventDependence evd)
+void ComputeInterface::transferToGPU(gpu_buffer* buf, size_t offset, const void* data, size_t size, EventDependence evd)
 {
 	compute_copy_to_gpu(buf, offset, data, size);
 }

@@ -21,7 +21,7 @@ public:
 	void bufferFree(gpu_buffer* buf);
 
 	uint64_t getVirtualAddress(gpu_buffer* buf);
-	void transferToGPU(gpu_buffer* buf, size_t offset, void* data, size_t size, EventDependence evd = EventDependence());
+	void transferToGPU(gpu_buffer* buf, size_t offset, const void* data, size_t size, EventDependence evd = EventDependence());
 	void transferFromGPU(gpu_buffer* buf, size_t offset, void* data, size_t size, EventDependence evd = EventDependence());
 
 	template<typename T>
