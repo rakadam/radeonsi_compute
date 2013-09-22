@@ -148,8 +148,8 @@ int64_t get_time_usec()
 
 int main()
 {
-	int mx = 1024*4;
-	int my = 1024*4;
+	int mx = 1024*1;
+	int my = 1024*1;
 	
 	ComputeInterface compute("/dev/dri/card0");
 	
