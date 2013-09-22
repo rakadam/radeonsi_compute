@@ -4,6 +4,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <assert.h>
+#include <cmath>
 #include "code_helper.h"
 #include "compute_interface.hpp"
 
@@ -36,6 +37,9 @@ void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, 
 
 void set_program(unsigned* p, int mx, int my)
 {
+
+  float N;
+
 	s_nop(p);
 	s_nop(p);
 	s_nop(p);
@@ -57,8 +61,8 @@ void set_program(unsigned* p, int mx, int my)
 	v_cvt_f32_i32(p, 8, 256+8);
 	v_add_f32(p, 6, 6, 255); p[0] = floatconv(-mx/2); p++;
 	v_add_f32(p, 8, 8, 255); p[0] = floatconv(-my/2); p++;
-	v_mul_f32(p, 6, 6, 255); p[0] = floatconv(1.0/float(mx/2)); p++;
-	v_mul_f32(p, 8, 8, 255); p[0] = floatconv(1.0/float(my/2)); p++;
+	v_mul_f32(p, 6, 6, 255); p[0] = floatconv(1.5/float(mx/2)); p++;
+	v_mul_f32(p, 8, 8, 255); p[0] = floatconv(1.5/float(my/2)); p++;
 	
 	//////////////////////////////////////////////////////////////////////////////
 	///x:v6 y:v8 float32
@@ -125,7 +129,9 @@ void set_program(unsigned* p, int mx, int my)
   v_mul_f32(p, 33, 36, 256+36);
   v_add_f32(p, 12, 32, 256+33);
   
-	v_cmpx_gt_f32(p, 12, 255); p[0]=floatconv(7.0); p++; //while(r12 < 7.0)
+  //setting the radius 
+  N = sqrt(7);
+	v_cmpx_gt_f32(p, 12, 255); p[0]=floatconv(N*N); p++; //while(r12 < 7.0)
 	
 	s_cbranch_execz(p, 3);//Exit loop if vector unit is idle
 	
@@ -134,8 +140,15 @@ void set_program(unsigned* p, int mx, int my)
 	
 	s_mov_b64(p, 126, 12); //restore exec from s12-s13
 	
-
-	v_mul_f32(p, 10, 10, 255); p[0] = floatconv(77); p++; //some scaling for the color
+  //continuous coloring
+  float scaleFactor = 1/(log2(N));
+  v_sqrt_f32(p, 12, 256+12);
+  v_log_f32(p, 12, 256+12);
+  v_mul_f32(p, 12, 12, 255); p[0]=floatconv(scaleFactor); p++;
+  v_log_f32(p, 12, 256+12);
+  v_sub_f32(p, 10, 12, 256+10);
+  
+	v_mul_f32(p, 10, 10, 255); p[0] = floatconv(777); p++; //some scaling for the color
 	v_cvt_i32_f32(p, 10, 256+10); //convert to int
 	
 	//////////////////////////////////////////////////////////////////////////////
@@ -181,7 +194,7 @@ int main()
 	int mx = 1024*4;
 	int my = 1024*4;
 	
-	ComputeInterface compute("/dev/dri/card0");
+	ComputeInterface compute("/dev/dri/card1");
 	
 	int code_size_max = 1024*4;
 	
