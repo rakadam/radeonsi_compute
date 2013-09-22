@@ -212,6 +212,19 @@ void v_sin_f32(unsigned *&p, int vdst, int src0)
   p++;
 }
 
+void v_log_f32(unsigned *&p, int vdst, int src0)
+{
+  p[0] = 0x7E000000;
+  
+  unsigned op = 39;
+  
+  p[0] |= src0;
+  p[0] |= op << 9;
+  p[0] |= vdst << 17;
+  
+  p++;
+}
+
 void v_rcp_f32(unsigned *&p, int vdst, int src0)
 {
   p[0] = 0x7E000000;
