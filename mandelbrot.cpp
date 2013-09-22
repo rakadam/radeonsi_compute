@@ -35,7 +35,7 @@ void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, 
 	fclose(f);
 }
 
-void set_program(unsigned* p, int mx, int my)
+void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double offset_x=0, double offset_y=0)
 {
 
   float N;
@@ -61,8 +61,11 @@ void set_program(unsigned* p, int mx, int my)
 	v_cvt_f32_i32(p, 8, 256+8);
 	v_add_f32(p, 6, 6, 255); p[0] = floatconv(-mx/2); p++;
 	v_add_f32(p, 8, 8, 255); p[0] = floatconv(-my/2); p++;
-	v_mul_f32(p, 6, 6, 255); p[0] = floatconv(1.5/float(mx/2)); p++;
-	v_mul_f32(p, 8, 8, 255); p[0] = floatconv(1.5/float(my/2)); p++;
+	v_mul_f32(p, 6, 6, 255); p[0] = floatconv(1.0/float(mx/2)/image_scale); p++;
+	v_mul_f32(p, 8, 8, 255); p[0] = floatconv(1.0/float(my/2)/image_scale); p++;
+	
+	v_add_f32(p, 6, 6, 255); p[0] = floatconv(offset_x / double(mx/2) / image_scale); p++;
+	v_add_f32(p, 8, 8, 255); p[0] = floatconv(offset_y / double(my/2) / image_scale); p++;
 	
 	//////////////////////////////////////////////////////////////////////////////
 	///x:v6 y:v8 float32
@@ -130,12 +133,12 @@ void set_program(unsigned* p, int mx, int my)
   v_add_f32(p, 12, 32, 256+33);
   
   //setting the radius 
-  N = sqrt(7);
+  N = sqrt(25);
 	v_cmpx_gt_f32(p, 12, 255); p[0]=floatconv(N*N); p++; //while(r12 < 7.0)
 	
 	s_cbranch_execz(p, 3);//Exit loop if vector unit is idle
 	
-	s_cmp_lt_i32(p, 8, 255); p[0] = 0x1FFF; p++;
+	s_cmp_lt_i32(p, 8, 255); p[0] = 0xFFF; p++;
 	s_cbranch_scc0(p, eleje-p-1); //if (s8 <= 0x1FFF) goto eleje;
 	
 	s_mov_b64(p, 126, 12); //restore exec from s12-s13
@@ -148,8 +151,36 @@ void set_program(unsigned* p, int mx, int my)
   v_log_f32(p, 12, 256+12);
   v_sub_f32(p, 10, 12, 256+10);
   
-	v_mul_f32(p, 10, 10, 255); p[0] = floatconv(777); p++; //some scaling for the color
-	v_cvt_i32_f32(p, 10, 256+10); //convert to int
+	float cscale = 5.0;
+	
+	v_mul_f32(p, 11, 10, 255); p[0] = floatconv(1.0/cscale); p++;
+	v_add_f32(p, 11, 11, 255); p[0] = floatconv(-M_PI*2/3.0); p++;
+	v_sin_f32(p, 11, 256+11);
+	v_add_f32(p, 11, 11, 255); p[0] = floatconv(1.0001); p++;
+	v_mul_f32(p, 11, 11, 255); p[0] = floatconv(127.0); p++;
+	
+	v_mul_f32(p, 12, 10, 255); p[0] = floatconv(1.0/cscale); p++;
+	v_add_f32(p, 12, 12, 255); p[0] = floatconv(0.0); p++;
+	v_sin_f32(p, 12, 256+12);
+	v_add_f32(p, 12, 12, 255); p[0] = floatconv(1.0001); p++;
+	v_mul_f32(p, 12, 12, 255); p[0] = floatconv(127.0); p++;
+	
+	v_mul_f32(p, 13, 10, 255); p[0] = floatconv(1.0/cscale); p++;
+	v_add_f32(p, 13, 13, 255); p[0] = floatconv(M_PI*2/3.0); p++;
+	v_sin_f32(p, 13, 256+13);
+	v_add_f32(p, 13, 13, 255); p[0] = floatconv(1.0001); p++;
+	v_mul_f32(p, 13, 13, 255); p[0] = floatconv(127.0); p++;
+	
+	v_cvt_i32_f32(p, 11, 256+11); //convert to int
+	v_cvt_i32_f32(p, 12, 256+12); //convert to int
+	v_cvt_i32_f32(p, 13, 256+13); //convert to int
+	
+	v_mul_i32_i24(p, 12, 12, 255); p[0]=256; p++;
+	v_mul_i32_i24(p, 13, 13, 255); p[0]=256*256; p++;
+	
+	v_mov_b32(p, 10, 256+11);
+	v_add_i32(p, 10, 10, 256+12);
+	v_add_i32(p, 10, 10, 256+13);
 	
 	//////////////////////////////////////////////////////////////////////////////
 	
@@ -194,7 +225,7 @@ int main()
 	int mx = 1024*4;
 	int my = 1024*4;
 	
-	ComputeInterface compute("/dev/dri/card1");
+	ComputeInterface compute("/dev/dri/card0");
 	
 	int code_size_max = 1024*4;
 	
@@ -225,7 +256,7 @@ int main()
 
 	uint32_t *code = new uint32_t[code_size_max/4];
 
-	set_program(code, mx, my);
+	set_program(code, mx, my, 0.7, 0, 0);
 	
 	assert(mx > 0 and mx%256 == 0);
 	
