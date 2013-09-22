@@ -159,6 +159,20 @@ void s_mov_b32(unsigned *&p, int sdst, int src)
   p += 1;
 }
 
+void s_mov_b64(unsigned *&p, int sdst, int src)
+{
+  p[0] = 0xBE800000;
+  
+  unsigned ssrc0 = src;
+  unsigned op = 4; //MOV_B32
+  
+  p[0] |= ssrc0;
+  p[0] |= op << 8;
+  p[0] |= sdst << 16;
+  
+  p += 1;
+}
+
 void s_getreg_b32(unsigned *&p, int sdst, unsigned size, unsigned offset, unsigned hwregid)
 {
   p[0] = 0xB0000000;
@@ -436,6 +450,12 @@ void s_cbranch_scc0(unsigned *&p, int16_t imm)
  p++;
 }
 
+void s_cbranch_execz(unsigned *&p, int16_t imm)
+{
+ p[0] = 0xBF800000 | (8 << 16) | uint32_t(imm) & 0xFFFF;
+ p++;
+}
+
 void s_branch(unsigned *&p, int16_t imm)
 {
  p[0] = 0xBF800000 | (2 << 16)| uint32_t(imm) & 0xFFFF;
@@ -456,6 +476,11 @@ void s_add_i32(unsigned *&p, unsigned sdst, unsigned ssrc1, unsigned ssrc0)
 void s_and_b32(unsigned *&p, unsigned sdst, unsigned ssrc1, unsigned ssrc0)
 {
  sop2(p, 14, sdst, ssrc1, ssrc0);
+}
+
+void s_and_b64(unsigned *&p, unsigned sdst, unsigned ssrc1, unsigned ssrc0)
+{
+ sop2(p, 15, sdst, ssrc1, ssrc0);
 }
 
 void s_rfe_b64(unsigned *&p)
@@ -496,6 +521,58 @@ void vop3a(unsigned *&p, unsigned vdst, unsigned abs, unsigned clamp, unsigned o
 void v_mul_lo_i32(unsigned *&p, unsigned vdst, unsigned src0, unsigned src1)
 {
 	vop3a(p, vdst, 0, 0, 363, src0, src1, 0, 0, 0);
+}
+
+void v_cmp_lt_f32(unsigned *&p, unsigned vsrc1, unsigned src0)
+{
+	unsigned op = 0x01; //cmp_lt
+	
+	p[0] = 0x7C000000;
+	
+	p[0] |= src0 << 0;
+	p[0] |= vsrc1 << 8;
+	p[0] |= op << 17;
+	
+	p++;
+}
+
+void v_cmpx_lt_f32(unsigned *&p, unsigned vsrc1, unsigned src0)
+{
+	unsigned op = 0x11; //cmp_lt
+	
+	p[0] = 0x7C000000;
+	
+	p[0] |= src0 << 0;
+	p[0] |= vsrc1 << 8;
+	p[0] |= op << 17;
+	
+	p++;
+}
+
+void v_cmp_gt_f32(unsigned *&p, unsigned vsrc1, unsigned src0)
+{
+	unsigned op = 0x04; //cmp_lt
+	
+	p[0] = 0x7C000000;
+	
+	p[0] |= src0 << 0;
+	p[0] |= vsrc1 << 8;
+	p[0] |= op << 17;
+	
+	p++;
+}
+
+void v_cmpx_gt_f32(unsigned *&p, unsigned vsrc1, unsigned src0)
+{
+	unsigned op = 0x14; //cmp_lt
+	
+	p[0] = 0x7C000000;
+	
+	p[0] |= src0 << 0;
+	p[0] |= vsrc1 << 9;
+	p[0] |= op << 17;
+	
+	p++;
 }
 
 void v_mul_hi_i32(unsigned *&p, unsigned vdst, unsigned src0, unsigned src1)

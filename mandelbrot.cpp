@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <string>
 #include <time.h>
+#include <sys/time.h>
 #include <assert.h>
 #include "code_helper.h"
 #include "compute_interface.hpp"
@@ -24,7 +25,7 @@ void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, 
 	
 	for (auto val : image)
 	{
-		cout << *(uint32_t*)&val << endl;
+// 		cout << *(uint32_t*)&val << endl;
 		fwrite(&val.r, 1, 1, f);
 		fwrite(&val.g, 1, 1, f);
 		fwrite(&val.b, 1, 1, f);
@@ -61,23 +62,49 @@ void set_program(unsigned* p, int mx, int my)
 	
 	//////////////////////////////////////////////////////////////////////////////
 	///x:v6 y:v8 float32
-	///pixelcolor:v9, 0xBBGGRR
+	///pixelcolor:v10, 0xBBGGRR
 	
-	v_mul_f32(p, 6, 6, 256+6);
-	v_mul_f32(p, 8, 8, 256+8);
+// 	v_mul_f32(p, 6, 6, 256+6);
+// 	v_mul_f32(p, 8, 8, 256+8);
+// 	
+//  	v_add_f32(p, 10, 6, 256+8);
+// 	
+// 	v_sqrt_f32(p, 10, 256+10);
+// 	
+// 	v_mul_f32(p, 10, 10, 255); p[0] = floatconv(float(mx/2)); p++;
 	
- 	v_add_f32(p, 10, 6, 256+8);
 	
-	v_sqrt_f32(p, 10, 256+10);
+// 	///-------------------
+	s_mov_b64(p, 12, 126); //SAVE exec to s12-s13
+	s_mov_imm32(p, 8, 0); //s8 = 0;
+	v_mov_imm32(p, 10, floatconv(0));
+	v_mov_imm32(p, 12, floatconv(0));
 	
-	v_mul_f32(p, 10, 10, 255); p[0] = floatconv(float(mx/2)); p++;
+	unsigned* eleje = p; //start label
 	
-	v_cvt_i32_f32(p, 10, 256+10);
+	v_add_f32(p, 10, 10, 242); //v10 = v10 + 1; iteration counter for pixel color
+	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1; iteration counter for the scalar unit
 	
- 	v_mul_lo_i32(p, 10, 256+10, 256+10);
+	///dummy computation:
+	v_sin_f32(p, 12, 256+12);
+	v_mul_f32(p, 12, 12, 255); p[0] = floatconv(7.01); p++;
+	v_mul_f32(p, 14, 6, 256+6);
+	v_add_f32(p, 12, 12, 256+14);
+	v_mul_f32(p, 14, 6, 256+8);
+	v_add_f32(p, 12, 12, 256+14);
 	
-// 	v_mov_b32(p, 8, 256+9);
-// 	v_mul_i32_i24(p, 8, 8, 255); p[0]=16; p++;
+	v_cmpx_gt_f32(p, 12, 255); p[0]=floatconv(7.0); p++; //while(r12 < 7.0)
+	
+	s_cbranch_execz(p, 3);//Exit loop if vector unit is idle
+	
+	s_cmp_lt_i32(p, 8, 255); p[0] = 0x1FFF; p++;
+	s_cbranch_scc0(p, eleje-p-1); //if (s8 <= 0x1FFF) goto eleje;
+	
+	s_mov_b64(p, 126, 12); //restore exec from s12-s13
+	
+
+	v_mul_f32(p, 10, 10, 255); p[0] = floatconv(77); p++; //some scaling for the color
+	v_cvt_i32_f32(p, 10, 256+10); //convert to int
 	
 	//////////////////////////////////////////////////////////////////////////////
 	
@@ -107,10 +134,20 @@ void set_program(unsigned* p, int mx, int my)
 	s_endpgm(p);
 }
 
+int64_t get_time_usec()
+{
+    struct timeval tv;
+    struct timezone tz;
+
+    gettimeofday(&tv, &tz);
+
+    return int64_t(tv.tv_sec) * 1000000 + int64_t(tv.tv_usec);
+}
+
 int main()
 {
-	int mx = 256;
-	int my = 256;
+	int mx = 1024*4;
+	int my = 1024*4;
 	
 	ComputeInterface compute("/dev/dri/card0");
 	
@@ -148,7 +185,20 @@ int main()
 	assert(mx > 0 and mx%256 == 0);
 	
 	compute.transferToGPU(program_code, 0, code, code_size_max);
+	
+	int64_t start_time = get_time_usec();
+	
 	compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code);
 	
+	int64_t stop_time = get_time_usec();
+	
+	cout << "Runtime: " << double(stop_time-start_time) / 1000.0 << "ms" << endl;
+	
 	imageToFile(compute, data, mx, my, "ki.ppm");
+	
+	{
+		FILE *f = fopen("ki.bin", "w");
+		fwrite(code, 1, code_size_max, f);
+		fclose(f);
+	}
 }
