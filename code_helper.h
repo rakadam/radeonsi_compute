@@ -498,4 +498,9 @@ void v_mul_lo_i32(unsigned *&p, unsigned vdst, unsigned src0, unsigned src1)
 	vop3a(p, vdst, 0, 0, 363, src0, src1, 0, 0, 0);
 }
 
+void v_mul_hi_i32(unsigned *&p, unsigned vdst, unsigned src0, unsigned src1)
+{
+	vop3a(p, vdst, 0, 0, 364, src0, src1, 0, 0, 0);
+}
+
 #endif
