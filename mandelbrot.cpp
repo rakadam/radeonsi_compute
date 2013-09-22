@@ -85,7 +85,7 @@ void set_program(unsigned* p, int mx, int my)
 	v_add_f32(p, 10, 10, 242); //v10 = v10 + 1; iteration counter for pixel color
 	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1; iteration counter for the scalar unit
 	
-	
+	///dummy computation:
 	v_sin_f32(p, 12, 256+12);
 	v_mul_f32(p, 12, 12, 255); p[0] = floatconv(7.01); p++;
 	v_mul_f32(p, 14, 6, 256+6);
