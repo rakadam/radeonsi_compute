@@ -376,6 +376,18 @@ void v_add_f32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
   p++;
 }
 
+void v_sub_f32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
+{
+  unsigned op = 4;
+
+  p[0] = 0;
+  p[0] |= src0;
+  p[0] |= vsrc1 << 9;
+  p[0] |= vdst << 17;
+  p[0] |= op << 25;
+  p++;
+}
+
 void v_mul_i32_i24_imm32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned imm32)
 {
   v_mul_i32_i24(p, vdst, vsrc1, 255);

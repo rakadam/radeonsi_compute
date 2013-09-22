@@ -79,6 +79,9 @@ void set_program(unsigned* p, int mx, int my)
 	s_mov_imm32(p, 8, 0); //s8 = 0;
 	v_mov_imm32(p, 10, floatconv(0));
 	v_mov_imm32(p, 12, floatconv(0));
+	v_mov_imm32(p, 35, floatconv(0));  //zero out xact
+	v_mov_imm32(p, 36, floatconv(0));  //zero out yact
+   
 	
 	unsigned* eleje = p; //start label
 	
@@ -86,13 +89,42 @@ void set_program(unsigned* p, int mx, int my)
 	s_add_i32(p, 8, 8, 129); //s8 = s8 + 1; iteration counter for the scalar unit
 	
 	///dummy computation:
-	v_sin_f32(p, 12, 256+12);
-	v_mul_f32(p, 12, 12, 255); p[0] = floatconv(7.01); p++;
-	v_mul_f32(p, 14, 6, 256+6);
-	v_add_f32(p, 12, 12, 256+14);
-	v_mul_f32(p, 14, 6, 256+8);
-	v_add_f32(p, 12, 12, 256+14);
-	
+	///v_sin_f32(p, 12, 256+12);
+	///v_mul_f32(p, 12, 12, 255); p[0] = floatconv(7.01); p++;
+	///v_mul_f32(p, 14, 6, 256+6);
+	///v_add_f32(p, 12, 12, 256+14);
+	///v_mul_f32(p, 14, 6, 256+8);
+	///v_add_f32(p, 12, 12, 256+14);
+
+  ///mandelbrot calculation
+  // A     := v32
+  // B     := v33
+  // C     := v34
+  // xact  := v35
+  // yact  := v36
+  // xval  := v6
+  // yval  := v8
+  // xtemp := v40
+ 
+  //float xtemp = xact * xact - yact * yact + xval;
+  v_mul_f32(p, 32, 35, 256+35);
+  v_add_f32(p, 32, 32, 256+6); 
+  v_mul_f32(p, 33, 36, 256+36);
+  v_sub_f32(p, 40, 33, 256+32); 
+
+  //yact = 2 * xact * yact + yval;
+  v_mul_f32(p, 32, 35, 255); p[0] = floatconv(2.0); p++;
+  v_mul_f32(p, 33, 32, 256+36);
+  v_add_f32(p, 36, 33, 256+8); 
+  
+  //xact = xtemp;
+	v_mov_b32(p, 35, 256+40);
+
+  //STOP_EXPR_1
+  v_mul_f32(p, 32, 35, 256+35);
+  v_mul_f32(p, 33, 36, 256+36);
+  v_add_f32(p, 12, 32, 256+33);
+  
 	v_cmpx_gt_f32(p, 12, 255); p[0]=floatconv(7.0); p++; //while(r12 < 7.0)
 	
 	s_cbranch_execz(p, 3);//Exit loop if vector unit is idle
