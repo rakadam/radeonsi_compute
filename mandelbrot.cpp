@@ -87,7 +87,7 @@ void set_program(unsigned* p, int mx, int my)
 	
 	
 	v_sin_f32(p, 12, 256+12);
-	v_mul_f32(p, 12, 12, 255); p[0] = floatconv(6.9); p++;
+	v_mul_f32(p, 12, 12, 255); p[0] = floatconv(7.01); p++;
 	
 	v_mul_f32(p, 14, 6, 256+6);
 	v_add_f32(p, 12, 12, 256+14);
