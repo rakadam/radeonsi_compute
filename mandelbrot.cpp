@@ -98,7 +98,7 @@ void set_program(unsigned* p, int mx, int my)
 	s_cbranch_execz(p, 3);//Exit loop if vector unit is idle
 	
 	s_cmp_lt_i32(p, 8, 255); p[0] = 0x1FFF; p++;
-	s_cbranch_scc0(p, eleje-p-1); //if (s8 <= 100) goto eleje;
+	s_cbranch_scc0(p, eleje-p-1); //if (s8 <= 0x1FFF) goto eleje;
 	
 	s_mov_b64(p, 126, 12); //restore exec from s12-s13
 	
