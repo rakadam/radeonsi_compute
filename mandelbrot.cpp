@@ -91,7 +91,7 @@ void set_program(unsigned* p, int mx, int my)
 	
 	v_mul_f32(p, 14, 6, 256+6);
 	v_add_f32(p, 12, 12, 256+14);
-	v_mul_f32(p, 14, 6, 256+8);
+	v_mul_f32(p, 14, 8, 256+8);
 	v_add_f32(p, 12, 12, 256+14);
 	
 
