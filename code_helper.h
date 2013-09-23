@@ -212,6 +212,19 @@ void v_sin_f32(unsigned *&p, int vdst, int src0)
   p++;
 }
 
+void v_log_f32(unsigned *&p, int vdst, int src0)
+{
+  p[0] = 0x7E000000;
+  
+  unsigned op = 39;
+  
+  p[0] |= src0;
+  p[0] |= op << 9;
+  p[0] |= vdst << 17;
+  
+  p++;
+}
+
 void v_rcp_f32(unsigned *&p, int vdst, int src0)
 {
   p[0] = 0x7E000000;
@@ -367,6 +380,18 @@ void v_mul_f32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
 void v_add_f32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
 {
   unsigned op = 3;
+
+  p[0] = 0;
+  p[0] |= src0;
+  p[0] |= vsrc1 << 9;
+  p[0] |= vdst << 17;
+  p[0] |= op << 25;
+  p++;
+}
+
+void v_sub_f32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
+{
+  unsigned op = 4;
 
   p[0] = 0;
   p[0] |= src0;
@@ -573,6 +598,11 @@ void v_cmpx_gt_f32(unsigned *&p, unsigned vsrc1, unsigned src0)
 	p[0] |= op << 17;
 	
 	p++;
+}
+
+void v_mul_hi_i32(unsigned *&p, unsigned vdst, unsigned src0, unsigned src1)
+{
+	vop3a(p, vdst, 0, 0, 364, src0, src1, 0, 0, 0);
 }
 
 #endif
