@@ -704,7 +704,7 @@ rak_adam: 0x48 is the TC (texture cache)
   s_mov_imm32(p, 127, 0xFFFFFFFF); //EXECHI
 
   
-  int iternum = 100;
+  int iternum = 10000;
 
   s_mov_imm32(p, 8, 0);
 
@@ -863,7 +863,7 @@ rak_adam: 0x48 is the TC (texture cache)
   state.sgpr_num = 11; //8x
   state.vgpr_num = 10; //4x
   state.priority = 0;
-  state.debug_mode = 1;
+  state.debug_mode = 0;
 	state.priv_mode = 1;
 	state.trap_en = 1;
   state.ieee_mode = 0;
