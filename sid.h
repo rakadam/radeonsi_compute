@@ -154,6 +154,12 @@
  * 1 - GDS (program SAS to 1 as well)
  * 2 - DATA
  */
+
+#define PKT3_CP_DMA_ENGINE(x)     ((x) << 27)
+/* 0 - ME
+ * 1 - PFP
+ */
+
 #define PKT3_CP_DMA_DST_SEL(x)       ((x) << 20)
 /* 0 - DST_ADDR
  * 1 - GDS (program DAS to 1 as well)
