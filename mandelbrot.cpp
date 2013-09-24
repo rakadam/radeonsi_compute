@@ -84,7 +84,9 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 		return;
 	}
 	
-	p = (char*)mmap (0, 640*480*3, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
+	size_t size = 640*480*3;
+	
+	p = (char*)mmap (0, size, PROT_WRITE, MAP_SHARED, fd, 0);
 	
 	if (p == MAP_FAILED)
 	{
@@ -94,7 +96,7 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 
 	close(fd);
 	
-	if (munmap (p, sb.st_size) == -1)
+	if (munmap (p, size) == -1)
 	{
 		perror ("munmap");
 		return;
