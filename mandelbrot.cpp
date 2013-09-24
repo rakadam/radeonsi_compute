@@ -100,14 +100,6 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 		std::cout << "GTT-CPU Bandwidth down: " << double(size) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
 	}
 
-	for (int i = 0; i < size; i += 4)
-	{
-		p[i] = 128;
-		p[i+1] = 255;
-		p[i+2] = 128;
-		p[i+3] = 0;
-	}
-	
 	if (p == MAP_FAILED)
 	{
 		perror ("mmap");
