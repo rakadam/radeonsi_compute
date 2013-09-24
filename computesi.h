@@ -95,7 +95,7 @@ void compute_pool_free(struct compute_context* ctx, uint64_t va);
 int compute_copy_to_gpu(struct gpu_buffer* bo, int gpu_offset, const void* src, int size);
 int compute_copy_from_gpu(struct gpu_buffer* bo, int gpu_offset, void* dst, int size);
 
-int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, struct gpu_buffer* src_bo, size_t size, int sync_flag, int raw_wait_flag);
+int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, struct gpu_buffer* src_bo, size_t size, int sync_flag, int raw_wait_flag, int use_pfp_engine);
 
 void compute_free_gpu_buffer(struct gpu_buffer* bo);
 struct gpu_buffer* compute_alloc_gpu_buffer(struct compute_context* ctx, int size, int domain, int alignment);
