@@ -330,7 +330,7 @@ int main()
 
 	set_program(code, mx, my, 0.7, 0, 0);
 	
-	assert(mx > 0 and mx%256 == 0);
+// 	assert(mx > 0 and mx%256 == 0);
 	
 	compute.transferToGPU(program_code, 0, code, code_size_max);
 	
