@@ -984,6 +984,11 @@ int compute_copy_to_gpu(struct gpu_buffer* bo, size_t gpu_offset, const void* sr
 			local_size = FRAGMENT_SIZE;
 		}
 		
+		if (local_size == 0)
+		{
+			break;
+		}
+		
 		local_offset = start_gpu % FRAGMENT_SIZE;
 		local_size -= local_offset;
 		
