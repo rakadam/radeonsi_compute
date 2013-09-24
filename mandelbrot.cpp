@@ -35,7 +35,15 @@ void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, 
 	
 	int64_t stop_time = get_time_usec();
 	
-	std::cout << "transfer time: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
+	std::cout << "transfer time down: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
+
+	{
+		int64_t start_time = get_time_usec();
+		compute.transferToGPU(buffer, 0, image);
+		int64_t stop_time = get_time_usec();
+		
+		std::cout << "transfer time up: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
+	}
 	
 	FILE *f = fopen(fname.c_str(), "w");
 	
