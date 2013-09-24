@@ -91,7 +91,7 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 	for (int i = 0; i < size; i += 3)
 	{
 		p[i] = 128;
-		p[i+1] = 150;
+		p[i+1] = 255;
 		p[i+2] = 128;
 	}
 	
