@@ -279,8 +279,62 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 	s_endpgm(p);
 }
 
+void animationZoom(double offset_x, double offset_y, double zoom_step, int iternum)
+{
+	double zoom = 0.1;
+
+	int mx = 1920;
+	int my = 1080;
+	int code_size_max = 1024*4;
+	
+	ComputeInterface compute("/dev/dri/card0");
+	gpu_buffer* program_code = compute.bufferAlloc(code_size_max);
+	gpu_buffer* data = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
+	uint32_t *code = new uint32_t[code_size_max/4];
+	
+	buffer_resource bufres;
+	vector<uint32_t> user_data;
+	
+	bufres.base_addr = compute.getVirtualAddress(data);
+	bufres.stride = 4;
+	bufres.num_records = mx*my+1024;
+	bufres.dst_sel_x = 4;
+	bufres.dst_sel_y = 4;
+	bufres.dst_sel_z = 4;
+	bufres.dst_sel_w = 4;
+	bufres.num_format = 4;
+	bufres.data_format = 10;
+	bufres.element_size = 1;
+	bufres.add_tid_en = 0;
+	
+	user_data.push_back(bufres.data[0]);
+	user_data.push_back(bufres.data[1]);
+	user_data.push_back(bufres.data[2]);
+	user_data.push_back(bufres.data[3]);
+
+
+	for (int i = 0; i < iternum; i++)
+	{
+		set_program(code, mx, my, zoom, offset_x, offset_y);
+		
+		compute.transferToGPU(program_code, 0, code, code_size_max);
+		
+		compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code, {program_code, data});
+
+		imageToFrameBuffer(compute, data, mx, my, "/dev/fb1");
+		zoom += zoom_step;
+	}
+	
+	compute.bufferFree(program_code);
+	compute.bufferFree(data);
+}
+
 int main()
 {
+	
+	animationZoom(0, 0, 0.1, 10);
+	
+	return 0;
 	int mx = 1920;
 	int my = 1080;
 	
