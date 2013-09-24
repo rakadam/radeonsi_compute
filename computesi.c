@@ -218,7 +218,7 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 				n2->next = NULL;
 				
 				buf->va = n2->va;
-				printf("pool %p, va: %lX, handle: %i fragment: %i, frag_size: %lX, prev_va: %lX prev_pool %p\n", n2, n2->va, buf->handle, i, n2->size, n->va, n);
+// 				printf("pool %p, va: %lX, handle: %i fragment: %i, frag_size: %lX, prev_va: %lX prev_pool %p\n", n2, n2->va, buf->handle, i, n2->size, n->va, n);
 				
 				n = n2;
 			}
@@ -986,6 +986,8 @@ int compute_copy_to_gpu(struct gpu_buffer* bo, size_t gpu_offset, const void* sr
 		
 		local_offset = start_gpu % FRAGMENT_SIZE;
 		local_size -= local_offset;
+		
+		printf("gg offset:%lx size:%lx\n", local_offset, local_size);
 		
 		int ret = compute_copy_to_gpu_unfragmented(&bo[i], local_offset, src, local_size);
 		
