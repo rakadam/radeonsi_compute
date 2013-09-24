@@ -3,7 +3,7 @@
 #Auto commit:
 git commit -a -m "*auto ..."
 SYNC_SERVER_NAME="sun"
-REMOTE_MACHINE_NAME="arnold"
+REMOTE_MACHINE_NAME="piedone3"
 DIRNAME=`pwd`
 BRANCHNAME=`git branch | sed -e 's/\* //'`
 
