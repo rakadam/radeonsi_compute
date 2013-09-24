@@ -38,14 +38,6 @@ void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, 
 	std::cout << "transfer time down: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
 	std::cout << "Bandwidth down: " << double(sizeof(image[0])*image.size()) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
 
-	{
-		int64_t start_time = get_time_usec();
-		compute.transferToGPU(buffer, 0, image);
-		int64_t stop_time = get_time_usec();
-		
-		std::cout << "transfer time up: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
-		std::cout << "Bandwidth up: " << double(sizeof(image[0])*image.size()) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
-	}
 	
 	FILE *f = fopen(fname.c_str(), "w");
 	
@@ -253,6 +245,15 @@ int main()
 	compute.transferToGPU(cpu_data, 0, vector<uchar4>(mx*my)); ///zero out CPU memory
 	compute.transferToGPU(data, 0, vector<uchar4>(mx*my)); ///zero out GPU memory
 	
+	{
+		int64_t start_time = get_time_usec();
+		compute.transferToGPU(data, 0, vector<uchar4>(mx*my));
+		int64_t stop_time = get_time_usec();
+		
+		std::cout << "transfer time up: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
+		std::cout << "Bandwidth up: " << double(mx*my*sizeof(uchar4)) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
+	}
+
 	buffer_resource bufres;
 	vector<uint32_t> user_data;
 	
