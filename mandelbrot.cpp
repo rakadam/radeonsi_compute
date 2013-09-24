@@ -227,16 +227,6 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 	s_endpgm(p);
 }
 
-int64_t get_time_usec()
-{
-    struct timeval tv;
-    struct timezone tz;
-
-    gettimeofday(&tv, &tz);
-
-    return int64_t(tv.tv_sec) * 1000000 + int64_t(tv.tv_usec);
-}
-
 int main()
 {
 	int mx = 1024;
