@@ -1084,7 +1084,7 @@ int compute_copy_from_gpu(struct gpu_buffer* bo, size_t gpu_offset, void* dst_, 
 		
 		printf("gg offset:%lx size:%lx fragment: %i start_gpu: %lx\n", local_offset, local_size, i, start_gpu);
 		
-		int ret = compute_copy_to_gpu_unfragmented(&bo[i], local_offset, dst, local_size);
+		int ret = compute_copy_from_gpu_unfragmented(&bo[i], local_offset, dst, local_size);
 		
 		if (ret)
 		{
