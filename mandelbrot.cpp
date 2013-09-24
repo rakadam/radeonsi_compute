@@ -232,17 +232,17 @@ int main()
 	gpu_buffer* cpu_data = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	gpu_buffer* data2 = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	
-	compute.transferToGPU(cpu_data, 0, vector<uchar4>(mx*my)); ///zero out CPU memory
-	compute.transferToGPU(data, 0, vector<uchar4>(mx*my)); ///zero out GPU memory
+	compute.transferToGPU(cpu_data, 0, vector<uchar4>(mx*my, 128)); ///zero out CPU memory
+	compute.transferToGPU(data, 0, vector<uchar4>(mx*my, 128)); ///zero out GPU memory
 	
-	{
-		int64_t start_time = get_time_usec();
-		compute.transferToGPU(data, 0, vector<uchar4>(mx*my));
-		int64_t stop_time = get_time_usec();
-		
-		std::cout << "transfer time up: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
-		std::cout << "Bandwidth up: " << double(mx*my*sizeof(uchar4)) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
-	}
+// 	{
+// 		int64_t start_time = get_time_usec();
+// 		compute.transferToGPU(data, 0, vector<uchar4>(mx*my));
+// 		int64_t stop_time = get_time_usec();
+// 		
+// 		std::cout << "transfer time up: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
+// 		std::cout << "Bandwidth up: " << double(mx*my*sizeof(uchar4)) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
+// 	}
 
 	buffer_resource bufres;
 	vector<uint32_t> user_data;
