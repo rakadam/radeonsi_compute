@@ -24,7 +24,7 @@ ComputeInterface::~ComputeInterface()
 
 gpu_buffer* ComputeInterface::bufferAlloc(size_t size)
 {
-	return compute_alloc_gpu_buffer(context, size, RADEON_DOMAIN_VRAM, 8*1024);
+	return compute_alloc_gpu_buffer(context, size, RADEON_DOMAIN_GTT, 8*1024);
 }
 
 void ComputeInterface::bufferFree(gpu_buffer* buf)
