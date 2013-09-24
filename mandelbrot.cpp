@@ -70,7 +70,7 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 	char *p;
 	int fd;
 
-	fd = open (fb_name.c_str(), O_WRONLY);
+	fd = open (fb_name.c_str(), O_RDWR);
 	
 	if (fd == -1)
 	{
