@@ -591,6 +591,7 @@ struct gpu_buffer* compute_alloc_gpu_buffer(struct compute_context* ctx, int siz
 	buf->domain = args.initial_domain;
 	buf->flags = 0;
 	buf->size = size;
+	buf->fragment_number = 1;
 	
 	buf->va_size = ((int)((size + 4095) / 4096)) * 4096;
 	
