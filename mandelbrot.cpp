@@ -44,6 +44,7 @@ void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, 
 		int64_t stop_time = get_time_usec();
 		
 		std::cout << "transfer time up: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
+		std::cout << "Bandwidth up: " << double(sizeof(image[0])*image.size()) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
 	}
 	
 	FILE *f = fopen(fname.c_str(), "w");
