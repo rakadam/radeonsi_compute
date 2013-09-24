@@ -343,7 +343,7 @@ int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo,
 	buf[cdw++] = (raw_wait_flag ? PKT3_CP_DMA_CMD_RAW_WAIT : 0) | size;
 	
 	flags[0] = RADEON_CS_USE_VM;
-	flags[1] = RADEON_CS_RING_COMPUTE;
+	flags[1] = RADEON_CS_RING_DMA;
 	
 	chunks[0].chunk_id = RADEON_CHUNK_ID_FLAGS;
 	chunks[0].length_dw = 2;
