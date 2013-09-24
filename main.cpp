@@ -901,8 +901,8 @@ rak_adam: 0x48 is the TC (texture cache)
 	
   compute_copy_from_gpu(data2_bo, 0, &test_data[0], test_data_size*4);
   
-	if(0)
-  for (int i = 1; i < 64*4; i++)
+// 	if(0)
+  for (int i = 1; i < 64; i++)
   {
     printf("%i : %.8x\n", i, test_data[i]);
   }
