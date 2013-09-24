@@ -319,7 +319,8 @@ void compute_send_dma_req(struct compute_context* ctx, uint64_t dst_va, uint64_t
   uint64_t chunk_array[5];
   struct drm_radeon_cs_chunk chunks[5];
   uint32_t flags[3];
-
+	int i;
+	
 	assert(size);
 	assert((size & ((1<<21)-1)) == size);
 	
@@ -343,6 +344,11 @@ void compute_send_dma_req(struct compute_context* ctx, uint64_t dst_va, uint64_t
 
   printf("cdw: %i\n", cdw);
 
+	for (i = 0; i < cdw; i++)
+	{
+		printf("%08X\n", buf[i]);
+	}
+	
   chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
   chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
   
