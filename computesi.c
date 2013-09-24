@@ -250,6 +250,8 @@ static int compute_vm_map(struct compute_context* ctx, struct gpu_buffer* bo, in
 {
 	unsigned i;
 	
+	printf("Mapping enter:\n");
+	
 	for (i = 0; i < bo->fragment_number; i++)
 	{
 		struct drm_radeon_gem_va va;
@@ -280,6 +282,8 @@ static int compute_vm_map(struct compute_context* ctx, struct gpu_buffer* bo, in
 			return -1;
 		}
 	}
+	
+	printf("Mapping finish:\n");
 	
 	return 0;
 }
