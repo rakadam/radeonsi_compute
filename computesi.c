@@ -620,6 +620,8 @@ static struct gpu_buffer* compute_alloc_fragmented_buffer(struct compute_context
 	}
 	
 	assert(whole_size == size_alloced);
+	
+	return buf;
 }
 
 struct gpu_buffer* compute_alloc_gpu_buffer(struct compute_context* ctx, size_t size, int domain, int alignment)
