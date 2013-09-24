@@ -282,7 +282,7 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 int main()
 {
 	int mx = 256*4;
-	int my = 256*6;
+	int my = 256*7;
 	
 	ComputeInterface compute("/dev/dri/card0");
 	
