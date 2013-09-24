@@ -281,7 +281,7 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 
 int main()
 {
-	int mx = 1024;
+	int mx = 1080;
 	int my = 1920;
 	
 	
