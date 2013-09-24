@@ -256,6 +256,8 @@ static int compute_vm_map(struct compute_context* ctx, uint64_t vm_addr, uint32_
 						
 	va.offset = vm_addr;
 	
+	printf("%lX %lX %lX\n", handle, vm_id, vm_addr);
+	
 	r = drmCommandWriteRead(ctx->fd, DRM_RADEON_GEM_VA, &va, sizeof(va));
 	
 	if (r && va.operation == RADEON_VA_RESULT_ERROR)
