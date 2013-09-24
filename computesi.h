@@ -44,6 +44,12 @@ struct compute_context
 	
 };
 
+struct compute_relocs
+{
+	size_t reloc_num;
+	struct cs_reloc_gem* relocs;
+};
+
 struct compute_state
 {
 	int id;
@@ -96,8 +102,8 @@ void compute_flush_caches(const struct compute_context* ctx);
 void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo);
 void compute_pool_free(struct compute_context* ctx, struct gpu_buffer* bo);
 
-int compute_copy_to_gpu(struct gpu_buffer* bo, int gpu_offset, const void* src, int size);
-int compute_copy_from_gpu(struct gpu_buffer* bo, int gpu_offset, void* dst, int size);
+int compute_copy_to_gpu(struct gpu_buffer* bo, size_t gpu_offset, const void* src, size_t size);
+int compute_copy_from_gpu(struct gpu_buffer* bo, size_t gpu_offset, void* dst, size_t size);
 
 int compute_send_sync_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, size_t dst_offset, struct gpu_buffer* src_bo, size_t src_offset, size_t size, int sync_flag, int raw_wait_flag, int use_pfp_engine);
 
@@ -110,6 +116,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
 int compute_emit_compute_state_manual_relocs(const struct compute_context* ctx, const struct compute_state* state, int reloc_num, struct cs_reloc_gem* relocs);
 struct cs_reloc_gem* compute_allocate_reloc_array(int reloc_num);
 void compute_set_reloc(struct cs_reloc_gem* relocs, int index, struct gpu_buffer* bo);
+int compute_bo_wait(struct gpu_buffer *boi);
 
 
 #endif

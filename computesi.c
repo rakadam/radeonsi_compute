@@ -260,7 +260,7 @@ static int compute_vm_map(struct compute_context* ctx, uint64_t vm_addr, uint32_
 						
 	va.offset = vm_addr;
 	
-	fprintf(stderr, "%lX %lX %lX\n", handle, vm_id, vm_addr);
+// 	fprintf(stderr, "%lX %lX %lX\n", handle, vm_id, vm_addr);
 	
 	r = drmCommandWriteRead(ctx->fd, DRM_RADEON_GEM_VA, &va, sizeof(va));
 	
@@ -372,7 +372,6 @@ int compute_send_sync_dma_req(struct compute_context* ctx, struct gpu_buffer* ds
 	uint64_t chunk_array[5];
 	struct drm_radeon_cs_chunk chunks[5];
 	uint32_t flags[3];
-	int i;
 	
 	assert(size);
 	assert((size & ((1<<21)-1)) == size);
@@ -436,7 +435,6 @@ int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* d
 	uint64_t chunk_array[5];
 	struct drm_radeon_cs_chunk chunks[5];
 	uint32_t flags[3];
-	int i;
 	
 	assert(size);
 	assert((size & ((1<<21)-1)) == size);
@@ -599,7 +597,7 @@ static struct gpu_buffer* compute_alloc_fragmented_buffer(struct compute_context
 		if (drmCommandWriteRead(ctx->fd, DRM_RADEON_GEM_CREATE, &args, sizeof(args)))
 		{
 			fprintf(stderr, "radeon: Failed to allocate a buffer:\n");
-			fprintf(stderr, "radeon:    size      : %d bytes\n", size);
+			fprintf(stderr, "radeon:    size      : %ld bytes\n", size);
 			fprintf(stderr, "radeon:    alignment : %d bytes\n", alignment);
 			fprintf(stderr, "radeon:    domains   : %d\n", domain);
 			return NULL;
@@ -885,7 +883,7 @@ int compute_emit_compute_state_manual_relocs(const struct compute_context* ctx, 
 	return r;
 }
 
-int compute_copy_to_gpu(struct gpu_buffer* bo, int gpu_offset, const void* src, int size)
+int compute_copy_to_gpu(struct gpu_buffer* bo, size_t gpu_offset, const void* src, size_t size)
 {
 	struct drm_radeon_gem_mmap args;
 	int r;
@@ -925,7 +923,7 @@ int compute_copy_to_gpu(struct gpu_buffer* bo, int gpu_offset, const void* src, 
 	return 0;
 }
 
-int compute_copy_from_gpu(struct gpu_buffer* bo, int gpu_offset, void* dst, int size)
+int compute_copy_from_gpu(struct gpu_buffer* bo, size_t gpu_offset, void* dst, size_t size)
 {
 	struct drm_radeon_gem_mmap args;
 	int r;
