@@ -5,6 +5,11 @@
 #include <sys/time.h>
 #include <assert.h>
 #include <cmath>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
 #include "code_helper.h"
 #include "compute_interface.hpp"
 
@@ -56,6 +61,31 @@ void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, 
 	}
 	
 	fclose(f);
+}
+
+void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, std::string fb_name)
+{
+	struct stat sb;
+	off_t len;
+	char *p;
+	int fd;
+
+	fd = open (fb_name.c_str(), O_RDWR);
+	
+	if (fd == -1)
+	{
+		perror ("open");
+		return;
+	}
+
+	if (fstat (fd, &sb) == -1)
+	{
+		perror ("fstat");
+		return;
+	}
+	
+	std::cout << sb.st_size << std::endl;
+	close(fd);
 }
 
 void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double offset_x=0, double offset_y=0)
@@ -223,8 +253,8 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 
 int main()
 {
-	int mx = 1024*8;
-	int my = 1024*8;
+	int mx = 1024*1;
+	int my = 1024*1;
 	
 	ComputeInterface compute("/dev/dri/card0");
 	
@@ -297,7 +327,7 @@ int main()
 	}
 	
 	imageToFile(compute, cpu_data, mx, my, "ki.ppm");
-	
+	imageToFrameBuffer(compute, cpu_data, mx, my, "/dev/fb1");
 	{
 		FILE *f = fopen("ki.bin", "w");
 		fwrite(code, 1, code_size_max, f);
