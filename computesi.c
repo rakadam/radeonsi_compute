@@ -509,7 +509,10 @@ int compute_send_dma_fence(struct compute_context* ctx, struct gpu_buffer* bo)
 	cs.chunks = (uint64_t)(uintptr_t)chunk_array;
 	cs.cs_id = 1;
 	
+	printf("err: \n");
+	printf("err: \n");
 	int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
+	printf("err: \n");
 	
 	printf("%s\n", strerror(-r));
 	
