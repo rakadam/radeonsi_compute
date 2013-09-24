@@ -431,9 +431,9 @@ int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* d
 	buf[cdw++] = ((dst_va >> 32) & 0xFF) | (0/*swap*/ << 8);
 	buf[cdw++] = ((src_va >> 32) & 0xFF) | (0/*swap*/ << 8);
 	
-	buf[cdw++] = DMA_PACKET(DMA_PACKET_FENCE, 0, 0);
-	buf[cdw++] = dst_va & 0xFFFFFFFF;
-	buf[cdw++] = (dst_va >> 32) & 0xFF;
+// 	buf[cdw++] = DMA_PACKET(DMA_PACKET_FENCE, 0, 0);
+// 	buf[cdw++] = dst_va & 0xFFFFFFFF;
+// 	buf[cdw++] = (dst_va >> 32) & 0xFF;
 	
 	flags[0] = RADEON_CS_USE_VM;
 	flags[1] = RADEON_CS_RING_DMA;
@@ -466,6 +466,8 @@ int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* d
 	cs.cs_id = 1;
 	
 	int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
+	
+	compute_bo_wait(dst_bo);
 	
 	return r;
 }
