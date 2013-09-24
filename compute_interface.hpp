@@ -18,6 +18,7 @@ public:
 	~ComputeInterface();
 
 	gpu_buffer* bufferAlloc(size_t size);
+	gpu_buffer* bufferAllocGTT(size_t size);
 	void bufferFree(gpu_buffer* buf);
 
 	uint64_t getVirtualAddress(gpu_buffer* buf);
