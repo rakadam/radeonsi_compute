@@ -169,6 +169,13 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 	struct pool_node *n;
 	assert((bo->va_size & 4095) == 0);
 	assert(bo->fragment_number > 0);
+
+	printf("pool dump:\n");
+	for (n = ctx->vm_pool; n; n = n->next)
+	{
+		printf("pool %p, va: %lX, size: %lX,\n", n, n->va, n->size);
+	}
+	printf("\n");
 	
 	for (n = ctx->vm_pool; n; n = n->next)
 	{
