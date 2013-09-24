@@ -898,6 +898,8 @@ rak_adam: 0x48 is the TC (texture cache)
 
 	compute_send_dma_req(ctx, data2_bo->va, data_bo->va, 16*1024, 1, 0);
 	
+	sleep(10);
+	
   compute_copy_from_gpu(data2_bo, 0, &test_data[0], test_data_size*4);
   
 	if(0)
