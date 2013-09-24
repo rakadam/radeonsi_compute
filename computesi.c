@@ -423,6 +423,7 @@ int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* d
 	}
 	else
 	{
+		printf("DW aligned\n");
 		buf[cdw++] = DMA_PACKET(DMA_PACKET_COPY, 0x00/*DW aligned L2L*/, size/4);
 	}
 	
