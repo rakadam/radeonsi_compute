@@ -250,6 +250,7 @@ int main()
 	gpu_buffer* data = compute.bufferAlloc(mx*my*sizeof(uchar4)+1024*4);
 	gpu_buffer* cpu_data = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	
+	compute.transferToGPU(cpu_data, 0, vector<uchar4>(mx*my)); ///zero out CPU memory
 	compute.transferToGPU(data, 0, vector<uchar4>(mx*my)); ///zero out GPU memory
 	
 	buffer_resource bufres;
@@ -288,6 +289,7 @@ int main()
 	
 	cout << "Runtime: " << double(stop_time-start_time) / 1000.0 << "ms" << endl;
 	
+	compute.syncDMACopy(cpu_data, 0, data, 0, mx*my*sizeof(uchar4));
 	
 	imageToFile(compute, cpu_data, mx, my, "ki.ppm");
 	
