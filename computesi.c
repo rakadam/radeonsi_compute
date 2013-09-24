@@ -260,8 +260,6 @@ static int compute_vm_map(struct compute_context* ctx, struct gpu_buffer* bo, in
 {
 	unsigned i;
 	
-	printf("Mapping enter:\n");
-	
 	for (i = 0; i < bo->fragment_number; i++)
 	{
 		struct drm_radeon_gem_va va;
@@ -276,7 +274,7 @@ static int compute_vm_map(struct compute_context* ctx, struct gpu_buffer* bo, in
 							
 		va.offset = bo[i].va;
 		
-		fprintf(stderr, "mapping: handle:%i va_addr:%lX size:%lX fragment:%i\n", bo[i].handle, bo[i].va, bo[i].size, i);
+// 		fprintf(stderr, "mapping: handle:%i va_addr:%lX size:%lX fragment:%i\n", bo[i].handle, bo[i].va, bo[i].size, i);
 		
 		int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_GEM_VA, &va, sizeof(va));
 		
@@ -292,8 +290,6 @@ static int compute_vm_map(struct compute_context* ctx, struct gpu_buffer* bo, in
 			return -1;
 		}
 	}
-	
-	printf("Mapping finish:\n");
 	
 	return 0;
 }
@@ -646,7 +642,7 @@ static struct gpu_buffer* compute_alloc_fragmented_buffer(struct compute_context
 			return NULL;
 		}
 		
-		fprintf(stderr, "handle: %i\n", args.handle);
+// 		fprintf(stderr, "handle: %i\n", args.handle);
 		
 		buf[i].fragment_number = (i == 0) ? fragment_num : 0;
 		buf[i].ctx = ctx;
@@ -741,7 +737,7 @@ int compute_bo_wait(struct gpu_buffer *boi)
 	return 0;
 }
 
-void compute_flush_caches(const struct compute_context* ctx)
+int compute_flush_caches(const struct compute_context* ctx)
 {
 	struct drm_radeon_cs cs;
 	unsigned buf[1024];
@@ -780,7 +776,7 @@ void compute_flush_caches(const struct compute_context* ctx)
 	chunks[2].length_dw = cdw;
 	chunks[2].chunk_data =  (uint64_t)(uintptr_t)&buf[0];  
 
-	printf("cdw: %i\n", cdw);
+// 	printf("cdw: %i\n", cdw);
 
 	chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
 	chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
@@ -792,7 +788,7 @@ void compute_flush_caches(const struct compute_context* ctx)
 	
 	int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
 
-	printf("ret:%i\n", r);
+	return r;
 }
 
 int compute_emit_compute_state(const struct compute_context* ctx, const struct compute_state* state)
