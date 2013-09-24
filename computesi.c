@@ -42,20 +42,6 @@
 /* query if a RADEON_CS_RING_* submission is supported */
 #define RADEON_INFO_RING_WORKING 0x15
 
-#define DMA_PACKET(cmd, sub_cmd, n) ((((cmd) & 0xF) << 28) |    \
-                                    (((sub_cmd) & 0xFF) << 20) |\
-                                    (((n) & 0xFFFFF) << 0))
-
-/* async DMA Packet types */
-#define DMA_PACKET_WRITE                        0x2
-#define DMA_PACKET_COPY                         0x3
-#define DMA_PACKET_INDIRECT_BUFFER              0x4
-#define DMA_PACKET_SEMAPHORE                    0x5
-#define DMA_PACKET_FENCE                        0x6
-#define DMA_PACKET_TRAP                         0x7
-#define DMA_PACKET_SRBM_WRITE                   0x9
-#define DMA_PACKET_CONSTANT_FILL                0xd
-#define DMA_PACKET_NOP                          0xf
 
 struct drm_radeon_gem_va {
 		uint32_t    handle;
@@ -72,6 +58,21 @@ struct drm_radeon_gem_va {
 	#define RADEON_INFO_VA_START          0x0e
 	#define RADEON_INFO_IB_VM_MAX_SIZE    0x0f
 #endif
+
+#define DMA_PACKET(cmd, sub_cmd, n) ((((cmd) & 0xF) << 28) |    \
+                                    (((sub_cmd) & 0xFF) << 20) |\
+                                    (((n) & 0xFFFFF) << 0))
+
+/* async DMA Packet types */
+#define DMA_PACKET_WRITE                        0x2
+#define DMA_PACKET_COPY                         0x3
+#define DMA_PACKET_INDIRECT_BUFFER              0x4
+#define DMA_PACKET_SEMAPHORE                    0x5
+#define DMA_PACKET_FENCE                        0x6
+#define DMA_PACKET_TRAP                         0x7
+#define DMA_PACKET_SRBM_WRITE                   0x9
+#define DMA_PACKET_CONSTANT_FILL                0xd
+#define DMA_PACKET_NOP                          0xf
 
 struct cs_reloc_gem {
 		uint32_t    handle;
