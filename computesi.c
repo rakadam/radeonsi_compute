@@ -431,10 +431,6 @@ int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* d
 	buf[cdw++] = ((dst_va >> 32) & 0xFF) | (0/*swap*/ << 8);
 	buf[cdw++] = ((src_va >> 32) & 0xFF) | (0/*swap*/ << 8);
 	
-// 	buf[cdw++] = DMA_PACKET(DMA_PACKET_FENCE, 0, 0);
-// 	buf[cdw++] = dst_va & 0xFFFFFFFF;
-// 	buf[cdw++] = (dst_va >> 32) & 0xFF;
-	
 	flags[0] = RADEON_CS_USE_VM;
 	flags[1] = RADEON_CS_RING_DMA;
 	
@@ -467,9 +463,57 @@ int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* d
 	
 	int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
 	
-	compute_bo_wait(dst_bo);
-	
 	return r;
+}
+
+int compute_send_dma_fence(struct compute_context* ctx, struct gpu_buffer* bo)
+{
+	/*struct drm_radeon_cs cs;
+	unsigned buf[64];
+	int cdw = 0;
+	uint64_t chunk_array[5];
+	struct drm_radeon_cs_chunk chunks[5];
+	uint32_t flags[3];
+	int i;
+	
+	buf[cdw++] = DMA_PACKET(DMA_PACKET_FENCE, 0, 0);
+	buf[cdw++] = bo->va & 0xFFFFFFFF;
+	buf[cdw++] = (bo->va >> 32) & 0xFF;
+	
+	flags[0] = RADEON_CS_USE_VM;
+	flags[1] = RADEON_CS_RING_DMA;
+	
+	chunks[0].chunk_id = RADEON_CHUNK_ID_FLAGS;
+	chunks[0].length_dw = 2;
+	chunks[0].chunk_data =  (uint64_t)(uintptr_t)&flags[0];
+	
+	#define RELOC_SIZE (sizeof(struct cs_reloc_gem) / sizeof(uint32_t))
+	
+	struct cs_reloc_gem* relocs = calloc(1, sizeof(struct cs_reloc_gem));
+
+	compute_set_reloc(&relocs[0], bo);
+	
+	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
+	chunks[1].length_dw = 1*RELOC_SIZE;
+	chunks[1].chunk_data =  (uint64_t)(uintptr_t)relocs;
+
+	chunks[2].chunk_id = RADEON_CHUNK_ID_IB;
+	chunks[2].length_dw = cdw;
+	chunks[2].chunk_data =  (uint64_t)(uintptr_t)&buf[0];  
+
+	chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
+	chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
+	chunk_array[2] = (uint64_t)(uintptr_t)&chunks[2];
+	
+	cs.num_chunks = 3;
+	cs.chunks = (uint64_t)(uintptr_t)chunk_array;
+	cs.cs_id = 1;
+	
+	int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
+	*/
+	compute_bo_wait(bo);
+	
+// 	return r;
 }
 
 void compute_free_gpu_buffer(struct gpu_buffer* bo)

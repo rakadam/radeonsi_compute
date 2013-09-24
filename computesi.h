@@ -98,6 +98,7 @@ int compute_copy_from_gpu(struct gpu_buffer* bo, int gpu_offset, void* dst, int 
 int compute_send_sync_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, size_t dst_offset, struct gpu_buffer* src_bo, size_t src_offset, size_t size, int sync_flag, int raw_wait_flag, int use_pfp_engine);
 
 int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, size_t dst_offset, struct gpu_buffer* src_bo, size_t src_offset, size_t size);
+int compute_send_dma_fence(struct compute_context* ctx, struct gpu_buffer* bo);
 
 void compute_free_gpu_buffer(struct gpu_buffer* bo);
 struct gpu_buffer* compute_alloc_gpu_buffer(struct compute_context* ctx, int size, int domain, int alignment);

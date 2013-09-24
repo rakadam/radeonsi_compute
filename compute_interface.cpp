@@ -64,6 +64,8 @@ void ComputeInterface::asyncDMACopy(gpu_buffer* dst, size_t dst_offset, gpu_buff
 		
 		compute_send_async_dma_req(context, dst, i+dst_offset, src, i+src_offset, curSize);
 	}
+	
+	compute_send_dma_fence(context, dst);
 }
 
 void ComputeInterface::transferToGPU(gpu_buffer* buf, size_t offset, const void* data, size_t size, EventDependence evd)
