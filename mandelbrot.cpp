@@ -36,6 +36,7 @@ void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, 
 	int64_t stop_time = get_time_usec();
 	
 	std::cout << "transfer time down: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
+	std::cout << "Bandwidth down: " << double(sizeof(image[0])*image.size()) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
 
 	{
 		int64_t start_time = get_time_usec();
@@ -245,7 +246,7 @@ int main()
 	int code_size_max = 1024*4;
 	
 	gpu_buffer* program_code = compute.bufferAlloc(code_size_max);
-	gpu_buffer* data = compute.bufferAlloc(mx*my*sizeof(uchar4)+1024*4);
+	gpu_buffer* data = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	
 	compute.transferToGPU(data, 0, vector<uchar4>(mx*my)); ///zero out GPU memory
 	
