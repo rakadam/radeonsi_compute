@@ -318,7 +318,7 @@ static struct cs_reloc_gem* compute_create_reloc_table(const struct compute_cont
 	return relocs;
 }
 
-void compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, struct gpu_buffer* src_bo, size_t size, int sync_flag, int raw_wait_flag)
+int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, struct gpu_buffer* src_bo, size_t size, int sync_flag, int raw_wait_flag)
 {
 	struct drm_radeon_cs cs;
 	unsigned buf[64];
@@ -360,8 +360,6 @@ void compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo
 	chunks[2].length_dw = cdw;
 	chunks[2].chunk_data =  (uint64_t)(uintptr_t)&buf[0];  
 
-	printf("cdw: %i\n", cdw);
-
 	chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
 	chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
 	chunk_array[2] = (uint64_t)(uintptr_t)&chunks[2];
@@ -371,8 +369,8 @@ void compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo
 	cs.cs_id = 1;
 	
 	int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
-
-	printf("ret:%i\n", r);
+	
+	return r;
 }
 
 void compute_free_gpu_buffer(struct gpu_buffer* bo)
