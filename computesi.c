@@ -1010,7 +1010,7 @@ int compute_copy_to_gpu(struct gpu_buffer* bo, size_t gpu_offset, const void* sr
 	return 0;
 }
 
-int compute_copy_from_gpu(struct gpu_buffer* bo, size_t gpu_offset, void* dst, size_t size)
+int compute_copy_from_gpu_unfragmented(struct gpu_buffer* bo, size_t gpu_offset, void* dst, size_t size)
 {
 	struct drm_radeon_gem_mmap args;
 	int r;
@@ -1050,3 +1050,52 @@ int compute_copy_from_gpu(struct gpu_buffer* bo, size_t gpu_offset, void* dst, s
 	return 0;
 }
 
+int compute_copy_from_gpu(struct gpu_buffer* bo, size_t gpu_offset, void* dst_, size_t size)
+{
+	const char* dst = (const char*)dst_;
+	size_t start_gpu = gpu_offset;
+	size_t start_fragment = gpu_offset / FRAGMENT_SIZE;
+	unsigned i;
+	
+	assert(start_fragment < bo->fragment_number);
+	
+	for (i = start_fragment; i < bo->fragment_number; i++)
+	{
+		size_t local_size;
+		size_t local_offset;
+		size_t size_left = size - start_gpu;
+		
+		if (size_left < FRAGMENT_SIZE)
+		{
+			local_size = size_left;
+		}
+		else
+		{
+			local_size = FRAGMENT_SIZE;
+		}
+		
+		if (local_size == 0)
+		{
+			break;
+		}
+		
+		local_offset = start_gpu % FRAGMENT_SIZE;
+		local_size -= local_offset;
+		
+		printf("gg offset:%lx size:%lx fragment: %i start_gpu: %lx\n", local_offset, local_size, i, start_gpu);
+		
+		int ret = compute_copy_to_gpu_unfragmented(&bo[i], local_offset, dst, local_size);
+		
+		if (ret)
+		{
+			return ret;
+		}
+		
+		dst += local_size;
+		start_gpu += local_size;
+	}
+	
+	assert(start_gpu = size);
+	
+	return 0;
+}
