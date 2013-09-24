@@ -1052,7 +1052,7 @@ int compute_copy_from_gpu_unfragmented(struct gpu_buffer* bo, size_t gpu_offset,
 
 int compute_copy_from_gpu(struct gpu_buffer* bo, size_t gpu_offset, void* dst_, size_t size)
 {
-	const char* dst = (const char*)dst_;
+	char* dst = (char*)dst_;
 	size_t start_gpu = gpu_offset;
 	size_t start_fragment = gpu_offset / FRAGMENT_SIZE;
 	unsigned i;
