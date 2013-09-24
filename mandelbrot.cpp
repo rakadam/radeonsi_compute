@@ -247,7 +247,8 @@ int main()
 	int code_size_max = 1024*4;
 	
 	gpu_buffer* program_code = compute.bufferAlloc(code_size_max);
-	gpu_buffer* data = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
+	gpu_buffer* data = compute.bufferAlloc(mx*my*sizeof(uchar4)+1024*4);
+	gpu_buffer* cpu_data = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	
 	compute.transferToGPU(data, 0, vector<uchar4>(mx*my)); ///zero out GPU memory
 	
@@ -287,7 +288,8 @@ int main()
 	
 	cout << "Runtime: " << double(stop_time-start_time) / 1000.0 << "ms" << endl;
 	
-	imageToFile(compute, data, mx, my, "ki.ppm");
+	
+	imageToFile(compute, cpu_data, mx, my, "ki.ppm");
 	
 	{
 		FILE *f = fopen("ki.bin", "w");

@@ -42,6 +42,11 @@ uint64_t ComputeInterface::getVirtualAddress(gpu_buffer* buf)
 	return buf->va;
 }
 
+void ComputeInterface::syncDMACopy(gpu_buffer* dst, size_t dst_offset, gpu_buffer* src, size_t src_offset, size_t size)
+{
+	
+}
+
 void ComputeInterface::transferToGPU(gpu_buffer* buf, size_t offset, const void* data, size_t size, EventDependence evd)
 {
 	compute_copy_to_gpu(buf, offset, data, size);

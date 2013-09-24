@@ -319,7 +319,7 @@ static struct cs_reloc_gem* compute_create_reloc_table(const struct compute_cont
 	return relocs;
 }
 
-int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, struct gpu_buffer* src_bo, size_t size, int sync_flag, int raw_wait_flag, int use_pfp_engine)
+int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, size_t dst_offset, struct gpu_buffer* src_bo, size_t src_offset, size_t size, int sync_flag, int raw_wait_flag, int use_pfp_engine)
 {
 	struct drm_radeon_cs cs;
 	unsigned buf[64];
@@ -332,15 +332,18 @@ int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo,
 	assert(size);
 	assert((size & ((1<<21)-1)) == size);
 	
+	size_t src_va = src_bo->va + src_offset;
+	size_t dst_va = dst_bo->va + dst_offset;
+	
 	buf[cdw++] = PKT3C(PKT3_CP_DMA, 4, 0);
-	buf[cdw++] = src_bo->va & 0xFFFFFFFF;
-	buf[cdw++] = (sync_flag ? PKT3_CP_DMA_CP_SYNC : 0) | PKT3_CP_DMA_ENGINE((use_pfp_engine ? 1 : 0))| ((src_bo->va >> 32) & 0xFFFF);
-	buf[cdw++] = dst_bo->va & 0xFFFFFFFF;
-	buf[cdw++] = (dst_bo->va >> 32) & 0xffff;
+	buf[cdw++] = src_va & 0xFFFFFFFF;
+	buf[cdw++] = (sync_flag ? PKT3_CP_DMA_CP_SYNC : 0) | PKT3_CP_DMA_ENGINE((use_pfp_engine ? 1 : 0))| ((src_va >> 32) & 0xFFFF);
+	buf[cdw++] = dst_va & 0xFFFFFFFF;
+	buf[cdw++] = (dst_va >> 32) & 0xffff;
 	buf[cdw++] = (raw_wait_flag ? PKT3_CP_DMA_CMD_RAW_WAIT : 0) | size;
 	
 	flags[0] = RADEON_CS_USE_VM;
-	flags[1] = RADEON_CS_RING_DMA;
+	flags[1] = RADEON_CS_RING_COMPUTE;
 	
 	chunks[0].chunk_id = RADEON_CHUNK_ID_FLAGS;
 	chunks[0].length_dw = 2;

@@ -21,7 +21,10 @@ public:
 	gpu_buffer* bufferAllocGTT(size_t size);
 	void bufferFree(gpu_buffer* buf);
 
+	
 	uint64_t getVirtualAddress(gpu_buffer* buf);
+	void syncDMACopy(gpu_buffer* dst, size_t dst_offset, gpu_buffer* src, size_t src_offset, size_t size);
+	
 	void transferToGPU(gpu_buffer* buf, size_t offset, const void* data, size_t size, EventDependence evd = EventDependence());
 	void transferFromGPU(gpu_buffer* buf, size_t offset, void* data, size_t size, EventDependence evd = EventDependence());
 
