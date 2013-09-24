@@ -88,6 +88,11 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 	
 	p = (char*)mmap (0, size, PROT_WRITE, MAP_SHARED, fd, 0);
 	
+	for (int i = 0; i < size; i += 3)
+	{
+		p[i] = 0;
+	}
+	
 	if (p == MAP_FAILED)
 	{
 		perror ("mmap");
