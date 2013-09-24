@@ -50,7 +50,19 @@ void ComputeInterface::syncDMACopy(gpu_buffer* dst, size_t dst_offset, gpu_buffe
 	{
 		size_t curSize = std::min(fragmentSize, size-i);
 		
-		compute_send_sync_dma_req(context, dst, i+dst_offset, src, i+src_offset, fragmentSize, i+curSize >= size, i == 0, 1);
+		compute_send_sync_dma_req(context, dst, i+dst_offset, src, i+src_offset, curSize, i+curSize >= size, i == 0, 1);
+	}
+}
+
+void ComputeInterface::asyncDMACopy(gpu_buffer* dst, size_t dst_offset, gpu_buffer* src, size_t src_offset, size_t size)
+{
+	size_t fragmentSize = 512*1024;
+	
+	for (size_t i = 0; i < size; i += std::min(fragmentSize, size-i))
+	{
+		size_t curSize = std::min(fragmentSize, size-i);
+		
+		compute_send_async_dma_req(context, dst, i+dst_offset, src, i+src_offset, curSize);
 	}
 }
 
