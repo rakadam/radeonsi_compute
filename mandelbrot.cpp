@@ -15,10 +15,27 @@ struct uchar4
 	uint8_t r, g, b, a;
 }__attribute__((packed));
 
+int64_t get_time_usec()
+{
+    struct timeval tv;
+    struct timezone tz;
+
+    gettimeofday(&tv, &tz);
+
+    return int64_t(tv.tv_sec) * 1000000 + int64_t(tv.tv_usec);
+}
+
 void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, std::string fname)
 {
 	vector<uchar4> image(mx*my);
+
+	int64_t start_time = get_time_usec();
+	
 	compute.transferFromGPU(buffer, 0, image);
+	
+	int64_t stop_time = get_time_usec();
+	
+	std::cout << "transfer time: " << stop_time-start_time << std::endl;
 	
 	FILE *f = fopen(fname.c_str(), "w");
 	
