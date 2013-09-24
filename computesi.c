@@ -374,6 +374,11 @@ int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo,
 	
 	int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
 	
+	if (sync_flag)
+	{
+		compute_bo_wait(dst_bo);
+	}
+	
 	return r;
 }
 
