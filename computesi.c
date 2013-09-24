@@ -417,7 +417,7 @@ int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* d
 	assert((src_va >> 40) == 0);
 	assert((dst_va >> 40) == 0);
 	
-	buf[cdw++] = DMA_PACKET(DMA_PACKET_COPY, 0x40/*byte aligned L2L*/, size);
+	buf[cdw++] = DMA_PACKET(DMA_PACKET_COPY, 0*0x40/*byte aligned L2L*/, size);
 	buf[cdw++] = dst_va & 0xFFFFFFFF;
 	buf[cdw++] = src_va & 0xFFFFFFFF;
 	buf[cdw++] = ((dst_va >> 32) & 0xFF) | (0/*swap*/ << 8);
