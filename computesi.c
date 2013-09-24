@@ -319,6 +319,7 @@ void compute_send_dma_req(struct compute_context* ctx, uint64_t dst_va, uint64_t
   uint64_t chunk_array[5];
   struct drm_radeon_cs_chunk chunks[5];
   uint32_t flags[3];
+  struct cs_reloc_gem* relocs;
 	int i;
 	
 	assert(size);
@@ -337,10 +338,19 @@ void compute_send_dma_req(struct compute_context* ctx, uint64_t dst_va, uint64_t
   chunks[0].chunk_id = RADEON_CHUNK_ID_FLAGS;
   chunks[0].length_dw = 2;
   chunks[0].chunk_data =  (uint64_t)(uintptr_t)&flags[0];
+	
+  #define RELOC_SIZE (sizeof(struct cs_reloc_gem) / sizeof(uint32_t))
+  
+  int reloc_num = 0;
+  relocs = compute_create_reloc_table(ctx, &reloc_num);
+  
+  chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
+  chunks[1].length_dw = reloc_num*RELOC_SIZE;
+  chunks[1].chunk_data =  (uint64_t)(uintptr_t)relocs;
 
-  chunks[1].chunk_id = RADEON_CHUNK_ID_IB;
-  chunks[1].length_dw = cdw;
-  chunks[1].chunk_data =  (uint64_t)(uintptr_t)&buf[0];  
+  chunks[2].chunk_id = RADEON_CHUNK_ID_IB;
+  chunks[2].length_dw = cdw;
+  chunks[2].chunk_data =  (uint64_t)(uintptr_t)&buf[0];  
 
   printf("cdw: %i\n", cdw);
 
@@ -351,8 +361,9 @@ void compute_send_dma_req(struct compute_context* ctx, uint64_t dst_va, uint64_t
 	
   chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
   chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
+  chunk_array[2] = (uint64_t)(uintptr_t)&chunks[2];
   
-  cs.num_chunks = 2;
+  cs.num_chunks = 3;
   cs.chunks = (uint64_t)(uintptr_t)chunk_array;
   cs.cs_id = 1;
   
