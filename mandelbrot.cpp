@@ -293,7 +293,7 @@ int main()
 	{
 		int64_t start_time = get_time_usec();
 		
-		compute.asyncDMACopy(cpu_data, 1, data, 0, mx*my*sizeof(uchar4));
+		compute.asyncDMACopy(cpu_data, 4, data, 0, mx*my*sizeof(uchar4));
 		
 		int64_t stop_time = get_time_usec();
 		
