@@ -262,7 +262,7 @@ static int compute_vm_map(struct compute_context* ctx, uint64_t vm_addr, uint32_
 	
 	if (r && va.operation == RADEON_VA_RESULT_ERROR)
 	{
-		fprintf(stderr, "radeon: Failed to map buffer: %x\n", handle);
+		fprintf(stderr, "radeon: Failed to map buffer : %x\n", handle);
 		return -1;
 	}
 	
