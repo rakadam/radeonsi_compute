@@ -44,6 +44,8 @@ uint64_t ComputeInterface::getVirtualAddress(gpu_buffer* buf)
 
 void ComputeInterface::syncDMACopy(gpu_buffer* dst, size_t dst_offset, gpu_buffer* src, size_t src_offset, size_t size)
 {
+	assert(src);
+	assert(dst);
 	size_t fragmentSize = 512*1024;
 	
 	for (size_t i = 0; i < size; i += std::min(fragmentSize, size-i))
@@ -56,6 +58,8 @@ void ComputeInterface::syncDMACopy(gpu_buffer* dst, size_t dst_offset, gpu_buffe
 
 void ComputeInterface::asyncDMACopy(gpu_buffer* dst, size_t dst_offset, gpu_buffer* src, size_t src_offset, size_t size)
 {
+	assert(src);
+	assert(dst);
 	size_t fragmentSize = 512*1024;
 	
 	for (size_t i = 0; i < size; i += std::min(fragmentSize, size-i))
@@ -82,6 +86,7 @@ void ComputeInterface::transferFromGPU(gpu_buffer* buf, size_t offset, void* dat
 }
 
 void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t> threadOffset, std::vector<size_t> blockDim, std::vector<size_t> localSize, gpu_buffer* code,
+															const std::vector<gpu_buffer*>& usedMemories,
 															int localMemSize, int vgprnum, int sgprnum, EventDependence evd)
 {
 	assert(localMemSize <= 32*1024);
@@ -142,8 +147,19 @@ void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t
 	state.tmpring_wavesize = 0;
 	state.binary = code;
 
-	int ret = compute_emit_compute_state(context, &state);
+	
+	struct compute_relocs crelocs;
+	compute_init_relocs(&crelocs);
+	
+	for (auto bo : usedMemories)
+	{
+		compute_push_reloc(&crelocs, bo);
+	}
+	
+	int ret = compute_emit_compute_state_manual_relocs(context, &state, crelocs);
 
+	free(crelocs.relocs);
+	
 	if (ret != 0)
 	{
 		throw std::runtime_error("Error while running kernel: " + std::string(strerror(errno)));

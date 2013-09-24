@@ -3,10 +3,10 @@
 #Auto commit:
 git commit -a -m "*auto ..."
 SYNC_SERVER_NAME="sun"
-REMOTE_MACHINE_NAME="arnold"
+REMOTE_MACHINE_NAME="piedone3"
 DIRNAME=`pwd`
 BRANCHNAME=`git branch | sed -e 's/\* //'`
 
 git push sun ${BRANCHNAME}
 
-ssh ${REMOTE_MACHINE_NAME} "cd ${DIRNAME}; cmake .; git fetch ${SYNC_SERVER_NAME}; if git pull --ff-only ${SYNC_SERVER_NAME} ${BRANCHNAME}; then if make; then ./mandelbrot; fi; fi"
+ssh ${REMOTE_MACHINE_NAME} "cd ${DIRNAME}; cmake .; git fetch ${SYNC_SERVER_NAME}; if git pull --ff-only ${SYNC_SERVER_NAME} ${BRANCHNAME}; then if make; then sync;./mandelbrot; fi; fi"

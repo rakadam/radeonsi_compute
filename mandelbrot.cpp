@@ -12,17 +12,20 @@ using namespace std;
 
 struct uchar4
 {
+	uchar4() : r(0), g(0), b(0), a(0) {}
+	uchar4(int val) : r(val), g(val), b(val), a(val) {}
+	
 	uint8_t r, g, b, a;
 }__attribute__((packed));
 
 int64_t get_time_usec()
 {
-    struct timeval tv;
-    struct timezone tz;
+		struct timeval tv;
+		struct timezone tz;
 
-    gettimeofday(&tv, &tz);
+		gettimeofday(&tv, &tz);
 
-    return int64_t(tv.tv_sec) * 1000000 + int64_t(tv.tv_usec);
+		return int64_t(tv.tv_sec) * 1000000 + int64_t(tv.tv_usec);
 }
 
 void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, std::string fname)
@@ -57,8 +60,7 @@ void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, 
 
 void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double offset_x=0, double offset_y=0)
 {
-
-  float N;
+	float N;
 
 	s_nop(p);
 	s_nop(p);
@@ -91,24 +93,13 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 	///x:v6 y:v8 float32
 	///pixelcolor:v10, 0xBBGGRR
 	
-// 	v_mul_f32(p, 6, 6, 256+6);
-// 	v_mul_f32(p, 8, 8, 256+8);
-// 	
-//  	v_add_f32(p, 10, 6, 256+8);
-// 	
-// 	v_sqrt_f32(p, 10, 256+10);
-// 	
-// 	v_mul_f32(p, 10, 10, 255); p[0] = floatconv(float(mx/2)); p++;
-	
-	
-// 	///-------------------
 	s_mov_b64(p, 12, 126); //SAVE exec to s12-s13
 	s_mov_imm32(p, 8, 0); //s8 = 0;
 	v_mov_imm32(p, 10, floatconv(0));
 	v_mov_imm32(p, 12, floatconv(0));
 	v_mov_imm32(p, 35, floatconv(0));  //zero out xact
 	v_mov_imm32(p, 36, floatconv(0));  //zero out yact
-   
+	
 	
 	unsigned* eleje = p; //start label
 	
@@ -123,37 +114,37 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 	///v_mul_f32(p, 14, 6, 256+8);
 	///v_add_f32(p, 12, 12, 256+14);
 
-  ///mandelbrot calculation
-  // A     := v32
-  // B     := v33
-  // C     := v34
-  // xact  := v35
-  // yact  := v36
-  // xval  := v6
-  // yval  := v8
-  // xtemp := v40
- 
-  //float xtemp = xact * xact - yact * yact + xval;
-  v_mul_f32(p, 32, 35, 256+35);
-  v_add_f32(p, 32, 32, 256+6); 
-  v_mul_f32(p, 33, 36, 256+36);
-  v_sub_f32(p, 40, 33, 256+32); 
+	///mandelbrot calculation
+	// A     := v32
+	// B     := v33
+	// C     := v34
+	// xact  := v35
+	// yact  := v36
+	// xval  := v6
+	// yval  := v8
+	// xtemp := v40
 
-  //yact = 2 * xact * yact + yval;
-  v_mul_f32(p, 32, 35, 255); p[0] = floatconv(2.0); p++;
-  v_mul_f32(p, 33, 32, 256+36);
-  v_add_f32(p, 36, 33, 256+8); 
-  
-  //xact = xtemp;
+	//float xtemp = xact * xact - yact * yact + xval;
+	v_mul_f32(p, 32, 35, 256+35);
+	v_add_f32(p, 32, 32, 256+6); 
+	v_mul_f32(p, 33, 36, 256+36);
+	v_sub_f32(p, 40, 33, 256+32); 
+
+	//yact = 2 * xact * yact + yval;
+	v_mul_f32(p, 32, 35, 255); p[0] = floatconv(2.0); p++;
+	v_mul_f32(p, 33, 32, 256+36);
+	v_add_f32(p, 36, 33, 256+8); 
+	
+	//xact = xtemp;
 	v_mov_b32(p, 35, 256+40);
 
-  //STOP_EXPR_1
-  v_mul_f32(p, 32, 35, 256+35);
-  v_mul_f32(p, 33, 36, 256+36);
-  v_add_f32(p, 12, 32, 256+33);
-  
-  //setting the radius 
-  N = sqrt(25);
+	//STOP_EXPR_1
+	v_mul_f32(p, 32, 35, 256+35);
+	v_mul_f32(p, 33, 36, 256+36);
+	v_add_f32(p, 12, 32, 256+33);
+	
+	//setting the radius 
+	N = sqrt(25);
 	v_cmpx_gt_f32(p, 12, 255); p[0]=floatconv(N*N); p++; //while(r12 < 7.0)
 	
 	s_cbranch_execz(p, 3);//Exit loop if vector unit is idle
@@ -163,14 +154,14 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 	
 	s_mov_b64(p, 126, 12); //restore exec from s12-s13
 	
-  //continuous coloring
-  float scaleFactor = 1/(log2(N));
-  v_sqrt_f32(p, 12, 256+12);
-  v_log_f32(p, 12, 256+12);
-  v_mul_f32(p, 12, 12, 255); p[0]=floatconv(scaleFactor); p++;
-  v_log_f32(p, 12, 256+12);
-  v_sub_f32(p, 10, 12, 256+10);
-  
+	//continuous coloring
+	float scaleFactor = 1/(log2(N));
+	v_sqrt_f32(p, 12, 256+12);
+	v_log_f32(p, 12, 256+12);
+	v_mul_f32(p, 12, 12, 255); p[0]=floatconv(scaleFactor); p++;
+	v_log_f32(p, 12, 256+12);
+	v_sub_f32(p, 10, 12, 256+10);
+	
 	float cscale = 5.0;
 	
 	v_mul_f32(p, 11, 10, 255); p[0] = floatconv(1.0/cscale); p++;
@@ -221,7 +212,7 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 		0//int vaddr
 	);
 	
-  s_waitcnt(p);
+	s_waitcnt(p);
 
 	s_nop(p);
 	s_nop(p);
@@ -232,8 +223,8 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 
 int main()
 {
-	int mx = 1024*6;
-	int my = 1024*6;
+	int mx = 1024*8;
+	int my = 1024*8;
 	
 	ComputeInterface compute("/dev/dri/card0");
 	
@@ -242,9 +233,10 @@ int main()
 	gpu_buffer* program_code = compute.bufferAlloc(code_size_max);
 	gpu_buffer* data = compute.bufferAlloc(mx*my*sizeof(uchar4)+1024*4);
 	gpu_buffer* cpu_data = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
+	gpu_buffer* data2 = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	
-	compute.transferToGPU(cpu_data, 0, vector<uchar4>(mx*my)); ///zero out CPU memory
-	compute.transferToGPU(data, 0, vector<uchar4>(mx*my)); ///zero out GPU memory
+	compute.transferToGPU(cpu_data, 0, vector<uchar4>(mx*my, uchar4(128))); ///zero out CPU memory
+	compute.transferToGPU(data, 0, vector<uchar4>(mx*my, uchar4(128))); ///zero out GPU memory
 	
 	{
 		int64_t start_time = get_time_usec();
@@ -285,8 +277,8 @@ int main()
 	
 	int64_t start_time = get_time_usec();
 	
-	compute.asyncDMACopy(cpu_data, 0, data, 0, mx*my*sizeof(uchar4));
-	compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code);
+// 	compute.asyncDMACopy(cpu_data, 0, data2, 0, mx*my*sizeof(uchar4));
+	compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code, {program_code, data});
 	
 	int64_t stop_time = get_time_usec();
 	
