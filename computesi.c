@@ -419,12 +419,11 @@ int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* d
 	
 	if ((src_va & 3) == 0 && (dst_va & 3) == 0)
 	{
-		buf[cdw++] = DMA_PACKET(DMA_PACKET_COPY, 0x40/*byte aligned L2L*/, size);
+		buf[cdw++] = DMA_PACKET(DMA_PACKET_COPY, 0x00/*DW aligned L2L*/, size/4);
 	}
 	else
 	{
-		printf("DW aligned %li\n", dst_offset);
-		buf[cdw++] = DMA_PACKET(DMA_PACKET_COPY, 0x00/*DW aligned L2L*/, size/4);
+		buf[cdw++] = DMA_PACKET(DMA_PACKET_COPY, 0x40/*byte aligned L2L*/, size);
 	}
 	
 	buf[cdw++] = dst_va & 0xFFFFFFFF;
