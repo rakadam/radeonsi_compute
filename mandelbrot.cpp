@@ -288,8 +288,16 @@ int main()
 	int64_t stop_time = get_time_usec();
 	
 	cout << "Runtime: " << double(stop_time-start_time) / 1000.0 << "ms" << endl;
-	
-	compute.syncDMACopy(cpu_data, 0, data, 0, mx*my*sizeof(uchar4));
+
+	{
+		int64_t start_time = get_time_usec();
+		
+		compute.syncDMACopy(cpu_data, 0, data, 0, mx*my*sizeof(uchar4));
+		
+		int64_t stop_time = get_time_usec();
+		
+		std::cout << "DMA time: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
+	}
 	
 	imageToFile(compute, cpu_data, mx, my, "ki.ppm");
 	
