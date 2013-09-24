@@ -279,6 +279,16 @@ static int compute_vm_unmap(struct compute_context* ctx, uint64_t vm_addr, uint3
 	return 0;
 }
 
+static void compute_set_reloc(struct cs_reloc_gem* reloc, struct gpu_buffer* bo)
+{
+	memset(reloc, 0, sizeof(struct cs_reloc_gem));
+	
+	reloc->handle = bo->handle;
+	reloc->read_domain = bo->domain;
+	reloc->write_domain = bo->domain;
+	reloc->flags = 0;
+}
+
 static struct cs_reloc_gem* compute_create_reloc_table(const struct compute_context* ctx, int* size)
 {
 	struct cs_reloc_gem* relocs = NULL;
@@ -301,10 +311,11 @@ static struct cs_reloc_gem* compute_create_reloc_table(const struct compute_cont
 	
 	for (n = ctx->vm_pool->next; n; n = n->next)
 	{
-		relocs[i].handle = n->bo->handle;
-		relocs[i].read_domain = n->bo->domain;
-		relocs[i].write_domain = n->bo->domain;
-		relocs[i].flags = 0;
+// 		relocs[i].handle = n->bo->handle;
+// 		relocs[i].read_domain = n->bo->domain;
+// 		relocs[i].write_domain = n->bo->domain;
+// 		relocs[i].flags = 0;
+		compute_set_reloc(&relocs[i], n->bo);
 		i++;
 	}
 	
