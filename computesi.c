@@ -202,7 +202,6 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 				n2->parent_bo = bo;
 				n2->bo = buf;
 				n2->va = n->va + n->size;
-				printf("VA: %p : addr: %lX\n", n2, n2->va);
 				n2->size = buf->va_size;
 				n->next = n2;
 				n2->prev = n;
@@ -570,42 +569,94 @@ void compute_free_gpu_buffer(struct gpu_buffer* bo)
 	free(bo);
 }
 
-
-struct gpu_buffer* compute_alloc_gpu_buffer(struct compute_context* ctx, int size, int domain, int alignment)
+static struct gpu_buffer* compute_alloc_fragmented_buffer(struct compute_context* ctx, size_t whole_size, int domain, int alignment)
 {
-	struct drm_radeon_gem_create args;
-	struct gpu_buffer* buf = calloc(1, sizeof(struct gpu_buffer));
+	unsigned i;
+	size_t fragment_size = 64*1024*1024;
+	size_t fragment_num = (whole_size+fragment_size-1) / fragment_size;
+	size_t size_alloced = 0;
+	struct gpu_buffer* buf = calloc(fragment_num, sizeof(struct gpu_buffer));
 	
-	memset(&args, 0, sizeof(args));
-	args.size = size;
-	args.alignment = alignment;
-	args.initial_domain = domain;
-	
-	if (drmCommandWriteRead(ctx->fd, DRM_RADEON_GEM_CREATE, &args, sizeof(args)))
+	for (i = 0; i < fragment_num; i++)
 	{
-		fprintf(stderr, "radeon: Failed to allocate a buffer:\n");
-		fprintf(stderr, "radeon:    size      : %d bytes\n", size);
-		fprintf(stderr, "radeon:    alignment : %d bytes\n", alignment);
-		fprintf(stderr, "radeon:    domains   : %d\n", domain);
-		return NULL;
+		size_t size;
+		struct drm_radeon_gem_create args;
+		
+		if (size_alloced + fragment_size <= whole_size)
+		{
+			size = fragment_size;
+		}
+		else
+		{
+			size = whole_size-size_alloced;
+		}
+		
+		memset(&args, 0, sizeof(args));
+		args.size = size;
+		args.alignment = alignment;
+		args.initial_domain = domain;
+		
+		if (drmCommandWriteRead(ctx->fd, DRM_RADEON_GEM_CREATE, &args, sizeof(args)))
+		{
+			fprintf(stderr, "radeon: Failed to allocate a buffer:\n");
+			fprintf(stderr, "radeon:    size      : %d bytes\n", size);
+			fprintf(stderr, "radeon:    alignment : %d bytes\n", alignment);
+			fprintf(stderr, "radeon:    domains   : %d\n", domain);
+			return NULL;
+		}
+		
+		fprintf(stderr, "handle: %i\n", args.handle);
+		
+		buf[i].fragment_number = fragment_num;
+		buf[i].ctx = ctx;
+		buf[i].alignment = args.alignment;
+		buf[i].handle = args.handle;
+		buf[i].domain = args.initial_domain;
+		buf[i].flags = 0;
+		buf[i].size = size;
+		buf[i].fragment_number = 1;
+		buf[i].va_size = ((int)((size + 4095) / 4096)) * 4096;
+		size_alloced += size;
 	}
 	
-	fprintf(stderr, "handle: %i\n", args.handle);
+	assert(whole_size == size_alloced);
+}
+
+struct gpu_buffer* compute_alloc_gpu_buffer(struct compute_context* ctx, size_t size, int domain, int alignment)
+{
+// 	struct drm_radeon_gem_create args;
+// 	struct gpu_buffer* buf = calloc(1, sizeof(struct gpu_buffer));
+// 	
+// 	memset(&args, 0, sizeof(args));
+// 	args.size = size;
+// 	args.alignment = alignment;
+// 	args.initial_domain = domain;
+// 	
+// 	if (drmCommandWriteRead(ctx->fd, DRM_RADEON_GEM_CREATE, &args, sizeof(args)))
+// 	{
+// 		fprintf(stderr, "radeon: Failed to allocate a buffer:\n");
+// 		fprintf(stderr, "radeon:    size      : %d bytes\n", size);
+// 		fprintf(stderr, "radeon:    alignment : %d bytes\n", alignment);
+// 		fprintf(stderr, "radeon:    domains   : %d\n", domain);
+// 		return NULL;
+// 	}
+// 	
+// 	fprintf(stderr, "handle: %i\n", args.handle);
+// 	
+// 	buf->ctx = ctx;
+// 	buf->alignment = args.alignment;
+// 	buf->handle = args.handle;
+// 	buf->domain = args.initial_domain;
+// 	buf->flags = 0;
+// 	buf->size = size;
+// 	buf->fragment_number = 1;
+// 	
+// 	buf->va_size = ((int)((size + 4095) / 4096)) * 4096;
 	
-	buf->ctx = ctx;
-	buf->alignment = args.alignment;
-	buf->handle = args.handle;
-	buf->domain = args.initial_domain;
-	buf->flags = 0;
-	buf->size = size;
-	buf->fragment_number = 1;
-	
-	buf->va_size = ((int)((size + 4095) / 4096)) * 4096;
+	struct gpu_buffer* buf = compute_alloc_fragmented_buffer(ctx, size, domain, alignment);
 	
 	compute_pool_alloc(ctx, buf);
 
-	printf("buf va_addr:%lX\n", buf->va);
-	
 	if (compute_vm_map(ctx, buf->va, buf->handle, 0, RADEON_VM_PAGE_SNOOPED))
 	{
 		compute_pool_free(ctx, buf);

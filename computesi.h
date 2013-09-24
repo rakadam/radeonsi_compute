@@ -105,7 +105,7 @@ int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* d
 int compute_send_dma_fence(struct compute_context* ctx, struct gpu_buffer* bo);
 
 void compute_free_gpu_buffer(struct gpu_buffer* bo);
-struct gpu_buffer* compute_alloc_gpu_buffer(struct compute_context* ctx, int size, int domain, int alignment);
+struct gpu_buffer* compute_alloc_gpu_buffer(struct compute_context* ctx, size_t size, int domain, int alignment);
 int compute_emit_compute_state(const struct compute_context* ctx, const struct compute_state* state);
 int compute_emit_compute_state_manual_relocs(const struct compute_context* ctx, const struct compute_state* state, int reloc_num, struct cs_reloc_gem* relocs);
 struct cs_reloc_gem* compute_allocate_reloc_array(int reloc_num);
