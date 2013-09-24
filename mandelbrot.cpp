@@ -84,11 +84,11 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 		return;
 	}
 	
-	size_t size = 640*480*3;
+	size_t size = 640*480*4;
 	
 	p = (char*)mmap (0, size, PROT_WRITE, MAP_SHARED, fd, 0);
 	
-	for (int i = 0; i < size; i += 3)
+	for (int i = 0; i < size; i += 4)
 	{
 		p[i] = 128;
 		p[i+1] = 255;
