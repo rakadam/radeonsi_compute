@@ -162,58 +162,68 @@ void compute_free_context(struct compute_context* ctx)
 	free(ctx);
 }
 
-uint64_t compute_pool_alloc(struct compute_context* ctx, uint64_t size, int alignment, struct gpu_buffer* bo)
+void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 {
 	struct pool_node *n;
-	assert((size & 4095) == 0);
-
+	assert((bo->va_size & 4095) == 0);
+	assert(bo->fragment_number > 0);
+	
 	for (n = ctx->vm_pool; n; n = n->next)
 	{
-		if (n->next)
+		if (n->next && bo->fragment_number == 1)
 		{
-			if ((int64_t)n->next->va - n->va - n->size > size && alignment <= 4096)
+			if ((int64_t)n->next->va - n->va - n->size > bo->va_size && bo->alignment <= 4096)
 			{
 				struct pool_node* n2 = malloc(sizeof(struct pool_node));
 				
+				n2->parent_bo = bo;
 				n2->bo = bo;
 				n2->va = n->va + n->size;
-				n2->size = size;
+				n2->size = bo->va_size;
 				n2->prev = n;
 				n2->next = n->next;
 				n->next->prev = n2;
 				n->next = n2;
 				
-				return n2->va;
+				return;
 			}
 		}
 		else
 		{
-			struct pool_node* n2 = malloc(sizeof(struct pool_node));
+			unsigned i;
 			
-			n2->bo = bo;
-			n2->va = n->va + n->size + 4096;
-			n2->size = size;
-			n->next = n2;
-			n2->prev = n;
-			n2->next = NULL;
+			for (i = 0; i < bo->fragment_number; i++)
+			{
+				struct pool_node* n2 = malloc(sizeof(struct pool_node));
+				
+				struct gpu_buffer* buf = bo + i;
+				n2->parent_bo = bo;
+				n2->bo = buf;
+				n2->va = n->va + n->size;
+				n2->size = buf->va_size;
+				n->next = n2;
+				n2->prev = n;
+				n2->next = NULL;
+				n = n2;
+			}
 			
-			return n2->va;
+			return;
 		}
 	}
 	
 	assert(0 && "unreachable");
-	return 0;
 }
 
-void compute_pool_free(struct compute_context* ctx, uint64_t va)
+void compute_pool_free(struct compute_context* ctx, struct gpu_buffer* bo)
 {
-	struct pool_node *n;
+	struct pool_node *n, *next;
+	int found_bo_num = 0;
 	
-	assert(va > 0);
-	
-	for (n = ctx->vm_pool; n; n = n->next)
+	for (n = ctx->vm_pool; n; n = next)
 	{
-		if (n->va == va)
+		next = n->next;
+		
+		if (n->parent_bo == bo)
 		{
 			n->prev->next = n->next;
 			
@@ -222,12 +232,12 @@ void compute_pool_free(struct compute_context* ctx, uint64_t va)
 				n->next->prev = n->prev;
 			}
 			
+			found_bo_num++;
 			free(n);
-			return;
 		}
 	}
 	
-	assert(0 && "internal error attempted to free a non allocated vm block");
+	assert(found_bo_num != 0 && "internal error attempted to free a non allocated vm block");
 }
 
 static int compute_vm_map(struct compute_context* ctx, uint64_t vm_addr, uint32_t handle, int vm_id, int flags)
@@ -543,7 +553,7 @@ void compute_free_gpu_buffer(struct gpu_buffer* bo)
 	
 	if (bo->va)
 	{
-		compute_pool_free(bo->ctx, bo->va);
+		compute_pool_free(bo->ctx, bo);
 		compute_vm_unmap(bo->ctx, bo->va, bo->handle, 0);
 	}
 	
@@ -583,12 +593,12 @@ struct gpu_buffer* compute_alloc_gpu_buffer(struct compute_context* ctx, int siz
 	buf->size = size;
 	
 	buf->va_size = ((int)((size + 4095) / 4096)) * 4096;
-				
-	buf->va = compute_pool_alloc(ctx, buf->va_size, buf->alignment, buf);
+	
+	compute_pool_alloc(ctx, buf);
 
 	if (compute_vm_map(ctx, buf->va, buf->handle, 0, RADEON_VM_PAGE_SNOOPED))
 	{
-		compute_pool_free(ctx, buf->va);
+		compute_pool_free(ctx, buf);
 		buf->va = 0;
 		compute_free_gpu_buffer(buf);
 		return NULL;

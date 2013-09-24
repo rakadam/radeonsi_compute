@@ -275,7 +275,7 @@ int main()
 	int64_t start_time = get_time_usec();
 	
 // 	compute.asyncDMACopy(cpu_data, 0, data2, 0, mx*my*sizeof(uchar4));
-	compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code, {program_code, data, data2});
+	compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code, {program_code, data});
 	
 	int64_t stop_time = get_time_usec();
 	
