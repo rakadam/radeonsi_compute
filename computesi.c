@@ -710,7 +710,7 @@ struct gpu_buffer* compute_alloc_gpu_buffer(struct compute_context* ctx, size_t 
 	return buf;
 }
 
-int compute_bo_wait(struct gpu_buffer *boi)
+static int compute_bo_wait_unfragmented(struct gpu_buffer *boi)
 {
 	struct drm_radeon_gem_wait_idle args;
 	int ret;
@@ -722,6 +722,23 @@ int compute_bo_wait(struct gpu_buffer *boi)
 		ret = drmCommandWriteRead(boi->ctx->fd, DRM_RADEON_GEM_WAIT_IDLE, &args, sizeof(args));
 	} while (ret == -EBUSY);
 	return ret;
+}
+
+int compute_bo_wait(struct gpu_buffer *boi)
+{
+	unsigned i;
+	
+	for (i = 0; i < boi->fragment_number; i++)
+	{
+		int ret = compute_bo_wait_unfragmented(boi + i);
+		
+		if (ret)
+		{
+			return ret;
+		}
+	}
+	
+	return 0;
 }
 
 void compute_flush_caches(const struct compute_context* ctx)
