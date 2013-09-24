@@ -897,7 +897,7 @@ rak_adam: 0x48 is the TC (texture cache)
   gpu_buffer* data2_bo = compute_alloc_gpu_buffer(ctx, test_data_size*4, RADEON_DOMAIN_VRAM, 4096);
   compute_copy_to_gpu(data2_bo, 0, &test_data[0], 1024);
 
-	compute_send_dma_req(ctx, data2_bo, 4, data_bo, 4, 1*1024, 0, 0, 0);
+	compute_send_dma_req(ctx, data2_bo, 8, data_bo, 8, 1*1024, 0, 0, 0);
 	
   compute_copy_from_gpu(data2_bo, 0, &test_data[0], test_data_size*4);
   
