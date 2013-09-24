@@ -42,6 +42,21 @@
 /* query if a RADEON_CS_RING_* submission is supported */
 #define RADEON_INFO_RING_WORKING 0x15
 
+#define DMA_PACKET(cmd, sub_cmd, n) ((((cmd) & 0xF) << 28) |    \
+                                    (((sub_cmd) & 0xFF) << 20) |\
+                                    (((n) & 0xFFFFF) << 0))
+
+/* async DMA Packet types */
+#define DMA_PACKET_WRITE                        0x2
+#define DMA_PACKET_COPY                         0x3
+#define DMA_PACKET_INDIRECT_BUFFER              0x4
+#define DMA_PACKET_SEMAPHORE                    0x5
+#define DMA_PACKET_FENCE                        0x6
+#define DMA_PACKET_TRAP                         0x7
+#define DMA_PACKET_SRBM_WRITE                   0x9
+#define DMA_PACKET_CONSTANT_FILL                0xd
+#define DMA_PACKET_NOP                          0xf
+
 struct drm_radeon_gem_va {
 		uint32_t    handle;
 		uint32_t    operation;
@@ -319,7 +334,7 @@ static struct cs_reloc_gem* compute_create_reloc_table(const struct compute_cont
 	return relocs;
 }
 
-int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, size_t dst_offset, struct gpu_buffer* src_bo, size_t src_offset, size_t size, int sync_flag, int raw_wait_flag, int use_pfp_engine)
+int compute_send_sync_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, size_t dst_offset, struct gpu_buffer* src_bo, size_t src_offset, size_t size, int sync_flag, int raw_wait_flag, int use_pfp_engine)
 {
 	struct drm_radeon_cs cs;
 	unsigned buf[64];
@@ -379,6 +394,63 @@ int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo,
 		compute_bo_wait(dst_bo);
 		compute_bo_wait(src_bo);
 	}
+	
+	return r;
+}
+
+int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, size_t dst_offset, struct gpu_buffer* src_bo, size_t src_offset, size_t size)
+{
+	struct drm_radeon_cs cs;
+	unsigned buf[64];
+	int cdw = 0;
+	uint64_t chunk_array[5];
+	struct drm_radeon_cs_chunk chunks[5];
+	uint32_t flags[3];
+	int i;
+	
+	assert(size);
+	assert((size & ((1<<21)-1)) == size);
+	
+	size_t src_va = src_bo->va + src_offset;
+	size_t dst_va = dst_bo->va + dst_offset;
+	
+	buf[cdw++] = DMA_PACKET(DMA_PACKET_COPY, 0x40/*byte aligned L2L*/, 4);
+	buf[cdw++] = dst_va & 0xFFFFFFFF;
+	buf[cdw++] = src_va & 0xFFFFFFFF;
+	buf[cdw++] = ((dst_va >> 32) & 0xFF) | (0/*swap*/ << 8);
+	buf[cdw++] = ((src_va >> 32) & 0xFF) | (0/*swap*/ << 8);
+	
+	flags[0] = RADEON_CS_USE_VM;
+	flags[1] = RADEON_CS_RING_DMA;
+	
+	chunks[0].chunk_id = RADEON_CHUNK_ID_FLAGS;
+	chunks[0].length_dw = 2;
+	chunks[0].chunk_data =  (uint64_t)(uintptr_t)&flags[0];
+	
+	#define RELOC_SIZE (sizeof(struct cs_reloc_gem) / sizeof(uint32_t))
+	
+	struct cs_reloc_gem* relocs = calloc(2, sizeof(struct cs_reloc_gem));
+
+	compute_set_reloc(&relocs[0], src_bo);
+	compute_set_reloc(&relocs[1], dst_bo);
+	
+	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
+	chunks[1].length_dw = 2*RELOC_SIZE;
+	chunks[1].chunk_data =  (uint64_t)(uintptr_t)relocs;
+
+	chunks[2].chunk_id = RADEON_CHUNK_ID_IB;
+	chunks[2].length_dw = cdw;
+	chunks[2].chunk_data =  (uint64_t)(uintptr_t)&buf[0];  
+
+	chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
+	chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
+	chunk_array[2] = (uint64_t)(uintptr_t)&chunks[2];
+	
+	cs.num_chunks = 3;
+	cs.chunks = (uint64_t)(uintptr_t)chunk_array;
+	cs.cs_id = 1;
+	
+	int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
 	
 	return r;
 }
