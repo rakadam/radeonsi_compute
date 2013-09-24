@@ -143,8 +143,18 @@ void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t
 	state.tmpring_wavesize = 0;
 	state.binary = code;
 
-	int ret = compute_emit_compute_state(context, &state);
+	int reloc_num = usedMemories.size();
+	struct cs_reloc_gem* relocs = compute_allocate_reloc_array(reloc_num);
+	
+	for (unsigned i = 0; i < usedMemories.size(); i++)
+	{
+		compute_set_reloc(relocs, i, usedMemories[i]);
+	}
+	
+	int ret = compute_emit_compute_state_manual_relocs(context, &state, reloc_num, relocs);
 
+	free(relocs);
+	
 	if (ret != 0)
 	{
 		throw std::runtime_error("Error while running kernel: " + std::string(strerror(errno)));

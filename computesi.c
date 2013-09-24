@@ -295,8 +295,22 @@ static int compute_vm_unmap(struct compute_context* ctx, uint64_t vm_addr, uint3
 	return 0;
 }
 
-void compute_set_reloc(struct cs_reloc_gem* reloc, struct gpu_buffer* bo)
+struct cs_reloc_gem* compute_allocate_reloc_array(int reloc_num)
 {
+	struct cs_reloc_gem* relocs = calloc(reloc_num, sizeof(struct cs_reloc_gem));
+	
+	if (relocs)
+	{
+		memset(relocs, 0, reloc_num*sizeof(struct cs_reloc_gem));
+	}
+	
+	return relocs;
+}
+
+void compute_set_reloc(struct cs_reloc_gem* relocs, int index, struct gpu_buffer* bo)
+{
+	struct cs_reloc_gem *reloc = &relocs[index];
+	
 	memset(reloc, 0, sizeof(struct cs_reloc_gem));
 	
 	reloc->handle = bo->handle;
@@ -327,7 +341,7 @@ static struct cs_reloc_gem* compute_create_reloc_table(const struct compute_cont
 	
 	for (n = ctx->vm_pool->next; n; n = n->next)
 	{
-		compute_set_reloc(&relocs[i], n->bo);
+		compute_set_reloc(relocs, i, n->bo);
 		i++;
 	}
 	
@@ -368,8 +382,8 @@ int compute_send_sync_dma_req(struct compute_context* ctx, struct gpu_buffer* ds
 	
 	struct cs_reloc_gem* relocs = calloc(2, sizeof(struct cs_reloc_gem));
 
-	compute_set_reloc(&relocs[0], src_bo);
-	compute_set_reloc(&relocs[1], dst_bo);
+	compute_set_reloc(relocs, 0, src_bo);
+	compute_set_reloc(relocs, 1, dst_bo);
 	
 	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
 	chunks[1].length_dw = 2*RELOC_SIZE;
@@ -442,8 +456,8 @@ int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* d
 	
 	struct cs_reloc_gem* relocs = calloc(2, sizeof(struct cs_reloc_gem));
 
-	compute_set_reloc(&relocs[0], src_bo);
-	compute_set_reloc(&relocs[1], dst_bo);
+	compute_set_reloc(relocs, 0, src_bo);
+	compute_set_reloc(relocs, 1, dst_bo);
 	
 	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
 	chunks[1].length_dw = 2*RELOC_SIZE;
