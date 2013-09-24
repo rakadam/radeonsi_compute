@@ -73,7 +73,7 @@ struct drm_radeon_gem_va {
 	#define RADEON_INFO_IB_VM_MAX_SIZE    0x0f
 #endif
 
-#define FRAGMENT_SIZE (2*1024*1024)
+#define FRAGMENT_SIZE (64*1024*1024)
 
 struct cs_reloc_gem {
 		uint32_t    handle;
