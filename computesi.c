@@ -311,10 +311,6 @@ static struct cs_reloc_gem* compute_create_reloc_table(const struct compute_cont
 	
 	for (n = ctx->vm_pool->next; n; n = n->next)
 	{
-// 		relocs[i].handle = n->bo->handle;
-// 		relocs[i].read_domain = n->bo->domain;
-// 		relocs[i].write_domain = n->bo->domain;
-// 		relocs[i].flags = 0;
 		compute_set_reloc(&relocs[i], n->bo);
 		i++;
 	}
@@ -322,7 +318,7 @@ static struct cs_reloc_gem* compute_create_reloc_table(const struct compute_cont
 	return relocs;
 }
 
-void compute_send_dma_req(struct compute_context* ctx, uint64_t dst_va, uint64_t src_va, size_t size, int sync_flag, int raw_wait_flag)
+void compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, struct gpu_buffer* src_bo, size_t size, int sync_flag, int raw_wait_flag)
 {
 	struct drm_radeon_cs cs;
 	unsigned buf[64];
@@ -330,17 +326,16 @@ void compute_send_dma_req(struct compute_context* ctx, uint64_t dst_va, uint64_t
 	uint64_t chunk_array[5];
 	struct drm_radeon_cs_chunk chunks[5];
 	uint32_t flags[3];
-	struct cs_reloc_gem* relocs;
 	int i;
 	
 	assert(size);
 	assert((size & ((1<<21)-1)) == size);
 	
 	buf[cdw++] = PKT3C(PKT3_CP_DMA, 4, 0);
-	buf[cdw++] = src_va & 0xFFFFFFFF;
-	buf[cdw++] = (sync_flag ? PKT3_CP_DMA_CP_SYNC : 0) | ((src_va >> 32) & 0xFFFF);
-	buf[cdw++] = dst_va & 0xFFFFFFFF;
-	buf[cdw++] = (dst_va >> 32) & 0xffff;
+	buf[cdw++] = src_bo->va & 0xFFFFFFFF;
+	buf[cdw++] = (sync_flag ? PKT3_CP_DMA_CP_SYNC : 0) | ((src_bo->va >> 32) & 0xFFFF);
+	buf[cdw++] = dst_bo->va & 0xFFFFFFFF;
+	buf[cdw++] = (dst_bo->va >> 32) & 0xffff;
 	buf[cdw++] = (raw_wait_flag ? PKT3_CP_DMA_CMD_RAW_WAIT : 0) | size;
 	
 	flags[0] = RADEON_CS_USE_VM;
@@ -352,11 +347,13 @@ void compute_send_dma_req(struct compute_context* ctx, uint64_t dst_va, uint64_t
 	
 	#define RELOC_SIZE (sizeof(struct cs_reloc_gem) / sizeof(uint32_t))
 	
-	int reloc_num = 0;
-	relocs = compute_create_reloc_table(ctx, &reloc_num);
+	struct cs_reloc_gem* relocs = calloc(2, sizeof(struct cs_reloc_gem));
+
+	compute_set_reloc(&relocs[0], src_bo);
+	compute_set_reloc(&relocs[1], dst_bo);
 	
 	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
-	chunks[1].length_dw = reloc_num*RELOC_SIZE;
+	chunks[1].length_dw = 2*RELOC_SIZE;
 	chunks[1].chunk_data =  (uint64_t)(uintptr_t)relocs;
 
 	chunks[2].chunk_id = RADEON_CHUNK_ID_IB;
