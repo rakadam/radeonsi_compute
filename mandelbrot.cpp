@@ -88,6 +88,18 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 	
 	p = (char*)mmap (0, size, PROT_WRITE, MAP_SHARED, fd, 0);
 	
+	
+	{
+		int64_t start_time = get_time_usec();
+		
+		compute.transferFromGPU(buffer, 0, p, size);
+		
+		int64_t stop_time = get_time_usec();
+		
+		std::cout << "GTT-CPU transfer time down: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
+		std::cout << "GTT-CPU Bandwidth down: " << double(size) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
+	}
+
 	for (int i = 0; i < size; i += 4)
 	{
 		p[i] = 128;
