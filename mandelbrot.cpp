@@ -174,7 +174,7 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 	float cscale = 5.0;
 	
 	v_mul_f32(p, 11, 10, 255); p[0] = floatconv(1.0/cscale); p++;
-	v_add_f32(p, 11, 11, 255); p[0] = floatconv(-M_PI*2/3.0); p++;
+	v_add_f32(p, 11, 11, 255); p[0] = floatconv(-1.0/3.0); p++;
 	v_sin_f32(p, 11, 256+11);
 	v_add_f32(p, 11, 11, 255); p[0] = floatconv(1.0001); p++;
 	v_mul_f32(p, 11, 11, 255); p[0] = floatconv(127.0); p++;
@@ -186,7 +186,7 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 	v_mul_f32(p, 12, 12, 255); p[0] = floatconv(127.0); p++;
 	
 	v_mul_f32(p, 13, 10, 255); p[0] = floatconv(1.0/cscale); p++;
-	v_add_f32(p, 13, 13, 255); p[0] = floatconv(M_PI*2/3.0); p++;
+	v_add_f32(p, 13, 13, 255); p[0] = floatconv(1.0/3.0); p++;
 	v_sin_f32(p, 13, 256+13);
 	v_add_f32(p, 13, 13, 255); p[0] = floatconv(1.0001); p++;
 	v_mul_f32(p, 13, 13, 255); p[0] = floatconv(127.0); p++;
