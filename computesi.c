@@ -170,36 +170,36 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 	assert((bo->va_size & 4095) == 0);
 	assert(bo->fragment_number > 0);
 
-	printf("pool dump:\n");
-	for (n = ctx->vm_pool; n; n = n->next)
-	{
-		printf("pool %p, va: %lX, size: %lX,\n", n, n->va, n->size);
-	}
-	printf("\n");
+// 	printf("pool dump:\n");
+// 	for (n = ctx->vm_pool; n; n = n->next)
+// 	{
+// 		printf("pool %p, va: %lX, size: %lX,\n", n, n->va, n->size);
+// 	}
+// 	printf("\n");
 	
 	for (n = ctx->vm_pool; n; n = n->next)
 	{
-// 		if (n->next && bo->fragment_number == 1)
-// 		{
-// 			if ((int64_t)n->next->va - n->va - n->size > bo->va_size && bo->alignment <= 4096)
-// 			{
-// 				struct pool_node* n2 = malloc(sizeof(struct pool_node));
-// 				
-// 				n2->parent_bo = bo;
-// 				n2->bo = bo;
-// 				n2->va = n->va + n->size;
-// 				n2->size = bo->va_size;
-// 				n2->prev = n;
-// 				n2->next = n->next;
-// 				n->next->prev = n2;
-// 				n->next = n2;
-// 				
-// 				bo->va = n2->va;
-// 				
-// 				return;
-// 			}
-// 		}
-// 		else
+		if (n->next && bo->fragment_number == 1)
+		{
+			if ((int64_t)n->next->va - n->va - n->size > bo->va_size && bo->alignment <= 4096)
+			{
+				struct pool_node* n2 = malloc(sizeof(struct pool_node));
+				
+				n2->parent_bo = bo;
+				n2->bo = bo;
+				n2->va = n->va + n->size;
+				n2->size = bo->va_size;
+				n2->prev = n;
+				n2->next = n->next;
+				n->next->prev = n2;
+				n->next = n2;
+				
+				bo->va = n2->va;
+				
+				return;
+			}
+		}
+
 		if (n->next == NULL)
 		{
 			unsigned i = 0;
