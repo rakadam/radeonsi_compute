@@ -12,6 +12,9 @@ using namespace std;
 
 struct uchar4
 {
+	uchar4() : r(0), g(0), b(0), a(0) {}
+	uchar4(int val) : r(val), g(val), b(val), a(val) {}
+	
 	uint8_t r, g, b, a;
 }__attribute__((packed));
 
@@ -232,8 +235,8 @@ int main()
 	gpu_buffer* cpu_data = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	gpu_buffer* data2 = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	
-	compute.transferToGPU(cpu_data, 0, vector<uchar4>(mx*my, 128)); ///zero out CPU memory
-	compute.transferToGPU(data, 0, vector<uchar4>(mx*my, 128)); ///zero out GPU memory
+	compute.transferToGPU(cpu_data, 0, vector<uchar4>(mx*my, uchar4(128))); ///zero out CPU memory
+	compute.transferToGPU(data, 0, vector<uchar4>(mx*my, uchar4(128))); ///zero out GPU memory
 	
 // 	{
 // 		int64_t start_time = get_time_usec();
