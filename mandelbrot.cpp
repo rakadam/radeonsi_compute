@@ -84,8 +84,22 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 		return;
 	}
 	
-	std::cout << sb.st_size << std::endl;
+	p = (char*)mmap (0, 640*480*3, PROT_WRITE, MAP_SHARED, fd, 0);
+	
+	if (p == MAP_FAILED)
+	{
+		perror ("mmap");
+		return;
+	}
+
 	close(fd);
+	
+	if (munmap (p, sb.st_size) == -1)
+	{
+		perror ("munmap");
+		return;
+	}
+	
 }
 
 void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double offset_x=0, double offset_y=0)
