@@ -323,6 +323,7 @@ void compute_send_dma_req(struct compute_context* ctx, uint64_t dst_va, uint64_t
 	assert(size);
 	assert((size & ((1<<21)-1)) == size);
 	
+	buf[cdw++] = PKT3C(PKT3_CP_DMA, 4, 0);
   buf[cdw++] = src_va & 0xFFFFFFFF;
   buf[cdw++] = (sync_flag ? PKT3_CP_DMA_CP_SYNC : 0) | ((src_va >> 32) & 0xFFFF);
   buf[cdw++] = dst_va & 0xFFFFFFFF;
