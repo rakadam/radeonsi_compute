@@ -238,14 +238,14 @@ int main()
 	compute.transferToGPU(cpu_data, 0, vector<uchar4>(mx*my, uchar4(128))); ///zero out CPU memory
 	compute.transferToGPU(data, 0, vector<uchar4>(mx*my, uchar4(128))); ///zero out GPU memory
 	
-// 	{
-// 		int64_t start_time = get_time_usec();
-// 		compute.transferToGPU(data, 0, vector<uchar4>(mx*my));
-// 		int64_t stop_time = get_time_usec();
-// 		
-// 		std::cout << "transfer time up: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
-// 		std::cout << "Bandwidth up: " << double(mx*my*sizeof(uchar4)) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
-// 	}
+	{
+		int64_t start_time = get_time_usec();
+		compute.transferToGPU(data, 0, vector<uchar4>(mx*my));
+		int64_t stop_time = get_time_usec();
+		
+		std::cout << "transfer time up: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
+		std::cout << "Bandwidth up: " << double(mx*my*sizeof(uchar4)) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
+	}
 
 	buffer_resource bufres;
 	vector<uint32_t> user_data;
@@ -296,7 +296,7 @@ int main()
 // 		std::cout << "DMA Bandwidth: " << double(mx*my*sizeof(uchar4)) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
 // 	}
 	
-	imageToFile(compute, /*cpu_data*/data, mx, my, "ki.ppm");
+	imageToFile(compute, cpu_data, mx, my, "ki.ppm");
 	
 	{
 		FILE *f = fopen("ki.bin", "w");
