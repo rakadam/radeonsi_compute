@@ -185,6 +185,8 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 				n->next->prev = n2;
 				n->next = n2;
 				
+				bo->va = n2->va;
+				
 				return;
 			}
 		}
@@ -195,8 +197,8 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 			for (i = 0; i < bo->fragment_number; i++)
 			{
 				struct pool_node* n2 = malloc(sizeof(struct pool_node));
-				
 				struct gpu_buffer* buf = bo + i;
+				
 				n2->parent_bo = bo;
 				n2->bo = buf;
 				n2->va = n->va + n->size;
@@ -206,6 +208,8 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 				n2->prev = n;
 				n2->next = NULL;
 				n = n2;
+				
+				buf->va = n2->va;
 			}
 			
 			return;
