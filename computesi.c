@@ -468,7 +468,6 @@ int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* d
 
 int compute_send_dma_fence(struct compute_context* ctx, struct gpu_buffer* bo)
 {
-	printf("line: %i\n", __LINE__);
 	struct drm_radeon_cs cs;
 	unsigned buf[64];
 	int cdw = 0;
@@ -511,10 +510,8 @@ int compute_send_dma_fence(struct compute_context* ctx, struct gpu_buffer* bo)
 	cs.cs_id = 1;
 	
 	int r = 0;
-	printf("err: \n");
-	printf("err: \n");
-// 	r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
-	printf("err: \n");
+	
+	r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
 	
 	printf("%s\n", strerror(-r));
 	
