@@ -295,7 +295,7 @@ static int compute_vm_unmap(struct compute_context* ctx, uint64_t vm_addr, uint3
 	return 0;
 }
 
-static void compute_set_reloc(struct cs_reloc_gem* reloc, struct gpu_buffer* bo)
+void compute_set_reloc(struct cs_reloc_gem* reloc, struct gpu_buffer* bo)
 {
 	memset(reloc, 0, sizeof(struct cs_reloc_gem));
 	
@@ -656,6 +656,20 @@ void compute_flush_caches(const struct compute_context* ctx)
 
 int compute_emit_compute_state(const struct compute_context* ctx, const struct compute_state* state)
 {
+	struct cs_reloc_gem* relocs;
+	
+	int reloc_num = 0;
+	relocs = compute_create_reloc_table(ctx, &reloc_num);
+	
+	int ret = compute_emit_compute_state_manual_relocs(ctx, state, reloc_num, relocs);
+	
+	free(relocs);
+
+	return ret;
+}
+
+int compute_emit_compute_state_manual_relocs(const struct compute_context* ctx, const struct compute_state* state, int reloc_num, struct cs_reloc_gem* relocs)
+{
 	struct drm_radeon_cs cs;
 	int i, r;
 	unsigned buf[1024];
@@ -663,7 +677,6 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
 	uint64_t chunk_array[5];
 	struct drm_radeon_cs_chunk chunks[5];
 	uint32_t flags[3];
-	struct cs_reloc_gem* relocs;
 	
 	set_compute_reg(R_00B804_COMPUTE_DIM_X,         state->dim[0]); ///global_size/local_size
 	set_compute_reg(R_00B808_COMPUTE_DIM_Y,         state->dim[1]);
@@ -756,10 +769,7 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
 	chunks[0].chunk_data =  (uint64_t)(uintptr_t)&flags[0];
 
 	#define RELOC_SIZE (sizeof(struct cs_reloc_gem) / sizeof(uint32_t))
-	
-	int reloc_num = 0;
-	relocs = compute_create_reloc_table(ctx, &reloc_num); ///dummy reloc table, for the kernel so we can sync with memory, we don't actually have relocs
-	
+		
 	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
 	chunks[1].length_dw = reloc_num*RELOC_SIZE;
 	chunks[1].chunk_data =  (uint64_t)(uintptr_t)relocs;
@@ -784,7 +794,6 @@ int compute_emit_compute_state(const struct compute_context* ctx, const struct c
 	
 	compute_bo_wait(state->binary); ///to see if it hangs
 	
-	free(relocs);
 	
 	return r;
 }

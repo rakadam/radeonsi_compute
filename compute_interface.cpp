@@ -82,6 +82,7 @@ void ComputeInterface::transferFromGPU(gpu_buffer* buf, size_t offset, void* dat
 }
 
 void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t> threadOffset, std::vector<size_t> blockDim, std::vector<size_t> localSize, gpu_buffer* code,
+															const std::vector<gpu_buffer*>& usedMemories,
 															int localMemSize, int vgprnum, int sgprnum, EventDependence evd)
 {
 	assert(localMemSize <= 32*1024);

@@ -42,7 +42,7 @@ public:
 		transferFromGPU(buf, offset, &data[0], data.size()*sizeof(data[0]), evd);
 	}
 
-	void launch(std::vector<uint32_t> userData, std::vector<size_t> threadOffset, std::vector<size_t> blockDim, std::vector<size_t> localSize, gpu_buffer* code, int localMemSize = 32*1024, int vgprnum=0, int sgprnum=0, EventDependence evd = EventDependence());
+	void launch(std::vector<uint32_t> userData, std::vector<size_t> threadOffset, std::vector<size_t> blockDim, std::vector<size_t> localSize, gpu_buffer* code, const std::vector<gpu_buffer*>& usedMemories, int localMemSize = 32*1024, int vgprnum=0, int sgprnum=0, EventDependence evd = EventDependence());
 };
 
 #endif
