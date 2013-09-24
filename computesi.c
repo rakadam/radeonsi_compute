@@ -73,6 +73,8 @@ struct drm_radeon_gem_va {
 	#define RADEON_INFO_IB_VM_MAX_SIZE    0x0f
 #endif
 
+#define FRAGMENT_SIZE (64*1024*1024)
+
 struct cs_reloc_gem {
 		uint32_t    handle;
 		uint32_t    read_domain;
@@ -311,21 +313,50 @@ static int compute_vm_unmap(struct compute_context* ctx, uint64_t vm_addr, uint3
 	return 0;
 }
 
-struct cs_reloc_gem* compute_allocate_reloc_array(int reloc_num)
+// struct cs_reloc_gem* compute_allocate_reloc_array(int reloc_num)
+// {
+// 	struct cs_reloc_gem* relocs = calloc(reloc_num, sizeof(struct cs_reloc_gem));
+// 	
+// 	if (relocs)
+// 	{
+// 		memset(relocs, 0, reloc_num*sizeof(struct cs_reloc_gem));
+// 	}
+// 	
+// 	return relocs;
+// }
+// 
+// void compute_set_reloc(struct cs_reloc_gem* relocs, int index, struct gpu_buffer* bo)
+// {
+// 	struct cs_reloc_gem *reloc = &relocs[index];
+// 	
+// 	memset(reloc, 0, sizeof(struct cs_reloc_gem));
+// 	
+// 	reloc->handle = bo->handle;
+// 	reloc->read_domain = bo->domain;
+// 	reloc->write_domain = bo->domain;
+// 	reloc->flags = 0;
+// }
+
+void compute_init_relocs(struct compute_relocs* crelocs)
 {
-	struct cs_reloc_gem* relocs = calloc(reloc_num, sizeof(struct cs_reloc_gem));
-	
-	if (relocs)
-	{
-		memset(relocs, 0, reloc_num*sizeof(struct cs_reloc_gem));
-	}
-	
-	return relocs;
+	crelocs->reloc_num = 0;
+	crelocs->relocs = NULL;
 }
 
-void compute_set_reloc(struct cs_reloc_gem* relocs, int index, struct gpu_buffer* bo)
+static void compute_push_reloc_unfragmented(struct compute_relocs* crelocs, const struct gpu_buffer* bo)
 {
-	struct cs_reloc_gem *reloc = &relocs[index];
+	if (crelocs->reloc_num == 0)
+	{
+		crelocs->reloc_num = 1;
+		crelocs->relocs = malloc(sizeof(struct cs_reloc_gem));
+	}
+	else
+	{
+		crelocs->reloc_num++;
+		crelocs->relocs = realloc(crelocs->relocs, crelocs->reloc_num*sizeof(struct cs_reloc_gem));
+	}
+	
+	struct cs_reloc_gem *reloc = &crelocs->relocs[crelocs->reloc_num-1];
 	
 	memset(reloc, 0, sizeof(struct cs_reloc_gem));
 	
@@ -335,33 +366,26 @@ void compute_set_reloc(struct cs_reloc_gem* relocs, int index, struct gpu_buffer
 	reloc->flags = 0;
 }
 
-static struct cs_reloc_gem* compute_create_reloc_table(const struct compute_context* ctx, int* size)
+void compute_push_reloc(struct compute_relocs* crelocs, const struct gpu_buffer* bo)
 {
-	struct cs_reloc_gem* relocs = NULL;
+	unsigned i;
+	
+	for (i = 0; i < bo->fragment_number; i++)
+	{
+		compute_push_reloc_unfragmented(crelocs, bo+i);
+	}
+}
+
+static void compute_create_reloc_table(const struct compute_context* ctx, struct compute_relocs* crelocs)
+{
 	struct pool_node *n;
-	int i = 0;
+
+	compute_init_relocs(crelocs);
 	
 	for (n = ctx->vm_pool->next; n; n = n->next)
 	{
-		(*size)++;
+		compute_push_reloc(crelocs, n->bo);
 	}
-	
-	if (*size == 0)
-	{
-		return NULL;
-	}
-	
-	relocs = calloc(*size, sizeof(struct cs_reloc_gem));
-	
-	i = 0;
-	
-	for (n = ctx->vm_pool->next; n; n = n->next)
-	{
-		compute_set_reloc(relocs, i, n->bo);
-		i++;
-	}
-	
-	return relocs;
 }
 
 int compute_send_sync_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo, size_t dst_offset, struct gpu_buffer* src_bo, size_t src_offset, size_t size, int sync_flag, int raw_wait_flag, int use_pfp_engine)
@@ -394,15 +418,16 @@ int compute_send_sync_dma_req(struct compute_context* ctx, struct gpu_buffer* ds
 	chunks[0].chunk_data =  (uint64_t)(uintptr_t)&flags[0];
 	
 	#define RELOC_SIZE (sizeof(struct cs_reloc_gem) / sizeof(uint32_t))
-	
-	struct cs_reloc_gem* relocs = calloc(2, sizeof(struct cs_reloc_gem));
 
-	compute_set_reloc(relocs, 0, src_bo);
-	compute_set_reloc(relocs, 1, dst_bo);
+	struct compute_relocs crelocs;
+	compute_init_relocs(&crelocs);
+
+	compute_push_reloc(&crelocs, src_bo);
+	compute_push_reloc(&crelocs, dst_bo);
 	
 	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
-	chunks[1].length_dw = 2*RELOC_SIZE;
-	chunks[1].chunk_data =  (uint64_t)(uintptr_t)relocs;
+	chunks[1].length_dw = crelocs.reloc_num*RELOC_SIZE;
+	chunks[1].chunk_data =  (uint64_t)(uintptr_t)crelocs.relocs;
 
 	chunks[2].chunk_id = RADEON_CHUNK_ID_IB;
 	chunks[2].length_dw = cdw;
@@ -423,6 +448,8 @@ int compute_send_sync_dma_req(struct compute_context* ctx, struct gpu_buffer* ds
 		compute_bo_wait(dst_bo);
 		compute_bo_wait(src_bo);
 	}
+	
+	free(crelocs.relocs);
 	
 	return r;
 }
@@ -468,14 +495,15 @@ int compute_send_async_dma_req(struct compute_context* ctx, struct gpu_buffer* d
 	
 	#define RELOC_SIZE (sizeof(struct cs_reloc_gem) / sizeof(uint32_t))
 	
-	struct cs_reloc_gem* relocs = calloc(2, sizeof(struct cs_reloc_gem));
-
-	compute_set_reloc(relocs, 0, src_bo);
-	compute_set_reloc(relocs, 1, dst_bo);
+	struct compute_relocs crelocs;
+	compute_init_relocs(&crelocs);
+	
+	compute_push_reloc(&crelocs, src_bo);
+	compute_push_reloc(&crelocs, dst_bo);
 	
 	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
-	chunks[1].length_dw = 2*RELOC_SIZE;
-	chunks[1].chunk_data =  (uint64_t)(uintptr_t)relocs;
+	chunks[1].length_dw = crelocs.reloc_num*RELOC_SIZE;
+	chunks[1].chunk_data =  (uint64_t)(uintptr_t)crelocs.relocs;
 
 	chunks[2].chunk_id = RADEON_CHUNK_ID_IB;
 	chunks[2].length_dw = cdw;
@@ -570,8 +598,7 @@ void compute_free_gpu_buffer(struct gpu_buffer* bo)
 static struct gpu_buffer* compute_alloc_fragmented_buffer(struct compute_context* ctx, size_t whole_size, int domain, int alignment)
 {
 	unsigned i;
-	size_t fragment_size = 64*1024*1024;
-	size_t fragment_num = (whole_size+fragment_size-1) / fragment_size;
+	size_t fragment_num = (whole_size+FRAGMENT_SIZE-1) / FRAGMENT_SIZE;
 	size_t size_alloced = 0;
 	struct gpu_buffer* buf = calloc(fragment_num, sizeof(struct gpu_buffer));
 	
@@ -580,9 +607,9 @@ static struct gpu_buffer* compute_alloc_fragmented_buffer(struct compute_context
 		size_t size;
 		struct drm_radeon_gem_create args;
 		
-		if (size_alloced + fragment_size <= whole_size)
+		if (size_alloced + FRAGMENT_SIZE <= whole_size)
 		{
-			size = fragment_size;
+			size = FRAGMENT_SIZE;
 		}
 		else
 		{
@@ -605,14 +632,13 @@ static struct gpu_buffer* compute_alloc_fragmented_buffer(struct compute_context
 		
 		fprintf(stderr, "handle: %i\n", args.handle);
 		
-		buf[i].fragment_number = fragment_num;
+		buf[i].fragment_number = (i == 0) ? fragment_num : 0;
 		buf[i].ctx = ctx;
 		buf[i].alignment = args.alignment;
 		buf[i].handle = args.handle;
 		buf[i].domain = args.initial_domain;
 		buf[i].flags = 0;
 		buf[i].size = size;
-		buf[i].fragment_number = 1;
 		buf[i].va_size = ((int)((size + 4095) / 4096)) * 4096;
 		size_alloced += size;
 	}
@@ -690,7 +716,6 @@ void compute_flush_caches(const struct compute_context* ctx)
 	uint64_t chunk_array[5];
 	struct drm_radeon_cs_chunk chunks[5];
 	uint32_t flags[3];
-	struct cs_reloc_gem* relocs;
 
 	buf[cdw++] = PKT3C(PKT3_SURFACE_SYNC, 3, 0);
 	buf[cdw++] = S_0085F0_TCL1_ACTION_ENA(1) |
@@ -711,12 +736,12 @@ void compute_flush_caches(const struct compute_context* ctx)
 
 	#define RELOC_SIZE (sizeof(struct cs_reloc_gem) / sizeof(uint32_t))
 	
-	int reloc_num = 0;
-	relocs = compute_create_reloc_table(ctx, &reloc_num);
+	struct compute_relocs crelocs;
+	compute_create_reloc_table(ctx, &crelocs);
 	
 	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
-	chunks[1].length_dw = reloc_num*RELOC_SIZE;
-	chunks[1].chunk_data =  (uint64_t)(uintptr_t)relocs;
+	chunks[1].length_dw = crelocs.reloc_num*RELOC_SIZE;
+	chunks[1].chunk_data =  (uint64_t)(uintptr_t)crelocs.relocs;
 
 	chunks[2].chunk_id = RADEON_CHUNK_ID_IB;
 	chunks[2].length_dw = cdw;
@@ -735,25 +760,22 @@ void compute_flush_caches(const struct compute_context* ctx)
 	int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
 
 	printf("ret:%i\n", r);
-
-	free(relocs);
 }
 
 int compute_emit_compute_state(const struct compute_context* ctx, const struct compute_state* state)
 {
-	struct cs_reloc_gem* relocs;
+	struct compute_relocs crelocs;
 	
-	int reloc_num = 0;
-	relocs = compute_create_reloc_table(ctx, &reloc_num);
+	compute_create_reloc_table(ctx, &crelocs);
 	
-	int ret = compute_emit_compute_state_manual_relocs(ctx, state, reloc_num, relocs);
+	int ret = compute_emit_compute_state_manual_relocs(ctx, state, crelocs);
 	
-	free(relocs);
+	free(crelocs.relocs);
 
 	return ret;
 }
 
-int compute_emit_compute_state_manual_relocs(const struct compute_context* ctx, const struct compute_state* state, int reloc_num, struct cs_reloc_gem* relocs)
+int compute_emit_compute_state_manual_relocs(const struct compute_context* ctx, const struct compute_state* state, struct compute_relocs crelocs)
 {
 	struct drm_radeon_cs cs;
 	int i, r;
@@ -856,8 +878,8 @@ int compute_emit_compute_state_manual_relocs(const struct compute_context* ctx, 
 	#define RELOC_SIZE (sizeof(struct cs_reloc_gem) / sizeof(uint32_t))
 		
 	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
-	chunks[1].length_dw = reloc_num*RELOC_SIZE;
-	chunks[1].chunk_data =  (uint64_t)(uintptr_t)relocs;
+	chunks[1].length_dw = crelocs.reloc_num*RELOC_SIZE;
+	chunks[1].chunk_data =  (uint64_t)(uintptr_t)crelocs.relocs;
 
 	chunks[2].chunk_id = RADEON_CHUNK_ID_IB;
 	chunks[2].length_dw = cdw;
@@ -879,11 +901,10 @@ int compute_emit_compute_state_manual_relocs(const struct compute_context* ctx, 
 	
 	compute_bo_wait(state->binary); ///to see if it hangs
 	
-	
 	return r;
 }
 
-int compute_copy_to_gpu(struct gpu_buffer* bo, size_t gpu_offset, const void* src, size_t size)
+static int compute_copy_to_gpu_unfragmented(struct gpu_buffer* bo, size_t gpu_offset, const void* src, size_t size)
 {
 	struct drm_radeon_gem_mmap args;
 	int r;
@@ -920,6 +941,49 @@ int compute_copy_to_gpu(struct gpu_buffer* bo, size_t gpu_offset, const void* sr
 	memcpy(ptr, src, size);
 	munmap(ptr, args.size);
 
+	return 0;
+}
+
+int compute_copy_to_gpu(struct gpu_buffer* bo, size_t gpu_offset, const void* src_, size_t size)
+{
+	const char* src = (const char*)src_;
+	size_t start_gpu = gpu_offset;
+	size_t start_fragment = gpu_offset / FRAGMENT_SIZE;
+	unsigned i;
+	
+	assert(start_fragment < bo->fragment_number);
+	
+	for (i = start_fragment; i < bo->fragment_number; i++)
+	{
+		size_t local_size;
+		size_t local_offset;
+		size_t size_left = size - start_gpu;
+		
+		if (size_left < FRAGMENT_SIZE)
+		{
+			local_size = size_left;
+		}
+		else
+		{
+			local_size = FRAGMENT_SIZE;
+		}
+		
+		local_offset = start_gpu % FRAGMENT_SIZE;
+		local_size -= local_offset;
+		
+		int ret = compute_copy_to_gpu_unfragmented(&bo[i], local_offset, src, local_size);
+		
+		if (ret)
+		{
+			return ret;
+		}
+		
+		src += local_size;
+		start_gpu += local_size;
+	}
+	
+	assert(start_gpu = size);
+	
 	return 0;
 }
 

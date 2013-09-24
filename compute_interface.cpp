@@ -143,17 +143,18 @@ void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t
 	state.tmpring_wavesize = 0;
 	state.binary = code;
 
-	int reloc_num = usedMemories.size();
-	struct cs_reloc_gem* relocs = compute_allocate_reloc_array(reloc_num);
 	
-	for (unsigned i = 0; i < usedMemories.size(); i++)
+	struct compute_relocs crelocs;
+	compute_init_relocs(&crelocs);
+	
+	for (auto bo : usedMemories)
 	{
-		compute_set_reloc(relocs, i, usedMemories[i]);
+		compute_push_reloc(&crelocs, bo);
 	}
 	
-	int ret = compute_emit_compute_state_manual_relocs(context, &state, reloc_num, relocs);
+	int ret = compute_emit_compute_state_manual_relocs(context, &state, crelocs);
 
-	free(relocs);
+	free(crelocs.relocs);
 	
 	if (ret != 0)
 	{
