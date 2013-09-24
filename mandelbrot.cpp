@@ -281,7 +281,7 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 
 void animationZoom(double offset_x, double offset_y, double zoom_step, int iternum)
 {
-	double zoom = 0.1;
+	double zoom = 0.05;
 
 	int mx = 1920;
 	int my = 1080;
