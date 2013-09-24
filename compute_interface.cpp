@@ -44,7 +44,14 @@ uint64_t ComputeInterface::getVirtualAddress(gpu_buffer* buf)
 
 void ComputeInterface::syncDMACopy(gpu_buffer* dst, size_t dst_offset, gpu_buffer* src, size_t src_offset, size_t size)
 {
+	size_t fragmentSize = 512*1024;
 	
+	for (size_t i = 0; i < size; i += std::min(fragmentSize, size-i))
+	{
+		size_t curSize = std::min(fragmentSize, size-i);
+		
+		compute_send_dma_req(context, dst, i+dst_offset, src, i+src_offset, fragmentSize, i+curSize >= size, i == 0, 0);
+	}
 }
 
 void ComputeInterface::transferToGPU(gpu_buffer* buf, size_t offset, const void* data, size_t size, EventDependence evd)
