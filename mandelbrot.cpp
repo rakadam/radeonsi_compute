@@ -291,7 +291,7 @@ int main()
 	
 	gpu_buffer* program_code = compute.bufferAlloc(code_size_max);
 	gpu_buffer* data = compute.bufferAlloc(mx*my*sizeof(uchar4)+1024*4);
-	gpu_buffer* cpu_data = compute.bufferAlloc(mx*my*sizeof(uchar4)+1024*4);
+	gpu_buffer* cpu_data = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	gpu_buffer* data2 = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	
 	compute.transferToGPU(cpu_data, 0, vector<uchar4>(mx*my, uchar4(128))); ///zero out CPU memory
