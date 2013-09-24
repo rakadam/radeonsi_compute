@@ -333,7 +333,7 @@ int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo,
 	
 	buf[cdw++] = PKT3C(PKT3_CP_DMA, 4, 0);
 	buf[cdw++] = src_bo->va & 0xFFFFFFFF;
-	buf[cdw++] = (sync_flag ? PKT3_CP_DMA_CP_SYNC : 0) | PKT3_CP_DMA_ENGINE(0)| ((src_bo->va >> 32) & 0xFFFF);
+	buf[cdw++] = (sync_flag ? PKT3_CP_DMA_CP_SYNC : 0) | PKT3_CP_DMA_ENGINE(1)| ((src_bo->va >> 32) & 0xFFFF);
 	buf[cdw++] = dst_bo->va & 0xFFFFFFFF;
 	buf[cdw++] = (dst_bo->va >> 32) & 0xffff;
 	buf[cdw++] = (raw_wait_flag ? PKT3_CP_DMA_CMD_RAW_WAIT : 0) | size;
