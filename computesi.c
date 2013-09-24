@@ -37,7 +37,8 @@
 #define RADEON_CS_USE_VM            0x02
 #define RADEON_CS_RING_GFX          0
 #define RADEON_CS_RING_COMPUTE      1
-
+#define RADEON_CS_RING_DMA          2
+#define RADEON_CS_RING_UVD          3
 /* query if a RADEON_CS_RING_* submission is supported */
 #define RADEON_INFO_RING_WORKING 0x15
 
@@ -339,7 +340,7 @@ int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo,
 	buf[cdw++] = (raw_wait_flag ? PKT3_CP_DMA_CMD_RAW_WAIT : 0) | size;
 	
 	flags[0] = RADEON_CS_USE_VM;
-	flags[1] = RADEON_CS_RING_COMPUTE;
+	flags[1] = RADEON_CS_RING_DMA;
 	
 	chunks[0].chunk_id = RADEON_CHUNK_ID_FLAGS;
 	chunks[0].length_dw = 2;
