@@ -311,6 +311,49 @@ static struct cs_reloc_gem* compute_create_reloc_table(const struct compute_cont
   return relocs;
 }
 
+void compute_send_dma_req(struct compute_context* ctx, uint64_t dst_va, uint64_t src_va, size_t size, int sync_flag, int raw_wait_flag)
+{
+  struct drm_radeon_cs cs;
+  unsigned buf[64];
+  int cdw = 0;
+  uint64_t chunk_array[5];
+  struct drm_radeon_cs_chunk chunks[5];
+  uint32_t flags[3];
+
+	assert(size);
+	assert((size & ((1<<21)-1)) == size);
+	
+  buf[cdw++] = src_va & 0xFFFFFFFF;
+  buf[cdw++] = (sync_flag ? PKT3_CP_DMA_CP_SYNC : 0) | ((src_va >> 32) & 0xFFFF);
+  buf[cdw++] = dst_va & 0xFFFFFFFF;
+  buf[cdw++] = (dst_va >> 32) & 0xffff;
+  buf[cdw++] = (raw_wait_flag ? PKT3_CP_DMA_CMD_RAW_WAIT : 0) | size;
+	
+  flags[0] = RADEON_CS_USE_VM;
+  flags[1] = RADEON_CS_RING_COMPUTE;
+  
+  chunks[0].chunk_id = RADEON_CHUNK_ID_FLAGS;
+  chunks[0].length_dw = 2;
+  chunks[0].chunk_data =  (uint64_t)(uintptr_t)&flags[0];
+
+  chunks[1].chunk_id = RADEON_CHUNK_ID_IB;
+  chunks[1].length_dw = cdw;
+  chunks[1].chunk_data =  (uint64_t)(uintptr_t)&buf[0];  
+
+  printf("cdw: %i\n", cdw);
+
+  chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
+  chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
+  
+  cs.num_chunks = 2;
+  cs.chunks = (uint64_t)(uintptr_t)chunk_array;
+  cs.cs_id = 1;
+  
+  int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
+
+  printf("ret:%i\n", r);
+}
+
 void compute_free_gpu_buffer(struct gpu_buffer* bo)
 {
   struct drm_gem_close args;
