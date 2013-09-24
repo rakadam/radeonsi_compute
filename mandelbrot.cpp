@@ -332,7 +332,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, int itern
 int main()
 {
 	
-	animationZoom(500, 600, 0.04, 100);
+	animationZoom(500, 600, 0.02, 200);
 	
 	return 0;
 	int mx = 1920;
