@@ -246,37 +246,39 @@ void compute_pool_free(struct compute_context* ctx, struct gpu_buffer* bo)
 	assert(found_bo_num != 0 && "internal error attempted to free a non allocated vm block");
 }
 
-static int compute_vm_map(struct compute_context* ctx, uint64_t vm_addr, uint32_t handle, int vm_id, int flags)
+static int compute_vm_map(struct compute_context* ctx, struct gpu_buffer* bo, int vm_id, int flags)
 {
-	struct drm_radeon_gem_va va;
-	int r;
+	unsigned i;
 	
-	memset(&va, 0, sizeof(va));
-	
-	va.handle = handle;
-	va.vm_id = vm_id;
-	va.operation = RADEON_VA_MAP;
-	va.flags = flags |
-						RADEON_VM_PAGE_READABLE |
-						RADEON_VM_PAGE_WRITEABLE;
-						
-	va.offset = vm_addr;
-	
-// 	fprintf(stderr, "%lX %lX %lX\n", handle, vm_id, vm_addr);
-	
-	r = drmCommandWriteRead(ctx->fd, DRM_RADEON_GEM_VA, &va, sizeof(va));
-	
-	if (r && va.operation == RADEON_VA_RESULT_ERROR)
+	for (i = 0; i < bo->fragment_number; i++)
 	{
-		fprintf(stderr, "radeon: Failed to map buffer: %x\n", handle);
-		return -1;
-	}
-	
-	if (va.operation == RADEON_VA_RESULT_VA_EXIST)
-	{
-		fprintf(stderr, "double map?\n");
-//     assert(0 && "This cannot happen!");
-		return -1;
+		struct drm_radeon_gem_va va;
+		memset(&va, 0, sizeof(va));
+		
+		va.handle = bo[i].handle;
+		va.vm_id = vm_id;
+		va.operation = RADEON_VA_MAP;
+		va.flags = flags |
+							RADEON_VM_PAGE_READABLE |
+							RADEON_VM_PAGE_WRITEABLE;
+							
+		va.offset = bo[i].va;
+		
+		fprintf(stderr, "mapping: handle:%i va_addr:%lX size:%lX fragment:%i\n", bo[i].handle, bo[i].va, bo[i].size, i);
+		
+		int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_GEM_VA, &va, sizeof(va));
+		
+		if (r && va.operation == RADEON_VA_RESULT_ERROR)
+		{
+			fprintf(stderr, "radeon: Failed to map buffer: %x\n", bo[i].handle);
+			return -1;
+		}
+		
+		if (va.operation == RADEON_VA_RESULT_VA_EXIST)
+		{
+			fprintf(stderr, "double map?\n");
+			return -1;
+		}
 	}
 	
 	return 0;
@@ -284,7 +286,7 @@ static int compute_vm_map(struct compute_context* ctx, uint64_t vm_addr, uint32_
 
 int compute_vm_remap(struct gpu_buffer* bo)
 {
-	return compute_vm_map(bo->ctx, bo->va, bo->handle, 0, RADEON_VM_PAGE_SNOOPED);
+	return compute_vm_map(bo->ctx, bo, 0, RADEON_VM_PAGE_SNOOPED);
 }
 
 static int compute_vm_unmap(struct compute_context* ctx, uint64_t vm_addr, uint32_t handle, int vm_id)
@@ -683,7 +685,7 @@ struct gpu_buffer* compute_alloc_gpu_buffer(struct compute_context* ctx, size_t 
 	
 	compute_pool_alloc(ctx, buf);
 
-	if (compute_vm_map(ctx, buf->va, buf->handle, 0, RADEON_VM_PAGE_SNOOPED))
+	if (compute_vm_map(ctx, buf, 0, RADEON_VM_PAGE_SNOOPED))
 	{
 		compute_pool_free(ctx, buf);
 		buf->va = 0;
