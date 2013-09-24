@@ -230,6 +230,7 @@ int main()
 	gpu_buffer* program_code = compute.bufferAlloc(code_size_max);
 	gpu_buffer* data = compute.bufferAlloc(mx*my*sizeof(uchar4)+1024*4);
 	gpu_buffer* cpu_data = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
+	gpu_buffer* data2 = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	
 	compute.transferToGPU(cpu_data, 0, vector<uchar4>(mx*my)); ///zero out CPU memory
 	compute.transferToGPU(data, 0, vector<uchar4>(mx*my)); ///zero out GPU memory
@@ -273,7 +274,7 @@ int main()
 	
 	int64_t start_time = get_time_usec();
 	
-// 	compute.asyncDMACopy(cpu_data, 0, data, 0, mx*my*sizeof(uchar4));
+	compute.asyncDMACopy(cpu_data, 0, data2, 0, mx*my*sizeof(uchar4));
 	compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code, {program_code, data});
 	
 	int64_t stop_time = get_time_usec();
