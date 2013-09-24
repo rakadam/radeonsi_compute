@@ -284,17 +284,17 @@ int main()
 	
 	cout << "Runtime: " << double(stop_time-start_time) / 1000.0 << "ms" << endl;
 
-// 	{
-// 		int64_t start_time = get_time_usec();
-// 		
-// 		compute.asyncDMACopy(cpu_data, 0, data, 0, mx*my*sizeof(uchar4));
-// 		compute.asyncDMAFence(cpu_data);
-// 		
-// 		int64_t stop_time = get_time_usec();
-// 		
-// 		std::cout << "DMA time: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
-// 		std::cout << "DMA Bandwidth: " << double(mx*my*sizeof(uchar4)) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
-// 	}
+	{
+		int64_t start_time = get_time_usec();
+		
+		compute.asyncDMACopy(cpu_data, 0, data, 0, mx*my*sizeof(uchar4));
+		compute.asyncDMAFence(cpu_data);
+		
+		int64_t stop_time = get_time_usec();
+		
+		std::cout << "DMA time: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
+		std::cout << "DMA Bandwidth: " << double(mx*my*sizeof(uchar4)) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
+	}
 	
 	imageToFile(compute, cpu_data, mx, my, "ki.ppm");
 	
