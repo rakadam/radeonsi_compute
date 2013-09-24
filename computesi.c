@@ -511,6 +511,8 @@ int compute_send_dma_fence(struct compute_context* ctx, struct gpu_buffer* bo)
 	
 	int r = drmCommandWriteRead(ctx->fd, DRM_RADEON_CS, &cs, sizeof(struct drm_radeon_cs));
 	
+	printf("%s\n", strerror(-r));
+	
 // 	compute_bo_wait(bo);
 	
 	return r;
