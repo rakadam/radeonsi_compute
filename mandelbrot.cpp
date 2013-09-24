@@ -35,7 +35,7 @@ void imageToFile(ComputeInterface& compute, gpu_buffer* buffer, int mx, int my, 
 	{
 		int64_t start_time = get_time_usec();
 		
-		compute.transferToGPU(data, 0, vector<uchar4>(mx*my, uchar4(128)));
+		compute.transferToGPU(buffer, 0, vector<uchar4>(mx*my, uchar4(128)));
 		compute.transferFromGPU(buffer, 0, image);
 		
 		int64_t stop_time = get_time_usec();
