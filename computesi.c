@@ -376,8 +376,8 @@ int compute_send_dma_req(struct compute_context* ctx, struct gpu_buffer* dst_bo,
 	
 	if (sync_flag)
 	{
-// 		compute_bo_wait(dst_bo);
-// 		compute_bo_wait(src_bo);
+		compute_bo_wait(dst_bo);
+		compute_bo_wait(src_bo);
 	}
 	
 	return r;
