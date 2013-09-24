@@ -179,8 +179,8 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 	
 	for (n = ctx->vm_pool; n; n = n->next)
 	{
-		if (n->next && bo->fragment_number == 1)
-		{
+// 		if (n->next && bo->fragment_number == 1)
+// 		{
 // 			if ((int64_t)n->next->va - n->va - n->size > bo->va_size && bo->alignment <= 4096)
 // 			{
 // 				struct pool_node* n2 = malloc(sizeof(struct pool_node));
@@ -198,8 +198,9 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 // 				
 // 				return;
 // 			}
-		}
-		else
+// 		}
+// 		else
+		if (n->next == NULL)
 		{
 			unsigned i = 0;
 			
