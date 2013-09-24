@@ -600,6 +600,8 @@ struct gpu_buffer* compute_alloc_gpu_buffer(struct compute_context* ctx, int siz
 	
 	compute_pool_alloc(ctx, buf);
 
+	printf("buf va_addr:%lX\n", buf->va);
+	
 	if (compute_vm_map(ctx, buf->va, buf->handle, 0, RADEON_VM_PAGE_SNOOPED))
 	{
 		compute_pool_free(ctx, buf);
