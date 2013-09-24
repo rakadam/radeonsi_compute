@@ -208,10 +208,11 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 				n->next = n2;
 				n2->prev = n;
 				n2->next = NULL;
-				n = n2;
 				
 				buf->va = n2->va;
-				printf("pool %p, va: %lX, handle: %i fragment: %i, frag_size: %lX\n", n2, n2->va, buf->handle, i, n2->size);
+				printf("pool %p, va: %lX, handle: %i fragment: %i, frag_size: %lX, prev_va: %lX\n", n2, n2->va, buf->handle, i, n2->size, n->va);
+				
+				n = n2;
 			}
 			
 			return;
