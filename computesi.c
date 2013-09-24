@@ -192,7 +192,7 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 		{
 			unsigned i = 0;
 			
-// 			for (i = 0; i < bo->fragment_number; i++)
+			for (i = 0; i < bo->fragment_number; i++)
 			{
 				struct pool_node* n2 = malloc(sizeof(struct pool_node));
 				
@@ -200,6 +200,7 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 				n2->parent_bo = bo;
 				n2->bo = buf;
 				n2->va = n->va + n->size;
+				printf("VA: %p : addr: %lX\n", n2, n2->va);
 				n2->size = buf->va_size;
 				n->next = n2;
 				n2->prev = n;
