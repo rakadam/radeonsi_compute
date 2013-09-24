@@ -84,7 +84,7 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 		return;
 	}
 	
-	p = (char*)mmap (0, 640*480*3, PROT_WRITE, MAP_SHARED, fd, 0);
+	p = (char*)mmap (0, 640*480*3, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
 	
 	if (p == MAP_FAILED)
 	{
