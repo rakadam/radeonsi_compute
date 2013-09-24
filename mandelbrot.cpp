@@ -144,7 +144,7 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 	v_mul_f32(p, 6, 6, 255); p[0] = floatconv(1.0/float(mx/2)/image_scale); p++;
 	v_mul_f32(p, 8, 8, 255); p[0] = floatconv(1.0/float(my/2)/image_scale); p++;
 	
-	v_add_f32(p, 6, 6, 255); p[0] = floatconv((offset_x+1) / double(mx/2) / image_scale); p++;
+	v_add_f32(p, 6, 6, 255); p[0] = floatconv((offset_x) / double(mx/2) / image_scale); p++;
 	v_add_f32(p, 8, 8, 255); p[0] = floatconv(offset_y / double(my/2) / image_scale); p++;
 	
 	//////////////////////////////////////////////////////////////////////////////
@@ -332,7 +332,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, int itern
 int main()
 {
 	
-	animationZoom(10, 2, 0.04, 100);
+	animationZoom(500, 600, 0.04, 100);
 	
 	return 0;
 	int mx = 1920;
