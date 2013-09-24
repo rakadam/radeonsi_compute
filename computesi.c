@@ -211,6 +211,7 @@ void compute_pool_alloc(struct compute_context* ctx, struct gpu_buffer* bo)
 				n = n2;
 				
 				buf->va = n2->va;
+				printf("pool %p, va: %lX, handle: %i\n", n2, n2->va, buf->handle);
 			}
 			
 			return;
