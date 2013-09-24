@@ -21,7 +21,6 @@ public:
 	gpu_buffer* bufferAllocGTT(size_t size);
 	void bufferFree(gpu_buffer* buf);
 
-	
 	uint64_t getVirtualAddress(gpu_buffer* buf);
 	void syncDMACopy(gpu_buffer* dst, size_t dst_offset, gpu_buffer* src, size_t src_offset, size_t size);
 	void asyncDMACopy(gpu_buffer* dst, size_t dst_offset, gpu_buffer* src, size_t src_offset, size_t size);

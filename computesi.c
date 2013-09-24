@@ -730,7 +730,7 @@ int compute_bo_wait(struct gpu_buffer *boi)
 		
 		if (ret)
 		{
-// 			return ret;
+			return ret;
 		}
 	}
 	
