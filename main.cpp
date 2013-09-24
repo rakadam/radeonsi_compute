@@ -894,7 +894,9 @@ rak_adam: 0x48 is the TC (texture cache)
   
   compute_flush_caches(ctx);
 
-  compute_copy_from_gpu(data_bo, 0, &test_data[0], test_data_size*4);
+  gpu_buffer* data2_bo = compute_alloc_gpu_buffer(ctx, test_data_size*4, RADEON_DOMAIN_VRAM, 4096);
+
+  compute_copy_from_gpu(data2_bo, 0, &test_data[0], test_data_size*4);
   
 	if(0)
   for (int i = 1; i < 64*4; i++)
@@ -908,7 +910,7 @@ rak_adam: 0x48 is the TC (texture cache)
 
   std::cout << test_data[0] << " " << datalen << std::endl;
 
-  datalen = test_data[0];
+//   datalen = test_data[0];
 
   uint64_t firststart = *(uint64_t*)&test_data[1];
 
