@@ -93,6 +93,7 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 		p[i] = 128;
 		p[i+1] = 255;
 		p[i+2] = 128;
+		p[i+3] = 0;
 	}
 	
 	if (p == MAP_FAILED)
