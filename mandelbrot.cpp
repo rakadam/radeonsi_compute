@@ -353,8 +353,8 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 int main()
 {
 	
-	double stepsize = 1.05;
-	int iter = 180;
+	double stepsize = 1.03;
+	int iter = 350;
 	animationZoom(0.295, 0.450705, stepsize, 0.05, iter);
 	animationZoom(0.295, 0.450705, 1.0/stepsize, 0.05*pow(stepsize, iter), iter);
 	
