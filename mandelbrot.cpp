@@ -337,10 +337,10 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 		
 		std::cout << double(cur_time-prev_time) / 1000 << std::endl;
 		
-// 		if (cur_time-prev_time < 30000)
-// 		{
-// 			usleep(30000 - (cur_time-prev_time));
-// 		}
+		if (cur_time-prev_time < 30000)
+		{
+			usleep(30000 - (cur_time-prev_time));
+		}
 		
 		prev_time = cur_time;
 		
@@ -357,8 +357,12 @@ int main()
 	
 	double stepsize = 1.03;
 	int iter = 530;
-	animationZoom(0.295, 0.450705, stepsize, 0.05, iter);
-	animationZoom(0.295, 0.450705, 1.0/stepsize, 0.05*pow(stepsize, iter), iter);
+	
+	while (true)
+	{
+		animationZoom(0.295, 0.450705, stepsize, 0.05, iter);
+		animationZoom(0.295, 0.450705, 1.0/stepsize, 0.05*pow(stepsize, iter), iter);
+	}
 	
 	return 0;
 	int mx = 1920;
