@@ -90,14 +90,14 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 	
 	
 	{
-		int64_t start_time = get_time_usec();
+// 		int64_t start_time = get_time_usec();
 		
 		compute.transferFromGPU(buffer, 0, p, size);
 		
-		int64_t stop_time = get_time_usec();
+// 		int64_t stop_time = get_time_usec();
 		
-		std::cout << "GTT-CPU transfer time down: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
-		std::cout << "GTT-CPU Bandwidth down: " << double(size) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
+// 		std::cout << "GTT-CPU transfer time down: " << double(stop_time-start_time)/1000.0 << "ms" << std::endl;
+// 		std::cout << "GTT-CPU Bandwidth down: " << double(size) / double(stop_time-start_time) << "Mbyte/s" << std::endl;
 	}
 
 	if (p == MAP_FAILED)
@@ -334,7 +334,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 		compute.waitBuffer(program_code);
 		
 		int64_t cur_time = get_time_usec();
-		std::cout << double(cur_time-prev_time) / 1000.0 << std::endl;
+		
 		if (cur_time-prev_time < 60000)
 		{
 			usleep(60000 - (cur_time-prev_time));
