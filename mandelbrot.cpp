@@ -334,7 +334,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 		compute.waitBuffer(program_code);
 		
 		int64_t cur_time = get_time_usec();
-		
+		std::cout << double(cur_time-prev_time) / 1000.0 << std::endl;
 		if (cur_time-prev_time < 60000)
 		{
 			usleep(60000 - (cur_time-prev_time));
