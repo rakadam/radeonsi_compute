@@ -29,6 +29,7 @@ public:
 	void transferToGPU(gpu_buffer* buf, size_t offset, const void* data, size_t size, EventDependence evd = EventDependence());
 	void transferFromGPU(gpu_buffer* buf, size_t offset, void* data, size_t size, EventDependence evd = EventDependence());
 
+	
 	template<typename T>
 	void transferToGPU(gpu_buffer* buf, size_t offset, const T& data, EventDependence evd = EventDependence())
 	{
@@ -42,6 +43,7 @@ public:
 	}
 
 	void launch(std::vector<uint32_t> userData, std::vector<size_t> threadOffset, std::vector<size_t> blockDim, std::vector<size_t> localSize, gpu_buffer* code, const std::vector<gpu_buffer*>& usedMemories, int localMemSize = 32*1024, int vgprnum=0, int sgprnum=0, EventDependence evd = EventDependence());
+	void waitBuffer(gpu_buffer* buf);
 };
 
 #endif

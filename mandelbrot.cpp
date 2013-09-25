@@ -290,44 +290,53 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, int itern
 	
 	ComputeInterface compute("/dev/dri/card1");
 	gpu_buffer* program_code = compute.bufferAlloc(code_size_max);
-	gpu_buffer* data = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
+	gpu_buffer* data1 = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
+	gpu_buffer* data2 = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	uint32_t *code = new uint32_t[code_size_max/4];
 	
-	buffer_resource bufres;
-	vector<uint32_t> user_data;
-	
-	bufres.base_addr = compute.getVirtualAddress(data);
-	bufres.stride = 4;
-	bufres.num_records = mx*my+1024;
-	bufres.dst_sel_x = 4;
-	bufres.dst_sel_y = 4;
-	bufres.dst_sel_z = 4;
-	bufres.dst_sel_w = 4;
-	bufres.num_format = 4;
-	bufres.data_format = 10;
-	bufres.element_size = 1;
-	bufres.add_tid_en = 0;
-	
-	user_data.push_back(bufres.data[0]);
-	user_data.push_back(bufres.data[1]);
-	user_data.push_back(bufres.data[2]);
-	user_data.push_back(bufres.data[3]);
 
 
 	for (int i = 0; i < iternum; i++)
 	{
+		gpu_buffer* data_cur = i%2 ? data1 : data2;
+		gpu_buffer* data_other = i%2 ? data2 : data1;
+		
+		buffer_resource bufres;
+		vector<uint32_t> user_data;
+		
+		bufres.base_addr = compute.getVirtualAddress(data_cur);
+		bufres.stride = 4;
+		bufres.num_records = mx*my+1024;
+		bufres.dst_sel_x = 4;
+		bufres.dst_sel_y = 4;
+		bufres.dst_sel_z = 4;
+		bufres.dst_sel_w = 4;
+		bufres.num_format = 4;
+		bufres.data_format = 10;
+		bufres.element_size = 1;
+		bufres.add_tid_en = 0;
+		
+		user_data.push_back(bufres.data[0]);
+		user_data.push_back(bufres.data[1]);
+		user_data.push_back(bufres.data[2]);
+		user_data.push_back(bufres.data[3]);
+		
 		set_program(code, mx, my, zoom, offset_x, offset_y);
 		
 		compute.transferToGPU(program_code, 0, code, code_size_max);
 		
-		compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code, {program_code, data});
+		compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code, {program_code, data_cur});
 
-		imageToFrameBuffer(compute, data, mx, my, "/dev/fb1");
+		imageToFrameBuffer(compute, data_other, mx, my, "/dev/fb1");
+		
+		compute.waitBuffer(program_code);
+		
 		zoom *= zoom_step;
 	}
 	
 	compute.bufferFree(program_code);
-	compute.bufferFree(data);
+	compute.bufferFree(data1);
+	compute.bufferFree(data2);
 }
 
 int main()

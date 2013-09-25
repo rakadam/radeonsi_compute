@@ -929,7 +929,7 @@ int compute_emit_compute_state_manual_relocs(const struct compute_context* ctx, 
 
 //   printf("ret:%i\n", r);
 	
-	compute_bo_wait(state->binary); ///to see if it hangs
+// 	compute_bo_wait(state->binary); ///to see if it hangs
 	
 	return r;
 }

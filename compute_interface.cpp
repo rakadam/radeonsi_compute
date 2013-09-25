@@ -165,6 +165,11 @@ void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t
 		throw std::runtime_error("Error while running kernel: " + std::string(strerror(errno)));
 	}
 	
-	compute_flush_caches(context);
+//
 }
 
+void ComputeInterface::waitBuffer(gpu_buffer* buf)
+{
+	compute_bo_wait(buf);
+	compute_flush_caches(context);
+}
