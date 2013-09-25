@@ -90,7 +90,7 @@ void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t
 															int localMemSize, int vgprnum, int sgprnum, EventDependence evd)
 {
 	assert(localMemSize <= 32*1024);
-	std::cout << vgprnum << std::endl;
+	
 	assert(vgprnum < 257);
 	assert(sgprnum < 129);
 	assert(localSize.size() == blockDim.size());
