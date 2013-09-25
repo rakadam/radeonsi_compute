@@ -337,7 +337,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 		
 		if (cur_time-prev_time < 60000)
 		{
-			usleep(60000 - (cur_time-prev_time));
+// 			usleep(60000 - (cur_time-prev_time));
 		}
 		
 		prev_time = cur_time;
