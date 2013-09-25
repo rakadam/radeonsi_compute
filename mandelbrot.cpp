@@ -324,7 +324,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 		
 		compute.transferToGPU(program_code, 0, code, code_size_max);
 		
-		compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code, {program_code, data_cur}, 0, 41, 50);
+		compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code, {program_code, data_cur}, 0, 50, 50);
 
 		if (i > 0)
 		{
@@ -337,10 +337,10 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 		
 		std::cout << double(cur_time-prev_time) / 1000 << std::endl;
 		
-// 		if (cur_time-prev_time < 60000)
-// 		{
-// 			usleep(60000 - (cur_time-prev_time));
-// 		}
+		if (cur_time-prev_time < 30000)
+		{
+			usleep(30000 - (cur_time-prev_time));
+		}
 		
 		prev_time = cur_time;
 		
