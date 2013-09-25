@@ -295,7 +295,8 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, int itern
 	uint32_t *code = new uint32_t[code_size_max/4];
 	
 
-
+	int64_t prev_time = get_time_usec();
+	
 	for (int i = 0; i < iternum; i++)
 	{
 		gpu_buffer* data_cur = i%2 ? data1 : data2;
@@ -328,6 +329,15 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, int itern
 		compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code, {program_code, data_cur});
 
 		imageToFrameBuffer(compute, data_other, mx, my, "/dev/fb1");
+		
+		int64_t cur_time = get_time_usec();
+		
+		if (cur_time-prev_time < 60000)
+		{
+			usleep(60000 - (cur_time-prev_time));
+		}
+		
+		prev_time = cur_time;
 		
 		compute.waitBuffer(program_code);
 		
