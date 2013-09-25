@@ -208,7 +208,7 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 	
 	s_cbranch_execz(p, 3);//Exit loop if vector unit is idle
 	
-	s_cmp_lt_i32(p, 8, 255); p[0] = 0xFFF; p++;
+	s_cmp_lt_i32(p, 8, 255); p[0] = 0x2FF; p++;
 	s_cbranch_scc0(p, eleje-p-1); //if (s8 <= 0x1FFF) goto eleje;
 	
 	s_mov_b64(p, 126, 12); //restore exec from s12-s13
@@ -353,9 +353,10 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 int main()
 {
 	
-	animationZoom(0.295, 0.450705, 1.1, 0.05, 180);
-	
-	animationZoom(0.295, 0.450705, 1.0/1.1, 0.05*pow(1.1, 180), 180);
+	double stepsize = 1.1;
+	int iter = 180;
+	animationZoom(0.295, 0.450705, stepsize, 0.05, iter);
+	animationZoom(0.295, 0.450705, 1.0/stepsize, 0.05*pow(stepsize, iter), iter);
 	
 	return 0;
 	int mx = 1920;
