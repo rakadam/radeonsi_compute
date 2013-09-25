@@ -326,7 +326,10 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 		
 		compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code, {program_code, data_cur});
 
-		imageToFrameBuffer(compute, data_other, mx, my, "/dev/fb1");
+		if (i > 0)
+		{
+			imageToFrameBuffer(compute, data_other, mx, my, "/dev/fb1");
+		}
 		
 		compute.waitBuffer(program_code);
 		
