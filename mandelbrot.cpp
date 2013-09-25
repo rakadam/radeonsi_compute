@@ -323,7 +323,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, int itern
 		compute.launch(user_data, {0, 0, 0}, {size_t(mx/256), size_t(my), 1}, {256, 1, 1}, program_code, {program_code, data});
 
 		imageToFrameBuffer(compute, data, mx, my, "/dev/fb1");
-		zoom += zoom_step;
+		zoom *= zoom_step;
 	}
 	
 	compute.bufferFree(program_code);
@@ -333,7 +333,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, int itern
 int main()
 {
 	
-	animationZoom(0.3, 0.45, 0.1, 400);
+	animationZoom(0.3, 0.45, 1.1, 400);
 	
 	return 0;
 	int mx = 1920;
