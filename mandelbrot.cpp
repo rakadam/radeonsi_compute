@@ -280,10 +280,8 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 	s_endpgm(p);
 }
 
-void animationZoom(double offset_x, double offset_y, double zoom_step, int iternum)
+void animationZoom(double offset_x, double offset_y, double zoom_step, double zoom, int iternum)
 {
-	double zoom = 0.05;
-
 	int mx = 1920;
 	int my = 1080;
 	int code_size_max = 1024*4;
@@ -352,7 +350,9 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, int itern
 int main()
 {
 	
-	animationZoom(0.295, 0.450705, 1.1, 180);
+	animationZoom(0.295, 0.450705, 1.1, 0.05, 180);
+	
+// 	animationZoom(0.295, 0.450705, 1.0/1.1, 180);
 	
 	return 0;
 	int mx = 1920;
