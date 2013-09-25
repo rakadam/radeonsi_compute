@@ -330,6 +330,8 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, int itern
 
 		imageToFrameBuffer(compute, data_other, mx, my, "/dev/fb1");
 		
+		compute.waitBuffer(program_code);
+		
 		int64_t cur_time = get_time_usec();
 		
 		if (cur_time-prev_time < 60000)
@@ -338,8 +340,6 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, int itern
 		}
 		
 		prev_time = cur_time;
-		
-		compute.waitBuffer(program_code);
 		
 		zoom *= zoom_step;
 	}
