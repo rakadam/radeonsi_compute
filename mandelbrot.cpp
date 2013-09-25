@@ -352,7 +352,7 @@ int main()
 	
 	animationZoom(0.295, 0.450705, 1.1, 0.05, 180);
 	
-// 	animationZoom(0.295, 0.450705, 1.0/1.1, 180);
+	animationZoom(0.295, 0.450705, 1.0/1.1, 0.05*pow(1.1, 180), 180);
 	
 	return 0;
 	int mx = 1920;
