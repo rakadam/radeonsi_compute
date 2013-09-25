@@ -288,7 +288,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, int itern
 	int my = 1080;
 	int code_size_max = 1024*4;
 	
-	ComputeInterface compute("/dev/dri/card0");
+	ComputeInterface compute("/dev/dri/card1");
 	gpu_buffer* program_code = compute.bufferAlloc(code_size_max);
 	gpu_buffer* data1 = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	gpu_buffer* data2 = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
