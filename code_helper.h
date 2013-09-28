@@ -543,6 +543,11 @@ void vop3a(unsigned *&p, unsigned vdst, unsigned abs, unsigned clamp, unsigned o
 	p+=2;
 }
 
+void v_fma_f32(unsigned *&p, unsigned vdst, unsigned abs, unsigned clamp, unsigned src0, unsigned src1, unsigned src2, unsigned omod, unsigned neg)
+{
+    vop3a(p, vdst, abs, clamp, 331, src0, src1, src2, omod, neg);
+}
+
 void v_mul_lo_i32(unsigned *&p, unsigned vdst, unsigned src0, unsigned src1)
 {
 	vop3a(p, vdst, 0, 0, 363, src0, src1, 0, 0, 0);

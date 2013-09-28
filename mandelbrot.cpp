@@ -116,7 +116,7 @@ void imageToFrameBuffer(ComputeInterface& compute, gpu_buffer* buffer, int mx, i
 	
 }
 
-void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double offset_x=0, double offset_y=0)
+void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double offset_x=0, double offset_y=0, double shift = 0)
 {
 	float N;
 
@@ -223,20 +223,27 @@ void set_program(unsigned* p, int mx, int my, double image_scale=1.0, double off
 	
 	float cscale = 5.0;
 	
+/*	shift = fabs(shift);
+
+	while (shift > 1)
+	{
+		shift -= 1.0;
+	}
+*/
 	v_mul_f32(p, 11, 10, 255); p[0] = floatconv(1.0/cscale); p++;
-	v_add_f32(p, 11, 11, 255); p[0] = floatconv(-1.0/3.0); p++;
+	v_add_f32(p, 11, 11, 255); p[0] = floatconv(-1.0/3.0+shift); p++;
 	v_sin_f32(p, 11, 256+11);
 	v_add_f32(p, 11, 11, 255); p[0] = floatconv(1.0001); p++;
 	v_mul_f32(p, 11, 11, 255); p[0] = floatconv(127.0); p++;
 	
 	v_mul_f32(p, 12, 10, 255); p[0] = floatconv(1.0/cscale); p++;
-	v_add_f32(p, 12, 12, 255); p[0] = floatconv(0.0); p++;
+	v_add_f32(p, 12, 12, 255); p[0] = floatconv(0.0+shift); p++;
 	v_sin_f32(p, 12, 256+12);
 	v_add_f32(p, 12, 12, 255); p[0] = floatconv(1.0001); p++;
 	v_mul_f32(p, 12, 12, 255); p[0] = floatconv(127.0); p++;
 	
 	v_mul_f32(p, 13, 10, 255); p[0] = floatconv(1.0/cscale); p++;
-	v_add_f32(p, 13, 13, 255); p[0] = floatconv(1.0/3.0); p++;
+	v_add_f32(p, 13, 13, 255); p[0] = floatconv(1.0/3.0+shift); p++;
 	v_sin_f32(p, 13, 256+13);
 	v_add_f32(p, 13, 13, 255); p[0] = floatconv(1.0001); p++;
 	v_mul_f32(p, 13, 13, 255); p[0] = floatconv(127.0); p++;
@@ -320,7 +327,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 		user_data.push_back(bufres.data[2]);
 		user_data.push_back(bufres.data[3]);
 		
-		set_program(code, mx, my, zoom, offset_x, offset_y);
+		set_program(code, mx, my, zoom, offset_x, offset_y, double(i)*0.05);
 		
 		compute.transferToGPU(program_code, 0, code, code_size_max);
 		
@@ -335,7 +342,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 		
 		int64_t cur_time = get_time_usec();
 		
-		std::cout << double(cur_time-prev_time) / 1000 << std::endl;
+		//std::cout << double(cur_time-prev_time) / 1000 << std::endl;
 		
 		if (cur_time-prev_time < 30000)
 		{
@@ -369,7 +376,7 @@ int main()
 	int my = 1080;
 	
 	
-	ComputeInterface compute("/dev/dri/card0");
+	ComputeInterface compute("/dev/dri/card1");
 	
 	int code_size_max = 1024*4;
 	
