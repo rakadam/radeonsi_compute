@@ -1,0 +1,244 @@
+From e9ba2b39ff3a668a9cb3780afa31abfcc3158601 Mon Sep 17 00:00:00 2001
+From: Adam Rak <adam.rak@streamnovation.com>
+Date: Sat, 28 Sep 2013 06:45:12 +0200
+Subject: [PATCH] added radeon manual clocking support
+
+---
+ drivers/gpu/drm/radeon/radeon_pm.c |  200 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 200 insertions(+)
+
+diff --git a/drivers/gpu/drm/radeon/radeon_pm.c b/drivers/gpu/drm/radeon/radeon_pm.c
+index d755536..a09f7e7 100644
+--- a/drivers/gpu/drm/radeon/radeon_pm.c
++++ b/drivers/gpu/drm/radeon/radeon_pm.c
+@@ -152,6 +152,123 @@ static void radeon_sync_with_vblank(struct radeon_device *rdev)
+ 	}
+ }
+ 
++static void radeon_set_clocks_voltages_raw(struct radeon_device *rdev, u32 sclk, u32 mclk, u16 vddc, u16 vddci)
++{
++	bool misc_after = false;
++	int i, r;
++	
++	if ((vddc & 0xFF00) == 0xFF00 || (vddci & 0xFF00) == 0xFF00)
++	{
++		//invalid usage
++		return;
++	}
++
++	mutex_lock(&rdev->ddev->struct_mutex);
++	down_write(&rdev->pm.mclk_lock);
++	mutex_lock(&rdev->ring_lock);
++
++	/* wait for the rings to drain */
++	for (i = 0; i < RADEON_NUM_RINGS; i++) {
++		struct radeon_ring *ring = &rdev->ring[i];
++		if (!ring->ready) {
++			continue;
++		}
++		r = radeon_fence_wait_empty_locked(rdev, i);
++		if (r) {
++			/* needs a GPU reset dont reset here */
++			mutex_unlock(&rdev->ring_lock);
++			up_write(&rdev->pm.mclk_lock);
++			mutex_unlock(&rdev->ddev->struct_mutex);
++			return;
++		}
++	}
++
++	radeon_unmap_vram_bos(rdev);
++
++	if (rdev->irq.installed) {
++		for (i = 0; i < rdev->num_crtc; i++) {
++			if (rdev->pm.active_crtcs & (1 << i)) {
++				rdev->pm.req_vblank |= (1 << i);
++				drm_vblank_get(rdev->ddev, i);
++			}
++		}
++	}
++
++	if (radeon_gui_idle(rdev)) {
++		/* upvolt before raising clocks, downvolt after lowering clocks */
++		if (sclk < rdev->pm.current_sclk)
++			misc_after = true;
++
++		radeon_sync_with_vblank(rdev);
++
++		if (rdev->pm.pm_method == PM_METHOD_DYNPM) {
++			if (!radeon_pm_in_vbl(rdev))
++				return;
++		}
++
++		radeon_pm_prepare(rdev);
++
++		if (!misc_after)
++		{
++			radeon_atom_set_voltage(rdev, vddc, SET_VOLTAGE_TYPE_ASIC_VDDC);
++			rdev->pm.current_vddc = vddc;
++			radeon_atom_set_voltage(rdev, vddci, SET_VOLTAGE_TYPE_ASIC_VDDCI);
++			rdev->pm.current_vddci = vddci;
++		}
++		
++		/* set engine clock */
++		if (sclk != rdev->pm.current_sclk) {
++			radeon_pm_debug_check_in_vbl(rdev, false);
++			radeon_set_engine_clock(rdev, sclk);
++			radeon_pm_debug_check_in_vbl(rdev, true);
++			rdev->pm.current_sclk = sclk;
++			DRM_DEBUG_DRIVER("Setting: e: %d\n", sclk);
++		}
++
++		/* set memory clock */
++		if (rdev->asic->pm.set_memory_clock && (mclk != rdev->pm.current_mclk)) {
++			radeon_pm_debug_check_in_vbl(rdev, false);
++			radeon_set_memory_clock(rdev, mclk);
++			radeon_pm_debug_check_in_vbl(rdev, true);
++			rdev->pm.current_mclk = mclk;
++			DRM_DEBUG_DRIVER("Setting: m: %d\n", mclk);
++		}
++
++		if (misc_after)
++		{
++			radeon_atom_set_voltage(rdev, vddc, SET_VOLTAGE_TYPE_ASIC_VDDC);
++			rdev->pm.current_vddc = vddc;
++			radeon_atom_set_voltage(rdev, vddci, SET_VOLTAGE_TYPE_ASIC_VDDCI);
++			rdev->pm.current_vddci = vddci;
++		}
++
++		radeon_pm_finish(rdev);
++	} else
++	{
++		DRM_DEBUG_DRIVER("pm: GUI not idle!!!\n");
++	}
++	
++	if (rdev->irq.installed) {
++		for (i = 0; i < rdev->num_crtc; i++) {
++			if (rdev->pm.req_vblank & (1 << i)) {
++				rdev->pm.req_vblank &= ~(1 << i);
++				drm_vblank_put(rdev->ddev, i);
++			}
++		}
++	}
++
++	/* update display watermarks based on new power state */
++	radeon_update_bandwidth_info(rdev);
++	if (rdev->pm.active_crtc_count)
++		radeon_bandwidth_update(rdev);
++
++	rdev->pm.dynpm_planned_action = DYNPM_ACTION_NONE;
++
++	mutex_unlock(&rdev->ring_lock);
++	up_write(&rdev->pm.mclk_lock);
++	mutex_unlock(&rdev->ddev->struct_mutex);
++}
++
+ static void radeon_set_power_state(struct radeon_device *rdev)
+ {
+ 	u32 sclk, mclk;
+@@ -329,6 +446,85 @@ static void radeon_pm_print_states(struct radeon_device *rdev)
+ 	}
+ }
+ 
++static ssize_t radeon_get_pm_clocks(struct device *dev,
++				    struct device_attribute *attr,
++				    char *buf)
++{
++	struct drm_device *ddev = pci_get_drvdata(to_pci_dev(dev));
++	struct radeon_device *rdev = ddev->dev_private;
++	u16 max_vddc;
++	u16 min_vddc;
++	u16 max_vddci;
++	u16 min_vddci;
++	
++	radeon_atom_get_max_voltage(rdev, SET_VOLTAGE_TYPE_ASIC_VDDC, &max_vddc);
++	radeon_atom_get_min_voltage(rdev, SET_VOLTAGE_TYPE_ASIC_VDDC, &min_vddc);
++	
++	radeon_atom_get_max_voltage(rdev, SET_VOLTAGE_TYPE_ASIC_VDDCI, &max_vddci);
++	radeon_atom_get_min_voltage(rdev, SET_VOLTAGE_TYPE_ASIC_VDDCI, &min_vddci);
++	
++	return snprintf(buf, PAGE_SIZE, "engine_clk: %u MHz memory_clk: %u MHz\nget: sclk: %u MHz mclk: %u MHz\nVDDC: %u VDDCI: %u\nMAX_VDDC: %u MIN_VDDC: %u\nMAX_VDDCI: %u MIN_VDDCI: %u\n%i\n",
++									rdev->pm.current_sclk/100, rdev->pm.current_mclk/100, radeon_get_engine_clock(rdev)/100, radeon_get_memory_clock(rdev)/100, rdev->pm.current_vddc, rdev->pm.current_vddci, max_vddc, min_vddc, max_vddci, min_vddci, (int)42);
++}
++
++static ssize_t radeon_set_pm_clocks(struct device *dev,
++				     struct device_attribute *attr,
++				     const char *buf,
++				     size_t count)
++{
++	u32 sclk_mhz;
++	u32 mclk_mhz;
++	u32 vddc;
++	u32 vddci;
++	char head[256];
++	struct drm_device *ddev = pci_get_drvdata(to_pci_dev(dev));
++	struct radeon_device *rdev = ddev->dev_private;
++
++	mutex_lock(&rdev->pm.mutex);
++	
++	if (rdev->pm.pm_method != PM_METHOD_PROFILE)
++	{
++		count = -EINVAL;
++		goto fail;
++	}
++	
++	sclk_mhz = rdev->pm.current_sclk/100;
++	mclk_mhz = rdev->pm.current_mclk/100;
++	vddc = rdev->pm.current_vddc;
++	vddci = rdev->pm.current_vddci;
++	
++	sscanf(buf, "%s %u %u %u %u", head, &sclk_mhz, &mclk_mhz, &vddc, &vddci);
++	
++	if (strncmp(head, "set", 3) != 0)
++	{
++		count = -EINVAL;
++		goto fail;
++	}
++	
++	printk("%u %u %u %u\n", sclk_mhz, mclk_mhz, vddc, vddci);
++	
++	if (vddc < 100 || vddci < 100)
++	{
++		printk("Voltage too low\n");
++		count = -EINVAL;
++		goto fail;
++	}
++	
++	if (vddc > 1410 || vddci > 950)
++	{
++		printk("Voltage too high\n");
++		count = -EINVAL;
++		goto fail;
++	}
++	
++	radeon_set_clocks_voltages_raw(rdev, sclk_mhz*100, mclk_mhz*100, vddc, vddci);
++	 
++fail:
++	mutex_unlock(&rdev->pm.mutex);
++
++	return count;
++}
++
+ static ssize_t radeon_get_pm_profile(struct device *dev,
+ 				     struct device_attribute *attr,
+ 				     char *buf)
+@@ -513,6 +709,7 @@ fail:
+ 	return count;
+ }
+ 
++static DEVICE_ATTR(gpu_clocks, S_IRUGO | S_IWUSR, radeon_get_pm_clocks, radeon_set_pm_clocks);
+ static DEVICE_ATTR(power_profile, S_IRUGO | S_IWUSR, radeon_get_pm_profile, radeon_set_pm_profile);
+ static DEVICE_ATTR(power_method, S_IRUGO | S_IWUSR, radeon_get_pm_method, radeon_set_pm_method);
+ static DEVICE_ATTR(power_dpm_state, S_IRUGO | S_IWUSR, radeon_get_dpm_state, radeon_set_dpm_state);
+@@ -1071,6 +1268,9 @@ static int radeon_pm_init_old(struct radeon_device *rdev)
+ 
+ 	if (rdev->pm.num_power_states > 1) {
+ 		/* where's the best place to put these? */
++		ret = device_create_file(rdev->dev, &dev_attr_gpu_clocks);
++		if (ret)
++			DRM_ERROR("failed to create device file for gpu clocks\n");
+ 		ret = device_create_file(rdev->dev, &dev_attr_power_profile);
+ 		if (ret)
+ 			DRM_ERROR("failed to create device file for power profile\n");
+-- 
+1.7.10.4
+
