@@ -127,14 +127,14 @@ void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t
 	
 	state.sgpr_num = (sgprnum+7)/8-1;
 	state.vgpr_num = (vgprnum+3)/4-1;
-  state.priority = 0;
-  state.debug_mode = 0;
+	state.priority = 0;
+	state.debug_mode = 0;
 	state.priv_mode = 0;
 	state.trap_en = 0;
-  state.excp_en = 0;
-  state.ieee_mode = 1;
-  state.scratch_en = 0;
-  state.lds_size = (localMemSize+255) / 256;
+	state.excp_en = 0;
+	state.ieee_mode = 1;
+	state.scratch_en = 0;
+	state.lds_size = (localMemSize+255) / 256;
 	state.waves_per_sh = 0; ///zero means automatic maximum, practically limited by registers
 	state.thread_groups_per_cu = 0; ///zero means automatic maximum, practically limited by local memory and registers
 	state.lock_threshold = 0;
@@ -147,7 +147,6 @@ void ComputeInterface::launch(std::vector<uint32_t> userData, std::vector<size_t
 	state.tmpring_wavesize = 0;
 	state.binary = code;
 
-	
 	struct compute_relocs crelocs;
 	compute_init_relocs(&crelocs);
 	

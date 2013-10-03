@@ -17,7 +17,10 @@ include_directories(/usr/include/libdrm)
 
 
 add_executable(test ${SRCs} main.cpp)
+add_executable(fma_test ${SRCs} fma_test.cpp)
 add_executable(mandelbrot ${SRCs} mandelbrot.cpp)
+
 target_link_libraries(test drm_radeon drm)
+target_link_libraries(fma_test drm_radeon drm)
 target_link_libraries(mandelbrot drm_radeon drm)
 

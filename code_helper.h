@@ -315,6 +315,13 @@ void s_waitcnt(unsigned*&p)
   p++;
 }
 
+void s_sleep(unsigned*&p, unsigned imm)
+{
+  unsigned op = 14;
+  p[0] = 0xBF800000 | op << 16 | (imm & 0xFFFF);
+  p++;
+}
+
 void s_endpgm(unsigned*&p)
 {
   unsigned op = 1;

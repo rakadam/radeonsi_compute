@@ -58,14 +58,14 @@ int main()
 // 
 //   return 0;
 //   }
-  compute_context* ctx = compute_create_context("/dev/dri/card1");
+  compute_context* ctx = compute_create_context("/dev/dri/card0");
   assert(ctx);
 	
   int test_data_size = 1024*1024*16;
-  gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 1024*1024*4, RADEON_DOMAIN_VRAM, 4096);
-  gpu_buffer* trap_code_bo = compute_alloc_gpu_buffer(ctx, 1024*4, RADEON_DOMAIN_VRAM, 4096);
+  gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 1024*1024*4, RADEON_DOMAIN_GTT, 4096);
+  gpu_buffer* trap_code_bo = compute_alloc_gpu_buffer(ctx, 1024*4, RADEON_DOMAIN_GTT, 4096);
 	
-  gpu_buffer* data_bo = compute_alloc_gpu_buffer(ctx, test_data_size*4, RADEON_DOMAIN_VRAM, 4096);
+  gpu_buffer* data_bo = compute_alloc_gpu_buffer(ctx, test_data_size*4, RADEON_DOMAIN_GTT, 4096);
   
 	printf("code_bo->va: %08X\n", code_bo->va);
 	printf("trap_code_bo->va: %08X\n", trap_code_bo->va);
@@ -249,12 +249,13 @@ rak_adam: 0x48 is the TC (texture cache)
            2//int vaddr
           );
   s_waitcnt(p);
+
 ////////////////////////////////////////
+  int iternum = 100000;
+  int elem_flopcount = 2;
+  int ii2 = 1024*1;
   s_mov_imm32(p, 126, 0xFFFFFFFF); //EXECLO
   s_mov_imm32(p, 127, 0xFFFFFFFF); //EXECHI
-
-  
-  int iternum = 100000;
 
   s_mov_imm32(p, 8, 0);
 
@@ -263,18 +264,18 @@ rak_adam: 0x48 is the TC (texture cache)
 
   unsigned * eleje = p;
 
-  int ii2 = 1024*1;
-
-  int elem_flopcount = 2;
-
   for (int i = 0; i < ii2; i++)
   {
 		
-//    s_mov_b32(p, 6, 6);
+//     s_mov_b32(p, 6, 6);
 //    v_sin_f32(p, 4, 256+4);
 //    v_add_f32(p, 4, 4, 256+4);
-      v_fma_f32(p, 4, 0, 0, 256+5, 256+4, 256+4, 0, 0);
+//      v_fma_f32(p, 4, 0, 0, 256+5, 256+4, 256+4, 0, 0);
+  s_memtime(p, 6);
+  s_memtime(p, 6);
+  s_waitcnt(p);
 
+//      s_sleep(p, 7);
 //    v_add_f32_imm32(p, 4, 4, 1.1);
 //    v_sqrt_f64(p, 4, 256+4);
 //    v_bfrev(p, 4, 256+4);
@@ -295,8 +296,9 @@ rak_adam: 0x48 is the TC (texture cache)
   s_memtime(p, 6);
   s_waitcnt(p);
 
+
   s_getreg_b32(p, 8, 31, 0, 4); //hwid
-	
+
 	
   s_getreg_b32(p, 9, 31, 0, 5); //status
 //   printf("getreg: %08X\n", p[-1]);
@@ -389,7 +391,8 @@ rak_adam: 0x48 is the TC (texture cache)
   
   test_data[0] = 1;
 
-  compute_copy_to_gpu(data_bo, 0, &test_data[0], test_data_size*4);
+//  compute_copy_to_gpu(data_bo, 0, &test_data[0], test_data_size*4);
+  compute_copy_to_gpu(data_bo, 0, &test_data[0], 256);
   
   compute_state state;
   
@@ -409,7 +412,7 @@ rak_adam: 0x48 is the TC (texture cache)
   state.start[0] = 0;
   state.start[1] = 0;
   state.start[2] = 0;
-  state.num_thread[0] = 256*4;
+  state.num_thread[0] = 256*1;
   state.num_thread[1] = 1;
   state.num_thread[2] = 1;
   
@@ -437,11 +440,17 @@ rak_adam: 0x48 is the TC (texture cache)
 
   int e;
 
+  cout << "prestart1" << endl;
+  sleep(1);
+  cout << "prestart2" << endl;
+
   int64_t start_time = get_time_usec();
 
+  cout << "start" << endl;
   e = compute_emit_compute_state(ctx, &state);
 
   compute_bo_wait(code_bo);
+  cout << "stop" << endl;
   int64_t stop_time = get_time_usec();
 
   cout << e << " " << strerror(errno) << endl;
