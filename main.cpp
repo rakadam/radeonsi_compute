@@ -251,9 +251,9 @@ rak_adam: 0x48 is the TC (texture cache)
   s_waitcnt(p);
 
 ////////////////////////////////////////
-  int iternum = 100000;
-  int elem_flopcount = 2;
-  int ii2 = 1024*1;
+  int iternum = 10000;
+  int elem_flopcount = 1;
+  int ii2 = 1024*4;
   s_mov_imm32(p, 126, 0xFFFFFFFF); //EXECLO
   s_mov_imm32(p, 127, 0xFFFFFFFF); //EXECHI
 
@@ -269,11 +269,11 @@ rak_adam: 0x48 is the TC (texture cache)
 		
 //     s_mov_b32(p, 6, 6);
 //    v_sin_f32(p, 4, 256+4);
-//    v_add_f32(p, 4, 4, 256+4);
+   v_add_f32(p, 4, 4, 256+4);
 //      v_fma_f32(p, 4, 0, 0, 256+5, 256+4, 256+4, 0, 0);
-  s_memtime(p, 6);
-  s_memtime(p, 6);
-  s_waitcnt(p);
+//   s_memtime(p, 6);
+//   s_memtime(p, 6);
+//   s_waitcnt(p);
 
 //      s_sleep(p, 7);
 //    v_add_f32_imm32(p, 4, 4, 1.1);

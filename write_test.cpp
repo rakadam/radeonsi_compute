@@ -416,11 +416,6 @@ int main(int argc, char* argv[])
 		cout << p.second << std::endl;
 	}
 
-// 	for (int i = 0; i < 256*2; i+=4)
-// 	{
-// 		printf("%08i %08X %08X %08X\n", test_memory_cpu[i], test_memory_cpu[i+1], test_memory_cpu[i+2], test_memory_cpu[i+3]);
-// 	}
-	
 	cout << "run time: " << double(stop_time-start_time)/1000.0 << "ms" << endl;
 	cout << "run cycles: " << double(laststop - firststart) << endl;
 	cout << "Core freq: " << double(laststop - firststart)/double(stop_time-start_time) << "MHz" << endl;
