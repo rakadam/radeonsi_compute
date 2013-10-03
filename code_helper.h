@@ -27,6 +27,8 @@ enum mtbuf_op{
 };
 
 #define BUFFER_ATOMIC_ADD 50
+#define BUFFER_STORE_DWORDX4 30
+#define BUFFER_LOAD_DWORDX4 14
 
 struct buffer_resource{
   buffer_resource()
@@ -384,9 +386,22 @@ void v_mul_f32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
   p++;
 }
 
+
 void v_add_f32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
 {
   unsigned op = 3;
+
+  p[0] = 0;
+  p[0] |= src0;
+  p[0] |= vsrc1 << 9;
+  p[0] |= vdst << 17;
+  p[0] |= op << 25;
+  p++;
+}
+
+void v_and_b32(unsigned *&p, unsigned vdst, unsigned vsrc1, unsigned src0)
+{
+  unsigned op = 27;
 
   p[0] = 0;
   p[0] |= src0;
