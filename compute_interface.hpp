@@ -8,6 +8,7 @@ struct compute_context;
 
 class EventDependence
 {
+    //TODO: implement
 };
 
 class ComputeInterface
@@ -29,7 +30,6 @@ public:
 	void transferToGPU(gpu_buffer* buf, size_t offset, const void* data, size_t size, EventDependence evd = EventDependence());
 	void transferFromGPU(gpu_buffer* buf, size_t offset, void* data, size_t size, EventDependence evd = EventDependence());
 
-	
 	template<typename T>
 	void transferToGPU(gpu_buffer* buf, size_t offset, const T& data, EventDependence evd = EventDependence())
 	{

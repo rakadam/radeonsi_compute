@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
 	s_waitcnt(p);
 
 ////////////////////////////////////////
-	int iternum = 10000;
+	int iternum = 1000;
 	int elem_flopcount = 2;
 	int ii2 = 1024*1;
 	s_mov_imm32(p, 126, 0xFFFFFFFF); //EXECLO

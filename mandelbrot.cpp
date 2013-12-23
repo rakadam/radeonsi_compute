@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <signal.h>
 #include "code_helper.h"
 #include "compute_interface.hpp"
 
@@ -335,7 +336,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 
 		if (i > 0)
 		{
-			imageToFrameBuffer(compute, data_other, mx, my, "/dev/fb1");
+			imageToFrameBuffer(compute, data_other, mx, my, "/dev/fb0");
 		}
 		
 		compute.waitBuffer(program_code);
@@ -359,13 +360,21 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 	compute.bufferFree(data2);
 }
 
+bool run = true;
+
+void brkhelper(int s)
+{
+    run = false;
+}
+
 int main()
 {
-	
+	signal(SIGINT, brkhelper);
+
 	double stepsize = 1.03;
 	int iter = 530;
 	
-	while (true)
+	while (run)
 	{
 		animationZoom(0.295, 0.450705, stepsize, 0.05, iter);
 		animationZoom(0.295, 0.450705, 1.0/stepsize, 0.05*pow(stepsize, iter), iter);

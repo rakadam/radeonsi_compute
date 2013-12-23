@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
 	s_mov_imm32(p, 3, bufres2.data[3]);
 	
 ////////////////////////////////////////
-	int iternum = 10000;
+	int iternum = 1000;
 	int write_byte_count = 4*4;
 	int ii2 = 32;
 
