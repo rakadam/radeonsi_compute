@@ -15,6 +15,11 @@ ADD_CUSTOM_TARGET(run
 
 include_directories(/usr/include/libdrm)
 
+add_library(radeonsi_compute SHARED ${SRCs})
+target_link_libraries(radeonsi_compute drm_radeon drm)
+
+install(TARGETS radeonsi_compute LIBRARY DESTINATION lib)
+install(FILES computesi.h compute_interface.hpp DESTINATION include)
 
 add_executable(test ${SRCs} main.cpp)
 add_executable(fma_test ${SRCs} fma_test.cpp)
