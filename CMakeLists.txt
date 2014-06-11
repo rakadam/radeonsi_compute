@@ -1,7 +1,15 @@
 cmake_minimum_required(VERSION 2.6)
 
-SET(CMAKE_CXX_FLAGS "-std=c++0x -g3 -O0 -Wall")
-SET(CMAKE_C_FLAGS "-g3 -O0 -Wall")
+if(CXX_BUILD_TYPE MATCHES NONE)
+	SET(CXX_BUILD_TYPE DEBUG)
+endif()
+
+if(CXX_BUILD_TYPE MATCHES DEBUG)
+	SET(CMAKE_CXX_FLAGS "-std=c++11 -g3 -O0 -Wall")
+	SET(CMAKE_C_FLAGS "-g3 -O0 -Wall")
+else()
+	SET(CMAKE_CXX_FLAGS "-std=c++11")
+endif()
 
 SET(SRCs 
     computesi.c
