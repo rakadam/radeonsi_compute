@@ -67,8 +67,8 @@ int main()
 	
   gpu_buffer* data_bo = compute_alloc_gpu_buffer(ctx, test_data_size*4, RADEON_DOMAIN_GTT, 4096);
   
-	printf("code_bo->va: %08X\n", code_bo->va);
-	printf("trap_code_bo->va: %08X\n", trap_code_bo->va);
+	printf("code_bo->va: %08lX\n", code_bo->va);
+	printf("trap_code_bo->va: %08lX\n", trap_code_bo->va);
 	
   uint32_t prog[1024*1024*1];
   uint32_t trap_handler_code[1024];
@@ -137,7 +137,7 @@ int main()
   bufres.element_size = 1;
   bufres.add_tid_en = 0;
 
-  printf("buf addr%x, code addr: %x\n", data_bo->va, code_bo->va);
+  printf("buf addr%lx, code addr: %lx\n", data_bo->va, code_bo->va);
 //  printf("buf addr%p\n", data_bo->va >> 11);
 
 /*
