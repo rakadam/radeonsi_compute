@@ -40,4 +40,3 @@ target_link_libraries(fma_test drm_radeon drm)
 target_link_libraries(write_test drm_radeon drm)
 target_link_libraries(read_test drm_radeon drm)
 target_link_libraries(mandelbrot drm_radeon drm)
-

@@ -125,8 +125,9 @@ struct compute_context* compute_create_context(const char* drm_devfile)
 	ginfo.request = RADEON_INFO_VA_START;
 	ginfo.value = (uintptr_t)&reserved_mem;
 	
-	if (drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo)))
+	if ((ret=drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo))))
 	{
+		printf("Failed to perform drmCommandWriteRead on %d, error: %s\n", ctx->fd, strerror(-ret));
 		close(ctx->fd);
 		free(ctx);
 		return NULL;
@@ -135,8 +136,9 @@ struct compute_context* compute_create_context(const char* drm_devfile)
 	ginfo.request = RADEON_INFO_IB_VM_MAX_SIZE;
 	ginfo.value = (uintptr_t)&max_vm_size;
 	
-	if (drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo)))
+	if ((ret=drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo))))
 	{
+		printf("Failed to perform drmCommandWriteRead on %d, error: %s\n", ctx->fd, strerror(-ret));
 		close(ctx->fd);
 		free(ctx);
 		return NULL;
