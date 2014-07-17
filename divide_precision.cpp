@@ -4,6 +4,9 @@
 #include "code_helper.h"
 
 #include <iostream>
+#include <cassert>
+#include <cstdlib>
+#include <cmath>
 
 class AMDBinaryOperationRunner
 {
@@ -178,24 +181,173 @@ void AMDBinaryOperationRunner::generateTempCode(uint32_t* code, const std::vecto
 	s_endpgm(code);
 }
 
+void AMDBinaryOperationRunner::runCode(uint32_t* code, gpu_buffer* data1, gpu_buffer* data2, std::size_t typeSize)
+{
+	const int 	iBlockSize 		= 256;
+	int 		code_size_max	= 1024*4; // generate from seq?
+	gpu_buffer* program_code	= compute.bufferAlloc(code_size_max);
+
+	compute.transferToGPU(program_code, 0, code, code_size_max);
+
+	std::vector<size_t> thread_offset	= {0,0,0};
+	std::vector<size_t> grid_size 		= {size_t(mx/iBlockSize), size_t(my), 1};
+	std::vector<size_t> block_size 		= {iBlockSize,1,1};
+
+	buffer_resource bufres;
+	bufres.base_addr = compute.getVirtualAddress(data1);
+	bufres.stride = typeSize;
+	bufres.num_records = mx;
+	bufres.dst_sel_x = 4;
+	bufres.dst_sel_y = 4;
+	bufres.dst_sel_z = 4;
+	bufres.dst_sel_w = 4;
+	bufres.num_format = 4;
+	bufres.data_format = 4;
+	bufres.element_size = 1;
+	bufres.add_tid_en = 0;
+	buffer_resource bufres2 = bufres;
+	bufres2.base_addr = compute.getVirtualAddress(data2);
+	std::vector<uint32_t> user_data;
+	user_data.push_back(bufres.data[0]);
+	user_data.push_back(bufres.data[1]);
+	user_data.push_back(bufres.data[2]);
+	user_data.push_back(bufres.data[3]);
+	user_data.push_back(bufres2.data[0]);
+	user_data.push_back(bufres2.data[1]);
+	user_data.push_back(bufres2.data[2]);
+	user_data.push_back(bufres2.data[3]);
+
+	compute.launch(
+		user_data,
+		thread_offset,
+		grid_size,
+		block_size,
+		program_code,
+		{program_code, data1, data2});
+
+	compute.waitBuffer(program_code);
+}
+
 int main()
 {
 	AMDBinaryOperationRunner opRunner;
 	
-	// float32
-	std::vector<float> vec_input1(1024,1.1f);
-	std::vector<float> vec_input2(1024,2.4f);
-	std::vector<float> vec_result;
-	std::vector<float> vec_resultRef(1024,1.1f/2.4f);
+// 	// float32
+// 	std::vector<float> vec_input1(1024,1.0f);
+// 	std::vector<float> vec_input2(1024,1.0f);
+// 	std::vector<float> vec_result;
+// 	std::vector<float> vec_resultRef(1024,1.0f);
+// 	
+// 	for(int i = 0; i < 1024; i++ )
+// 	{
+// 		vec_input1[i] = 1e-8f*static_cast<float>(pow(1.035f,i));
+// 		vec_input2[i] = 2.3f;
+// 		vec_resultRef[i] = 2.3f/vec_input1[i];
+// 	}
+// 	
+// 	std::vector<uint32_t> binaryOperation(2,0);
+	uint32_t* p;
+// 	p = &binaryOperation[0];
+// 	
+// 	//make the division
+// 	v_rcp_f32(p,3,256+2);
+// 	v_mul_f32(p,4,4,256+3);
+// 	
+// 	vec_result = opRunner.testOperation<float>(binaryOperation,vec_input1,vec_input2);
+// 	
+// 	for(uint i = 0; i < vec_result.size(); i++)
+// 	{
+// 		printf("%a,\t%a",vec_result[i], vec_resultRef[i]);
+// 		double diff = vec_result[i] - vec_resultRef[i];
+// 		if(fabs(diff) > 0.0f)
+// 		{
+// 			double err = 2.0*diff/(vec_result[i] + vec_resultRef[i]);
+// 			std::cout <<"\t" <<err;
+// 		}
+// 		std::cout << std::endl;
+// 	}
+// 	std::cout << "********************************************************************" << std::endl;
 	
-	std::vector<uint32_t> binaryOperation(2,0);
-	uint32_t* p = &binaryOperation[0];
+	
+	// double
+	std::vector<double> vec_dinput1(1024,1.0);
+	std::vector<double> vec_dinput2(1024,1.0);
+	std::vector<double> vec_dresult;
+	std::vector<double> vec_dresultRef(1024,1.0);
+	
+	for(int i = 0; i < 1024; i++ )
+	{
+		vec_dinput1[i] = 1e-15*pow(1.06,i);
+		vec_dinput2[i] = 2.3;
+		vec_dresultRef[i] = 1.0/vec_dinput1[i];
+	}
+	
+	std::vector<uint32_t> binarydOperation(1024,0);
+	p = &binarydOperation[0];
 	
 	//make the division
-	v_rcp_f32(p,3,2);
-	v_mul_f32(p,4,4,256+3);
+	v_rcp_f64 (p,4,256+2);
+// 	vop3a(
+// 	p, //code
+// 	4, //vdst 
+// 	0, //abs
+// 	0, //clamp
+// 	357, //opcode of mul_f64
+// 	256+2, //src0
+// 	256+4, //src1
+// 	0, //src2
+// 	0, // omod
+// 	0  // neg
+// 	);
+	vop3a(
+	p, //code
+	10, //vdst -- temporary
+	0, //abs
+	0, //clamp
+	332, //opcode of fma_f64
+	256+2, //src0 -- denumerator
+	256+4, //src1 -- x
+	245, // -2 inline constant
+	0, // omod
+	0  // neg
+	);
+	vop3a(
+	p, //code
+	4, //vdst
+	0, //abs
+	0, //clamp
+	357, //opcode of mul_f64
+	256+4, //src0 -- x
+ 	256+10, //src1 -- temporary
+	0, //src2
+	0, // omod
+	1  // neg
+	);
 	
-	vec_result = opRunner.testOperation<float>(binaryOperation,vec_input1,vec_input2);
+	binarydOperation.resize(p - &binarydOperation[0]);
+	
+	std::cout << binarydOperation.size() << std::endl;
+	
+	vec_dresult = opRunner.testOperation<double>(binarydOperation,vec_dinput1,vec_dinput2);
+	
+	for(uint i = 0; i < vec_dresult.size(); i++)
+	{
+		printf("%2.12f\t%2.12f\t%2.12f",vec_dresult[i], vec_dresultRef[i], vec_dinput1[i]);
+		double diff = vec_dresult[i] - vec_dresultRef[i];
+		double err = diff;
+		if(fabs(vec_dresult[i]) > 0.0)
+		{
+			 err= 2.0*diff/(vec_dresult[i]+ vec_dresultRef[i]);
+			
+		}
+		else
+		{
+			err = diff;
+		}
+		
+		std::cout<<"\t"<<err << std::endl;
+	}
+	
 	
 	return 0;
 }
