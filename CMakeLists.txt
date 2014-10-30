@@ -27,7 +27,7 @@ add_library(radeonsi_compute SHARED ${SRCs})
 target_link_libraries(radeonsi_compute drm_radeon drm)
 
 install(TARGETS radeonsi_compute LIBRARY DESTINATION lib)
-install(FILES computesi.h compute_interface.hpp code_helper.h DESTINATION include)
+install(FILES computesi.h compute_interface.hpp code_helper.h sid.h DESTINATION include)
 
 add_executable(test ${SRCs} main.cpp)
 add_executable(fma_test ${SRCs} fma_test.cpp)
