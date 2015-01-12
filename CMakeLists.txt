@@ -12,8 +12,9 @@ else()
 endif()
 
 SET(SRCs
-    computesi.c
-    compute_interface.cpp
+	ati_chip.cpp
+	computesi.c
+	compute_interface.cpp
 )
 
 ADD_CUSTOM_TARGET(run
@@ -24,21 +25,21 @@ ADD_CUSTOM_TARGET(run
 include_directories(/usr/include/libdrm)
 
 add_library(radeonsi_compute SHARED ${SRCs})
-target_link_libraries(radeonsi_compute drm_radeon drm)
+target_link_libraries(radeonsi_compute drm_radeon drm pciaccess)
 
 install(TARGETS radeonsi_compute LIBRARY DESTINATION lib)
 install(FILES computesi.h compute_interface.hpp code_helper.h sid.h DESTINATION include)
 
-add_executable(test ${SRCs} main.cpp)
-add_executable(fma_test ${SRCs} fma_test.cpp)
-add_executable(write_test ${SRCs} write_test.cpp)
-add_executable(read_test ${SRCs} read_test.cpp)
-add_executable(mandelbrot ${SRCs} mandelbrot.cpp)
-add_executable(divide_precision ${SRCs} divide_precision.cpp)
+add_executable(test main.cpp)
+add_executable(fma_test fma_test.cpp)
+add_executable(write_test write_test.cpp)
+add_executable(read_test read_test.cpp)
+add_executable(mandelbrot mandelbrot.cpp)
+add_executable(divide_precision divide_precision.cpp)
 
-target_link_libraries(test drm_radeon drm)
-target_link_libraries(fma_test drm_radeon drm)
-target_link_libraries(write_test drm_radeon drm)
-target_link_libraries(read_test drm_radeon drm)
-target_link_libraries(mandelbrot drm_radeon drm)
-target_link_libraries(divide_precision drm_radeon drm)
+target_link_libraries(test radeonsi_compute)
+target_link_libraries(fma_test radeonsi_compute)
+target_link_libraries(write_test radeonsi_compute)
+target_link_libraries(read_test radeonsi_compute)
+target_link_libraries(mandelbrot radeonsi_compute)
+target_link_libraries(divide_precision radeonsi_compute)

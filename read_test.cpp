@@ -15,6 +15,9 @@ extern "C" {
 #include "computesi.h"
 };
 
+#include <pciaccess.h>
+#include "ati_chip.h"
+
 using namespace std;
 
 int64_t get_time_usec()
@@ -29,11 +32,19 @@ int64_t get_time_usec()
 
 int main(int argc, char* argv[])
 {
+	std::vector<AtiDeviceData> devices = getAllAtiDevices();
+	assert(devices.size() > 0);
+	
+	for (AtiDeviceData devData : devices)
+	{
+		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << std::endl;
+	}
+	
 	compute_context* ctx;
 	
 	if (argc == 1)
 	{
-		ctx = compute_create_context("/dev/dri/card0");
+		ctx = compute_create_context(devices.front().busid.c_str());
 	}
 	else
 	{
@@ -347,7 +358,10 @@ int main(int argc, char* argv[])
 	compute_bo_wait(code_bo);
 	int64_t stop_time = get_time_usec();
 
-	cout << e << " " << strerror(errno) << endl;
+	if (e)
+	{
+		cout << e << " " << strerror(errno) << endl;
+	}
 	
 	compute_flush_caches(ctx);
 	
