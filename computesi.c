@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <string.h>
 #include "computesi.h"
+#include <va/va_dri2.h>
 
 #define PKT3C(a, b, c) (PKT3(a, b, c) | 1 << 1)
 
@@ -83,8 +84,10 @@ struct cs_reloc_gem {
 		uint32_t    flags;
 };
 
+
 struct compute_context* compute_create_context(const char* drm_devfile)
 {
+	int ret = 0;
 	struct drm_radeon_info ginfo;
 	assert(drmAvailable());
 	struct compute_context* ctx = malloc(sizeof(struct compute_context));
@@ -104,11 +107,33 @@ struct compute_context* compute_create_context(const char* drm_devfile)
 		free(ctx);
 		return NULL;
 	}
-
+	
+	ctx->display = NULL;
+	ctx->window = NULL;
+	
+	if (getuid() != 0)
+	{
+		drm_magic_t magic = 0;
+		
+		if(ret=drmGetMagic(ctx->fd, &magic))
+		{
+			printf("Failed to perform drmGetMagic on %s, error: %s\n", drm_devfile, strerror(-ret));
+			close(ctx->fd);
+			free(ctx);
+			return NULL;
+		}
+		
+		ctx->display = XOpenDisplay(NULL);
+		ctx->window = DefaultRootWindow(ctx->display);
+		
+		printf("display: %p window: %p\n", ctx->display, ctx->window);
+		
+		ret=VA_DRI2Authenticate(ctx->display, ctx->window, magic);
+	}
+	
 	uint64_t reserved_mem = 0;
 	uint64_t max_vm_size = 0;
 	uint64_t ring_working = 0;
-	int ret = 0;
 	
 	memset(&ginfo, 0, sizeof(ginfo));
 	ginfo.request = RADEON_INFO_RING_WORKING;
@@ -117,6 +142,10 @@ struct compute_context* compute_create_context(const char* drm_devfile)
 	if ((ret=drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo))))
 	{
 		printf("Failed to perform DRM_RADEON_INFO on %s, error: %s\n", drm_devfile, strerror(-ret));
+		if (ctx->display)
+		{
+			XCloseDisplay(ctx->display);
+		}
 		close(ctx->fd);
 		free(ctx);
 		return NULL;
@@ -135,6 +164,10 @@ struct compute_context* compute_create_context(const char* drm_devfile)
 	if ((ret=drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo))))
 	{
 		printf("Failed to perform drmCommandWriteRead on %d, error: %s\n", ctx->fd, strerror(-ret));
+		if (ctx->display)
+		{
+			XCloseDisplay(ctx->display);
+		}
 		close(ctx->fd);
 		free(ctx);
 		return NULL;
@@ -146,6 +179,10 @@ struct compute_context* compute_create_context(const char* drm_devfile)
 	if ((ret=drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo))))
 	{
 		printf("Failed to perform drmCommandWriteRead on %d, error: %s\n", ctx->fd, strerror(-ret));
+		if (ctx->display)
+		{
+			XCloseDisplay(ctx->display);
+		}
 		close(ctx->fd);
 		free(ctx);
 		return NULL;
@@ -167,6 +204,11 @@ void compute_free_context(struct compute_context* ctx)
 	while (ctx->vm_pool->next)
 	{
 		compute_free_gpu_buffer(ctx->vm_pool->next->bo);
+	}
+	
+	if (ctx->display)
+	{
+		XCloseDisplay(ctx->display);
 	}
 	
 	free(ctx->vm_pool);

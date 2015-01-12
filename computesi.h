@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <drm.h>
+#include <X11/Xlib.h>
 #include <xf86drm.h>
 #include <radeon_cs_gem.h>
 #include <radeon_bo_gem.h>
@@ -40,6 +41,9 @@ struct pool_node
 struct compute_context
 {
 	int fd; ///opened DRM interface
+	Display* display;
+	Window* window;
+	
 	struct pool_node* vm_pool;
 	
 };

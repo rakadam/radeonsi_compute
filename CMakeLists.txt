@@ -25,7 +25,7 @@ ADD_CUSTOM_TARGET(run
 include_directories(/usr/include/libdrm)
 
 add_library(radeonsi_compute SHARED ${SRCs})
-target_link_libraries(radeonsi_compute drm_radeon drm pciaccess)
+target_link_libraries(radeonsi_compute drm_radeon drm pciaccess va-x11)
 
 install(TARGETS radeonsi_compute LIBRARY DESTINATION lib)
 install(FILES computesi.h compute_interface.hpp code_helper.h sid.h DESTINATION include)
