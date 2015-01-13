@@ -33,7 +33,7 @@ int main()
 	std::cout << std::endl;
 	std::cout << "entering daemon mode" << std::endl;
 	
-	daemon(0, 0);
+//	daemon(0, 0);
 	
 	openlog ("drm_master", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
 	
@@ -72,6 +72,7 @@ int main()
 		{
 			std::stringstream ss;
 			ss << "set Master on:" << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath;
+			std::cerr << ss.str() << std::endl;
 			syslog(LOG_INFO, ss.str().c_str());
 			
 			drms[devData.busid] = fd;
@@ -119,6 +120,7 @@ int main()
 					syslog(LOG_INFO, ss.str().c_str());
 					const char* ok = "OK";
 					sendto(sockfd, ok, strlen(ok), 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
+					std::cerr << ss.str() << std::endl;
 				}
 			}
 			else
@@ -133,6 +135,7 @@ int main()
 		
 		if (not ss.str().empty())
 		{
+			std::cerr << ss.str() << std::endl;
 			syslog(LOG_WARNING, ss.str().c_str());
 		}
 	}
