@@ -5,8 +5,51 @@
 #include <iostream>
 #include <errno.h>
 #include <string.h>
+#include <libudev.h>
+#include <map>
 
 #define PCI_VENDOR_ATI 0x1002
+
+std::map<std::string, std::string> getBusidLookup()
+{
+	std::map<std::string, std::string> result;
+	
+	udev* dev = udev_new();
+	
+	udev_enumerate* en = udev_enumerate_new(dev);
+	
+	udev_enumerate_add_match_subsystem(en, "drm");
+	udev_enumerate_add_match_sysname(en, "card*");
+	udev_enumerate_scan_devices(en);
+	udev_list_entry* first = udev_enumerate_get_list_entry(en);
+	
+	for (udev_list_entry* entry = first; entry; entry = udev_list_entry_get_next(entry))
+	{
+		const char* path = udev_list_entry_get_name(entry);
+		udev_device* device = udev_device_new_from_syspath(dev, path);
+		
+		const char* type = udev_device_get_devtype(device);
+		const char* devnode = udev_device_get_devnode(device);
+		const char* psysname = udev_device_get_sysname(udev_device_get_parent(device));
+		
+		if (type and strcmp(type, "drm_minor") == 0 and devnode and psysname)
+		{
+// 			printf("Device Node Path: %s\n", udev_device_get_devnode(device));
+// 			printf("Device type: %s\n", udev_device_get_devtype(device));
+// 			printf("Device driver: %s\n", udev_device_get_driver(device));
+// 			printf("Device sysname: %s\n", udev_device_get_sysname(device));
+// 			printf("Device parent sysname: %s\n", udev_device_get_sysname(udev_device_get_parent(device)));
+			result[devnode] = psysname;
+		}
+		
+		udev_device_unref(device);
+	}
+	
+	udev_enumerate_unref(en);
+	udev_unref(dev);
+	
+	return result;
+}
 
 bool isAtiGPU(pci_device* device)
 {
