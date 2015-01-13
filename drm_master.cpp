@@ -21,6 +21,17 @@
 
 int main()
 {
+	if (getuid() != 0)
+	{
+		system("modprobe radeon");
+	}
+	
+	if (not drmAvailable())
+	{
+		std::cerr << "ERROR: DRM not available" << std::endl;
+		return 1;
+	}
+	
 	std::vector<AtiDeviceData> devices = getAllAtiDevices();
 	
 	std::cout << "Devices found: " << std::endl;
