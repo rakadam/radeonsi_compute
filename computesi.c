@@ -96,7 +96,6 @@ struct compute_context* compute_create_context(const char* drm_devfile, const ch
 	
 	if (strstr(drm_devfile, "pci:"))
 	{
-		printf("open: %s\n", drm_devfile);
 		ctx->fd = drmOpen("radeon", drm_devfile);
 	}
 	else

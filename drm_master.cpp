@@ -60,6 +60,8 @@ int main()
 		int ret;
 		int fd = open(devData.devpath.c_str(), O_RDWR, 0);
 		
+		drmSetBusid(fd, devData.busid.c_str());
+		
 		ret = drmSetMaster(fd);
 		
 		if (ret < 0)
@@ -82,7 +84,7 @@ int main()
 		else
 		{
 			std::stringstream ss;
-			ss << "set Master on:" << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath;
+			ss << "set Master on:" << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << " fd: " << fd;
 			std::cerr << ss.str() << std::endl;
 			syslog(LOG_INFO, ss.str().c_str());
 			
@@ -113,13 +115,15 @@ int main()
 		int ret = sscanf(buf, "%s %li", busid, &magic);
 		
 		std::cout << "recv: " << buf << std::endl;
-		
+		bool ok = false;
 		std::stringstream ss;
 		
 		if (ret == 2)
 		{
 			if (drms.count(busid))
 			{
+				std::cout << drms.at(busid) << " " <<  magic << std::endl;
+				
 				if (drmAuthMagic(drms.at(busid), magic))
 				{
 					ss << "drmAuthMagic failed: " << strerror(errno) << std::endl;
@@ -129,8 +133,7 @@ int main()
 					std::stringstream ss;
 					ss << "set master on " << busid << " with magic: " << magic;
 					syslog(LOG_INFO, ss.str().c_str());
-					const char* ok = "OK";
-					sendto(sockfd, ok, strlen(ok), 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
+					ok = true;
 					std::cerr << ss.str() << std::endl;
 				}
 			}
@@ -149,5 +152,18 @@ int main()
 			std::cerr << ss.str() << std::endl;
 			syslog(LOG_WARNING, ss.str().c_str());
 		}
+		
+		const char* ans;
+		
+		if (ok)
+		{
+			ans = "ACK";
+		}
+		else
+		{
+			ans = "NACK";
+		}
+		
+		sendto(sockfd, ans, strlen(ans), 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
 	}
 }
