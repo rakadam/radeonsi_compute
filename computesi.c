@@ -115,7 +115,7 @@ struct compute_context* compute_create_context(const char* drm_devfile)
 	uint64_t ring_working = 0;
 	
 	ctx->display = NULL;
-	ctx->window = NULL;
+	ctx->window = 0;
 	
 	memset(&ginfo, 0, sizeof(ginfo));
 	ginfo.request = RADEON_INFO_RING_WORKING;

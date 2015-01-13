@@ -42,7 +42,7 @@ struct compute_context
 {
 	int fd; ///opened DRM interface
 	Display* display;
-	Window* window;
+	XID window;
 	
 	struct pool_node* vm_pool;
 	
