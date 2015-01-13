@@ -7,6 +7,12 @@
 #include <string.h>
 #include <libudev.h>
 #include <map>
+#include <drm.h>
+#include <xf86drm.h>
+#include <X11/Xlib.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
 
 #define PCI_VENDOR_ATI 0x1002
 
@@ -165,4 +171,26 @@ std::vector< AtiDeviceData > getAllAtiDevices()
 	pci_system_cleanup();
 	
 	return devices;
+}
+
+void authWithLocalMaster(long int magic, const char* busid)
+{
+	int sockfd,n;
+	struct sockaddr_in servaddr,cliaddr;
+	char sendline[1000];
+	char recvline[1000];
+	
+	sockfd=socket(AF_INET,SOCK_DGRAM,0);
+	
+	bzero(&servaddr,sizeof(servaddr));
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr=htonl(INADDR_LOOPBACK);
+	servaddr.sin_port=htons(DRM_LOCAL_MASTER_UDP_PORT);
+	
+	char buf[1024];
+	
+	snprintf(buf, sizeof(buf), "%s %li", busid, magic);
+	sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *)&servaddr,sizeof(servaddr));
+	
+	close(sockfd);
 }

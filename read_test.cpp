@@ -37,18 +37,18 @@ int main(int argc, char* argv[])
 	
 	for (AtiDeviceData devData : devices)
 	{
-		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << std::endl;
+		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << std::endl;
 	}
 	
 	compute_context* ctx;
 	
 	if (argc == 1)
 	{
-		ctx = compute_create_context(devices.front().devpath.c_str());
+		ctx = compute_create_context(devices.front().devpath.c_str(), devices.front().busid.c_str());
 	}
 	else
 	{
-		ctx = compute_create_context(argv[1]);
+		ctx = compute_create_context(argv[1], argv[2]);
 	}
 	
 	assert(ctx);

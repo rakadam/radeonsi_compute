@@ -99,7 +99,7 @@ enum radeon_bo_domain
 	RADEON_DOMAIN_VRAM = 4
 };
 
-struct compute_context* compute_create_context(const char* drm_devfile);
+struct compute_context* compute_create_context(const char* drm_devfile, const char* busid);
 void compute_free_context(struct compute_context* ctx);
 
 int  compute_flush_caches(const struct compute_context* ctx);

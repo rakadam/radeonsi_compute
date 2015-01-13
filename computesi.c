@@ -84,8 +84,9 @@ struct cs_reloc_gem {
 		uint32_t    flags;
 };
 
+void authWithLocalMaster(long int magic, const char* busid);
 
-struct compute_context* compute_create_context(const char* drm_devfile)
+struct compute_context* compute_create_context(const char* drm_devfile, const char* busid)
 {
 	int ret = 0;
 	struct drm_radeon_info ginfo;
@@ -121,6 +122,7 @@ struct compute_context* compute_create_context(const char* drm_devfile)
 	ginfo.request = RADEON_INFO_RING_WORKING;
 	ginfo.value = (uintptr_t)&ring_working;
 	
+	
 	if (drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo))) ///We only need to auth if we are disallowed to access the DRM
 	{
 		drm_magic_t magic = 0;
@@ -133,12 +135,17 @@ struct compute_context* compute_create_context(const char* drm_devfile)
 			return NULL;
 		}
 		
-		ctx->display = XOpenDisplay(NULL);
-		ctx->window = DefaultRootWindow(ctx->display);
+		authWithLocalMaster(magic, busid);
 		
-		printf("display: %p window: %p\n", ctx->display, ctx->window);
-		
-		ret=VA_DRI2Authenticate(ctx->display, ctx->window, magic);
+		if (drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo)))
+		{
+			ctx->display = XOpenDisplay(NULL);
+			ctx->window = DefaultRootWindow(ctx->display);
+			
+			printf("display: %p window: %p\n", ctx->display, ctx->window);
+			
+			ret=VA_DRI2Authenticate(ctx->display, ctx->window, magic);
+		}
 	}
 	
 	

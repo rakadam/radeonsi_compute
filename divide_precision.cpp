@@ -13,7 +13,7 @@ class AMDBinaryOperationRunner
 	unsigned mx,my;
 	ComputeInterface compute;
 public:
-	AMDBinaryOperationRunner():compute("/dev/dri/card0"){}
+	AMDBinaryOperationRunner():compute("/dev/dri/card0", ""){}
 
 template<typename T,typename C>
 std::vector<T> testOperation(const std::vector<uint32_t>& binary, const std::vector<T>& input1, const std::vector<C>& input2)

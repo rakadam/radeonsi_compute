@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#define DRM_LOCAL_MASTER_UDP_PORT 37463
+
 enum class AtiChipFamily
 {
 	UNKNOWN = 0,
@@ -29,5 +31,6 @@ std::string getAtiChipFamilyString(pci_device* device);
 
 std::vector<AtiDeviceData> getAllAtiDevices();
 
+extern "C" void authWithLocalMaster(long int magic, const char* busid);
 
 #endif

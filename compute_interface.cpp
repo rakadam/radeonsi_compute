@@ -7,9 +7,9 @@ extern "C" {
 #include "computesi.h"
 };
 
-ComputeInterface::ComputeInterface(std::string driName)
+ComputeInterface::ComputeInterface(std::string driName, std::string busid)
 {
-	context = compute_create_context(driName.c_str());
+	context = compute_create_context(driName.c_str(), busid.c_str());
 	
 	if (!context)
 	{

@@ -15,7 +15,7 @@ class ComputeInterface
 {
 	compute_context* context;
 public:
-	ComputeInterface(std::string driName);
+	ComputeInterface(std::string driName, std::string busid);
 	~ComputeInterface();
 
 	gpu_buffer* bufferAlloc(size_t size);
