@@ -21,9 +21,10 @@
 
 int main()
 {
-	if (getuid() != 0)
+	if (getuid() == 0)
 	{
 		system("modprobe radeon");
+		sleep(1);
 	}
 	
 	if (not drmAvailable())
@@ -114,7 +115,7 @@ int main()
 		long int magic = 0;
 		int ret = sscanf(buf, "%s %li", busid, &magic);
 		
-		std::cout << "recv: " << buf << std::endl;
+// 		std::cout << "recv: " << buf << std::endl;
 		bool ok = false;
 		std::stringstream ss;
 		
@@ -122,8 +123,6 @@ int main()
 		{
 			if (drms.count(busid))
 			{
-				std::cout << drms.at(busid) << " " <<  magic << std::endl;
-				
 				if (drmAuthMagic(drms.at(busid), magic))
 				{
 					ss << "drmAuthMagic failed: " << strerror(errno) << std::endl;
@@ -131,10 +130,10 @@ int main()
 				else
 				{
 					std::stringstream ss;
-					ss << "set master on " << busid << " with magic: " << magic;
+					ss << "Authenticated: " << busid << " with magic: " << magic;
 					syslog(LOG_INFO, ss.str().c_str());
 					ok = true;
-					std::cerr << ss.str() << std::endl;
+					std::cout << ss.str() << std::endl;
 				}
 			}
 			else

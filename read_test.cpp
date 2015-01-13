@@ -33,14 +33,19 @@ int64_t get_time_usec()
 int main(int argc, char* argv[])
 {
 	std::vector<AtiDeviceData> devices = getAllAtiDevices();
-	assert(devices.size() > 0);
 	
 	for (AtiDeviceData devData : devices)
 	{
 		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << std::endl;
 	}
 	
-	compute_context* ctx;
+	if (devices.empty())
+	{
+		std::cerr << "No available GPU devices" << std::endl;
+		return 1;
+	}
+	
+	compute_context* ctx = nullptr;
 	
 	if (argc == 1)
 	{
@@ -48,10 +53,21 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		ctx = compute_create_context(argv[1], argv[2]);
+		for (AtiDeviceData devData : devices)
+		{
+			if (argv[1] == devData.devpath)
+			{
+				ctx = compute_create_context(argv[1], devData.busid.c_str());
+				break;
+			}
+		}
 	}
 	
-	assert(ctx);
+	if (not ctx)
+	{
+		std::cerr << "Cannot create GPU context" << std::endl;
+		return 1;
+	}
 	
 	int test_data_size = 1024*1024*16;
 	int test_memory_size = 1024*1024*64;

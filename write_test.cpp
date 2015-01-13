@@ -11,6 +11,7 @@
 #include <set>
 #include <sys/time.h>
 #include "code_helper.h"
+#include "ati_chip.h"
 extern "C" {
 #include "computesi.h"
 };
@@ -29,18 +30,42 @@ int64_t get_time_usec()
 
 int main(int argc, char* argv[])
 {
-	compute_context* ctx;
+	std::vector<AtiDeviceData> devices = getAllAtiDevices();
+	
+	for (AtiDeviceData devData : devices)
+	{
+		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << std::endl;
+	}
+	
+	if (devices.empty())
+	{
+		std::cerr << "No available GPU devices" << std::endl;
+		return 1;
+	}
+	
+	compute_context* ctx = nullptr;
 	
 	if (argc == 1)
 	{
-		ctx = compute_create_context("/dev/dri/card0");
+		ctx = compute_create_context(devices.front().devpath.c_str(), devices.front().busid.c_str());
 	}
 	else
 	{
-		ctx = compute_create_context(argv[1]);
+		for (AtiDeviceData devData : devices)
+		{
+			if (argv[1] == devData.devpath)
+			{
+				ctx = compute_create_context(argv[1], devData.busid.c_str());
+				break;
+			}
+		}
 	}
 	
-	assert(ctx);
+	if (not ctx)
+	{
+		std::cerr << "Cannot create GPU context" << std::endl;
+		return 1;
+	}
 	
 	int test_data_size = 1024*1024*16;
 	int test_memory_size = 1024*1024*128;

@@ -13,8 +13,11 @@
 #include <signal.h>
 #include "code_helper.h"
 #include "compute_interface.hpp"
+#include "ati_chip.h"
 
 using namespace std;
+
+std::vector<AtiDeviceData> devices = getAllAtiDevices();
 
 struct uchar4
 {
@@ -294,7 +297,7 @@ void animationZoom(double offset_x, double offset_y, double zoom_step, double zo
 	int my = 1080;
 	int code_size_max = 1024*4;
 	
-	ComputeInterface compute("/dev/dri/card1");
+	ComputeInterface compute(devices.front().devpath, devices.front().busid);
 	gpu_buffer* program_code = compute.bufferAlloc(code_size_max);
 	gpu_buffer* data1 = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
 	gpu_buffer* data2 = compute.bufferAllocGTT(mx*my*sizeof(uchar4)+1024*4);
@@ -369,6 +372,17 @@ void brkhelper(int s)
 
 int main()
 {
+	for (AtiDeviceData devData : devices)
+	{
+		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << std::endl;
+	}
+	
+	if (devices.empty())
+	{
+		std::cerr << "No available GPU devices" << std::endl;
+		return 1;
+	}
+	
 	signal(SIGINT, brkhelper);
 
 	double stepsize = 1.03;
@@ -384,8 +398,7 @@ int main()
 	int mx = 1920;
 	int my = 1080;
 	
-	
-	ComputeInterface compute("/dev/dri/card1");
+	ComputeInterface compute(devices.front().devpath, devices.front().busid);
 	
 	int code_size_max = 1024*4;
 	

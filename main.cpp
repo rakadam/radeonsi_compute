@@ -14,6 +14,7 @@
 extern "C" {
 #include "computesi.h"
 };
+#include "ati_chip.h"
 
 
 using namespace std;
@@ -31,35 +32,44 @@ int64_t get_time_usec()
 
 
 
-int main()
+int main(int argc, char* argv[])
 {
-//   {
-//   int fd = open("/dev/dri/card0", O_RDWR, 0);
-//   
-//   radeon_cs *cs;
-//   radeon_cs_manager *gem = radeon_cs_manager_gem_ctor(fd);
-//   assert(gem);
-//   cs = radeon_cs_create(gem, RADEON_BUFFER_SIZE/4);
-//   assert(cs);
-//   radeon_bo_manager *bom = radeon_bo_manager_gem_ctor(fd);
-// 
-//   int ndw = 2;
-//   radeon_bo* bo = radeon_bo_open(bom, 0, 4096, 4096, RADEON_DOMAIN_VRAM, 0);
-//   
-//   radeon_cs_begin(cs, ndw, __FILE__, __func__, __LINE__);
-//   radeon_cs_write_reloc(cs, bo, RADEON_DOMAIN_VRAM, 0, 0);
-//   radeon_cs_end(cs, __FILE__, __func__, __LINE__);
-//   
-//   radeon_cs_space_add_persistent_bo(cs, bo, RADEON_DOMAIN_VRAM, 0);
-//   radeon_cs_space_check(cs);
-// 
-//   radeon_cs_emit(cs);
-//   radeon_cs_erase(cs);
-// 
-//   return 0;
-//   }
-  compute_context* ctx = compute_create_context("/dev/dri/card0");
-  assert(ctx);
+	std::vector<AtiDeviceData> devices = getAllAtiDevices();
+	
+	for (AtiDeviceData devData : devices)
+	{
+		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << std::endl;
+	}
+	
+	if (devices.empty())
+	{
+		std::cerr << "No available GPU devices" << std::endl;
+		return 1;
+	}
+	
+	compute_context* ctx = nullptr;
+	
+	if (argc == 1)
+	{
+		ctx = compute_create_context(devices.front().devpath.c_str(), devices.front().busid.c_str());
+	}
+	else
+	{
+		for (AtiDeviceData devData : devices)
+		{
+			if (argv[1] == devData.devpath)
+			{
+				ctx = compute_create_context(argv[1], devData.busid.c_str());
+				break;
+			}
+		}
+	}
+	
+	if (not ctx)
+	{
+		std::cerr << "Cannot create GPU context" << std::endl;
+		return 1;
+	}
 	
   int test_data_size = 1024*1024*16;
   gpu_buffer* code_bo = compute_alloc_gpu_buffer(ctx, 1024*1024*4, RADEON_DOMAIN_GTT, 4096);
