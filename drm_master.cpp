@@ -19,80 +19,8 @@
 #include <syslog.h>
 #include <sstream>
 
-int main()
+void drmServer(std::map<std::string, int> drms)
 {
-	if (getuid() == 0)
-	{
-		system("modprobe radeon");
-		sleep(1);
-	}
-	
-	if (not drmAvailable())
-	{
-		std::cerr << "ERROR: DRM not available" << std::endl;
-		return 1;
-	}
-	
-	std::vector<AtiDeviceData> devices = getAllAtiDevices();
-	
-	std::cout << "Devices found: " << std::endl;
-	
-	for (AtiDeviceData devData : devices)
-	{
-		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << std::endl;
-	}
-	
-	std::cout << std::endl;
-	std::cout << "entering daemon mode" << std::endl;
-	
-//	daemon(0, 0);
-	
-	openlog ("drm_master", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
-	
-	std::map<std::string, int> drms;
-	
-	for (AtiDeviceData devData : devices)
-	{
-		if (devData.devpath.empty())
-		{
-			continue;
-		}
-		
-		int ret;
-		int fd = open(devData.devpath.c_str(), O_RDWR, 0);
-		
-		drmSetBusid(fd, devData.busid.c_str());
-		
-		ret = drmSetMaster(fd);
-		
-		if (ret < 0)
-		{
-			std::stringstream ss;
-			
-			ss << "Failed to set Master on: " << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << " ";
-			
-			if (getuid() == 0)
-			{
-				ss << "drm already has a Master";
-			}
-			else
-			{
-				ss << "Reason: " << strerror(errno);
-			}
-			
-			syslog(LOG_WARNING, ss.str().c_str());
-		}
-		else
-		{
-			std::stringstream ss;
-			ss << "set Master on:" << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << " fd: " << fd;
-			std::cerr << ss.str() << std::endl;
-			syslog(LOG_INFO, ss.str().c_str());
-			
-			drms[devData.busid] = fd;
-		}
-	}
-	
 	int sockfd,n;
 	struct sockaddr_in servaddr,cliaddr;
 	socklen_t len;
@@ -115,7 +43,7 @@ int main()
 		long int magic = 0;
 		int ret = sscanf(buf, "%s %li", busid, &magic);
 		
-// 		std::cout << "recv: " << buf << std::endl;
+		// 		std::cout << "recv: " << buf << std::endl;
 		bool ok = false;
 		std::stringstream ss;
 		
@@ -165,4 +93,112 @@ int main()
 		
 		sendto(sockfd, ans, strlen(ans), 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
 	}
+}
+
+void help()
+{
+	std::cerr << "The only valid argument is: -nodaemon" << std::endl;
+}
+
+int main(int argc, char* argv[])
+{
+	bool daemonMode = true;
+	
+	if (argc == 2)
+	{
+		if (std::string(argv[1]) == "-nodaemon")
+		{
+			daemonMode = false;
+		}
+		else
+		{
+			help();
+			return 1;
+		}
+	}
+	else
+	{
+		if (argc != 1)
+		{
+			help();
+			return 1;
+		}
+	}
+	
+	if (getuid() == 0)
+	{
+		system("modprobe radeon");
+		sleep(1);
+	}
+	
+	if (not drmAvailable())
+	{
+		std::cerr << "ERROR: DRM not available" << std::endl;
+		return 1;
+	}
+	
+	std::vector<AtiDeviceData> devices = getAllAtiDevices();
+	
+	std::cout << "Devices found: " << std::endl;
+	
+	for (AtiDeviceData devData : devices)
+	{
+		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << std::endl;
+	}
+	
+	std::cout << std::endl;
+	
+	if (daemonMode)
+	{
+		std::cout << "entering daemon mode" << std::endl;
+		daemon(0, 0);
+	}
+	
+	openlog ("drm_master", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
+	
+	std::map<std::string, int> drms;
+	
+	for (AtiDeviceData devData : devices)
+	{
+		if (devData.devpath.empty())
+		{
+			continue;
+		}
+		
+		int ret;
+		int fd = open(devData.devpath.c_str(), O_RDWR, 0);
+		
+		drmSetBusid(fd, devData.busid.c_str());
+		
+		ret = drmSetMaster(fd);
+		
+		if (ret < 0)
+		{
+			std::stringstream ss;
+			
+			ss << "Failed to set Master on: " << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << " ";
+			
+			if (getuid() == 0)
+			{
+				ss << "drm already has a Master";
+			}
+			else
+			{
+				ss << "Reason: " << strerror(errno);
+			}
+			
+			syslog(LOG_WARNING, ss.str().c_str());
+		}
+		else
+		{
+			std::stringstream ss;
+			ss << "set Master on:" << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << " fd: " << fd;
+			std::cerr << ss.str() << std::endl;
+			syslog(LOG_INFO, ss.str().c_str());
+			
+			drms[devData.busid] = fd;
+		}
+	}
+	
+	drmServer(drms);
 }
