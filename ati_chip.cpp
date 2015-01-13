@@ -182,6 +182,12 @@ void authWithLocalMaster(long int magic, const char* busid)
 	
 	sockfd=socket(AF_INET,SOCK_DGRAM,0);
 	
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = 100000;
+	
+	assert(setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv,sizeof(tv)) >= 0);
+	
 	bzero(&servaddr,sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr=htonl(INADDR_LOOPBACK);
@@ -190,7 +196,15 @@ void authWithLocalMaster(long int magic, const char* busid)
 	char buf[1024];
 	
 	snprintf(buf, sizeof(buf), "%s %li", busid, magic);
-	sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *)&servaddr,sizeof(servaddr));
+	int ret = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *)&servaddr,sizeof(servaddr));
+	
+	if (ret < 0)
+	{
+		return;
+	}
+	
+	socklen_t len = sizeof(servaddr);
+	ret = recvfrom(sockfd, buf, 1023, 0, (struct sockaddr *)&servaddr, &len);
 	
 	close(sockfd);
 }
