@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
 	
 	if (argc == 1)
 	{
-		ctx = compute_create_context(devices.front().busid.c_str());
+		ctx = compute_create_context(devices.front().devpath.c_str());
 	}
 	else
 	{
