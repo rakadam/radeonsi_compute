@@ -16,7 +16,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
+#include <syslog.h>
+#include <sstream>
 
 int main()
 {
@@ -30,6 +31,11 @@ int main()
 	}
 	
 	std::cout << std::endl;
+	std::cout << "entering daemon mode" << std::endl;
+	
+	daemon(0, 0);
+	
+	openlog ("drm_master", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
 	
 	std::map<std::string, int> drms;
 	
@@ -47,27 +53,30 @@ int main()
 		
 		if (ret < 0)
 		{
-			std::cerr << "Failed to set Master on: " << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << std::endl;
+			std::stringstream ss;
+			
+			ss << "Failed to set Master on: " << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << " ";
 			
 			if (getuid() == 0)
 			{
-				std::cerr << "drm already has a Master" << std::endl;
+				ss << "drm already has a Master";
 			}
 			else
 			{
-				std::cerr << "Reason: " << strerror(errno) << std::endl;
+				ss << "Reason: " << strerror(errno);
 			}
+			
+			syslog(LOG_WARNING, ss.str().c_str());
 		}
 		else
 		{
+			std::stringstream ss;
+			ss << "set Master on:" << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath;
+			syslog(LOG_INFO, ss.str().c_str());
+			
 			drms[devData.busid] = fd;
 		}
 	}
-	
-// 	for (auto p : drms)
-// 	{
-// 		close(p.second);
-// 	}
 	
 	int sockfd,n;
 	struct sockaddr_in servaddr,cliaddr;
@@ -90,22 +99,41 @@ int main()
 		char busid[1025];
 		long int magic = 0;
 		int ret = sscanf(buf, "%s %li", busid, &magic);
+		
 		std::cout << "recv: " << buf << std::endl;
+		
+		std::stringstream ss;
+		
 		if (ret == 2)
 		{
 			if (drms.count(busid))
 			{
-				drmAuthMagic(drms.at(busid), magic);
+				if (drmAuthMagic(drms.at(busid), magic))
+				{
+					ss << "drmAuthMagic failed: " << strerror(errno) << std::endl;
+				}
+				else
+				{
+					std::stringstream ss;
+					ss << "set master on " << busid << " with magic: " << magic;
+					syslog(LOG_INFO, ss.str().c_str());
+					const char* ok = "OK";
+					sendto(sockfd, ok, strlen(ok), 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
+				}
 			}
 			else
 			{
-				std::cerr << "DRM not found for busid: " << busid << std::endl;
+				ss << "DRM not found for busid: " << busid;
 			}
 		}
 		else
 		{
-			std::cerr << "Error while parsing incoming data: " << buf << std::endl;
+			ss << "Error while parsing incoming data: " << buf;
 		}
-// 		sendto(sockfd,mesg,n,0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+		
+		if (not ss.str().empty())
+		{
+			syslog(LOG_WARNING, ss.str().c_str());
+		}
 	}
 }
