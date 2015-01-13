@@ -5,6 +5,7 @@
 #include <libudev.h>
 #include <iostream>
 #include <cstdio>
+#include <cstring>
 
 int main()
 {
@@ -22,24 +23,31 @@ int main()
 	
 	for (udev_list_entry* entry = first; entry; entry = udev_list_entry_get_next(entry))
 	{
-		std::cout << udev_list_entry_get_name(entry) << std::endl;
-		
 		const char* path = udev_list_entry_get_name(entry);
 		udev_device* device = udev_device_new_from_syspath(dev, path);
 		
-		printf("Device Node Path: %s\n", udev_device_get_devnode(device));
+		const char* type = udev_device_get_devtype(device);
 		
-		
-		for (udev_list_entry* i = udev_device_get_sysattr_list_entry(device); i; i = udev_list_entry_get_next(i))
+		if (type and strcmp(type, "drm_minor") == 0)
 		{
-			printf("%s : %s\n", udev_list_entry_get_name(i), udev_device_get_sysattr_value(device, udev_list_entry_get_name(i)));
+			std::cout << udev_list_entry_get_name(entry) << std::endl;
+			
+			printf("Device Node Path: %s\n", udev_device_get_devnode(device));
+			printf("Device type: %s\n", udev_device_get_devtype(device));
+			printf("Device driver: %s\n", udev_device_get_driver(device));
+			printf("Device sysname: %s\n", udev_device_get_sysname(device));
+			printf("Device parent sysname: %s\n", udev_device_get_sysname(udev_device_get_parent(device)));
+			
+			for (udev_list_entry* i = udev_device_get_sysattr_list_entry(device); i; i = udev_list_entry_get_next(i))
+			{
+				printf("%s : %s\n", udev_list_entry_get_name(i), udev_device_get_sysattr_value(device, udev_list_entry_get_name(i)));
+			}
+			
+			for (udev_list_entry* i = udev_device_get_tags_list_entry(device); i; i = udev_list_entry_get_next(i))
+			{
+				printf("%s\n", udev_list_entry_get_name(i));
+			}
 		}
-		
-		for (udev_list_entry* i = udev_device_get_tags_list_entry(device); i; i = udev_list_entry_get_next(i))
-		{
-			printf("%s\n", udev_list_entry_get_name(i));
-		}
-		
 	}
 	
 	std::cout << std::endl;
