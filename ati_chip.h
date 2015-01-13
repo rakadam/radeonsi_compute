@@ -20,6 +20,7 @@ struct AtiDeviceData
 	std::string vendorName;
 	std::string deviceName;
 	std::string busid;
+	std::string devpath;
 };
 
 bool isAtiGPU(pci_device* device);

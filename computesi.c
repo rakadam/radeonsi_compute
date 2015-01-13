@@ -93,7 +93,7 @@ struct compute_context* compute_create_context(const char* drm_devfile)
 	struct compute_context* ctx = malloc(sizeof(struct compute_context));
 	
 	
-	if (strstr(drm_devfile, "PCI:"))
+	if (strstr(drm_devfile, "pci:"))
 	{
 		printf("open: %s\n", drm_devfile);
 		ctx->fd = drmOpen("radeon", drm_devfile);

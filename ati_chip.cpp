@@ -39,7 +39,7 @@ std::map<std::string, std::string> getBusidLookup()
 // 			printf("Device driver: %s\n", udev_device_get_driver(device));
 // 			printf("Device sysname: %s\n", udev_device_get_sysname(device));
 // 			printf("Device parent sysname: %s\n", udev_device_get_sysname(udev_device_get_parent(device)));
-			result[devnode] = psysname;
+			result[psysname] = devnode;
 		}
 		
 		udev_device_unref(device);
@@ -90,6 +90,8 @@ static std::mutex pci_mutex;
 
 std::vector< AtiDeviceData > getAllAtiDevices()
 {
+	std::map<std::string, std::string> busidTable = getBusidLookup();
+	
 	std::lock_guard<std::mutex> lock(pci_mutex);
 	std::vector<AtiDeviceData> devices;
 	
@@ -124,9 +126,35 @@ std::vector< AtiDeviceData > getAllAtiDevices()
 			}
 			
 			char buf[1024];
-// 			sprintf(buf, "PCI:%04x:%02x:%02x.%d", device->domain, device->bus, device->dev, device->func);
-			sprintf(buf, "PCI:%d:%d:%d", device->bus, device->dev, device->func);
+			sprintf(buf, "pci:%04x:%02x:%02x.%d", device->domain, device->bus, device->dev, device->func);
+// 			sprintf(buf, "PCI:%d:%d:%d", device->bus, device->dev, device->func);
 			devData.busid = buf;
+			
+			for (auto p: busidTable)
+			{
+				int domain = 0;
+				int bus = 0;
+				int dev = 0;
+				int func = 0;
+				int ret = 0;
+				
+				ret = sscanf(p.first.c_str(), "%i:%i:%i.%i", &domain, &bus, &dev, &func);
+				
+				assert(ret == 3 or ret == 4);
+				
+				if (ret == 3)
+				{
+					domain = 0;
+					ret = sscanf(p.first.c_str(), "%i:%i:%i", &bus, &dev, &func);
+					assert(ret == 3);
+				}
+				
+				if (domain == device->domain and bus == device->bus and dev == device->dev and func == device->func)
+				{
+					devData.devpath = p.second;
+					break;
+				}
+			}
 			
 			if (int(devData.family))
 			{

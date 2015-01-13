@@ -7,14 +7,13 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
-
-std::map<std::string, std::string> getBusidLookup();
+#include "ati_chip.h"
 
 int main()
 {
-	for (auto p : getBusidLookup())
+	for (AtiDeviceData devData : getAllAtiDevices())
 	{
-		std::cout << p.first << " " << p.second << std::endl;
+		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << std::endl;
 	}
 	
 // 	udev* dev = udev_new();
