@@ -7,58 +7,77 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <cstdio>
+#include <cstdlib>
 #include "ati_chip.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 
 int main()
 {
-	for (AtiDeviceData devData : getAllAtiDevices())
+	std::vector<AtiDeviceData> devices = getAllAtiDevices();
+	
+	for (AtiDeviceData devData : devices)
 	{
 		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << std::endl;
 	}
 	
-// 	udev* dev = udev_new();
-// 	
-// 	udev_enumerate* en = udev_enumerate_new(dev);
-// 	
-// 	udev_enumerate_add_match_subsystem(en, "drm");
-// 	udev_enumerate_add_match_sysname(en, "card*");
-// 	udev_enumerate_scan_devices(en);
-// // 	udev_enumerate_scan_subsystems(en);
-// 	udev_list_entry* first = udev_enumerate_get_list_entry(en);
-// 	
-// 	std::cout << (void*)first << std::endl;
-// 	
-// 	for (udev_list_entry* entry = first; entry; entry = udev_list_entry_get_next(entry))
-// 	{
-// 		const char* path = udev_list_entry_get_name(entry);
-// 		udev_device* device = udev_device_new_from_syspath(dev, path);
-// 		
-// 		const char* type = udev_device_get_devtype(device);
-// 		
-// 		if (type and strcmp(type, "drm_minor") == 0)
-// 		{
-// 			std::cout << udev_list_entry_get_name(entry) << std::endl;
-// 			
-// 			printf("Device Node Path: %s\n", udev_device_get_devnode(device));
-// 			printf("Device type: %s\n", udev_device_get_devtype(device));
-// 			printf("Device driver: %s\n", udev_device_get_driver(device));
-// 			printf("Device sysname: %s\n", udev_device_get_sysname(device));
-// 			printf("Device parent sysname: %s\n", udev_device_get_sysname(udev_device_get_parent(device)));
-// 			
-// 			for (udev_list_entry* i = udev_device_get_sysattr_list_entry(device); i; i = udev_list_entry_get_next(i))
-// 			{
-// 				printf("%s : %s\n", udev_list_entry_get_name(i), udev_device_get_sysattr_value(device, udev_list_entry_get_name(i)));
-// 			}
-// 			
-// 			for (udev_list_entry* i = udev_device_get_tags_list_entry(device); i; i = udev_list_entry_get_next(i))
-// 			{
-// 				printf("%s\n", udev_list_entry_get_name(i));
-// 			}
-// 		}
-// 	}
-// 	
-// 	std::cout << std::endl;
-// 	udev_enumerate_unref(en);
-// 	
-// 	udev_unref(dev);
+	std::map<std::string, int> drms;
+	
+	for (AtiDeviceData devData : devices)
+	{
+		if (devData.devpath.empty())
+		{
+			continue;
+		}
+		
+		int ret;
+		int fd = open(devData.devpath.c_str(), O_RDWR, 0);
+		
+		ret = drmSetMaster(fd);
+		
+		if (ret < 0)
+		{
+			std::cerr << "Failed to set Master on: " << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << std::endl;
+			std::cerr << "Reason: " << strerror(errno) << std::endl;
+		}
+		
+		drms[devData.busid] = fd;
+	}
+	
+	for (auto p : drms)
+	{
+		close(p.second);
+	}
+	
+	return 0;
+	int sockfd,n;
+	struct sockaddr_in servaddr,cliaddr;
+	socklen_t len;
+	char mesg[1000];
+	
+	sockfd=socket(AF_INET,SOCK_DGRAM, 0);
+	
+	bzero(&servaddr,sizeof(servaddr));
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr=htonl(INADDR_ANY);
+	servaddr.sin_port=htons(37463);
+	bind(sockfd,(struct sockaddr *)&servaddr,sizeof(servaddr));
+	
+	for (;;)
+	{
+		len = sizeof(cliaddr);
+		n = recvfrom(sockfd,mesg,1000,0,(struct sockaddr *)&cliaddr,&len);
+		sendto(sockfd,mesg,n,0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+		printf("-------------------------------------------------------\n");
+		mesg[n] = 0;
+		printf("Received the following:\n");
+		printf("%s",mesg);
+		printf("-------------------------------------------------------\n");
+	}
 }
