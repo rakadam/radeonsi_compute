@@ -25,11 +25,12 @@ ADD_CUSTOM_TARGET(run
 include_directories(/usr/include/libdrm)
 
 add_library(radeonsi_compute SHARED ${SRCs})
-target_link_libraries(radeonsi_compute drm_radeon drm pciaccess va-x11)
+target_link_libraries(radeonsi_compute drm_radeon drm pciaccess va-x11 udev)
 
 install(TARGETS radeonsi_compute LIBRARY DESTINATION lib)
 install(FILES computesi.h compute_interface.hpp code_helper.h sid.h DESTINATION include)
 
+add_executable(drm_master drm_master.cpp)
 add_executable(test main.cpp)
 add_executable(fma_test fma_test.cpp)
 add_executable(write_test write_test.cpp)
@@ -37,6 +38,7 @@ add_executable(read_test read_test.cpp)
 add_executable(mandelbrot mandelbrot.cpp)
 add_executable(divide_precision divide_precision.cpp)
 
+target_link_libraries(drm_master radeonsi_compute)
 target_link_libraries(test radeonsi_compute)
 target_link_libraries(fma_test radeonsi_compute)
 target_link_libraries(write_test radeonsi_compute)

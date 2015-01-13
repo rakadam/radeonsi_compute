@@ -65,7 +65,7 @@ std::vector< AtiDeviceData > getAllAtiDevices()
 // 			std::cout << pci_device_get_vendor_name(device) << " : " << pci_device_get_device_name(device) << " : " << device->device_id  << " " << getAtiChipFamilyString(device) << std::endl;
 // 			printf("%x\n", device->device_id);
 			
-			
+// 			device->
 			AtiDeviceData devData;
 			
 			devData.family = getAtiChipFamily(device);
@@ -81,7 +81,8 @@ std::vector< AtiDeviceData > getAllAtiDevices()
 			}
 			
 			char buf[1024];
-			sprintf(buf, "pci:%04x:%02x:%02x.%d", device->domain, device->bus, device->dev, device->func);
+// 			sprintf(buf, "PCI:%04x:%02x:%02x.%d", device->domain, device->bus, device->dev, device->func);
+			sprintf(buf, "PCI:%d:%d:%d", device->bus, device->dev, device->func);
 			devData.busid = buf;
 			
 			if (int(devData.family))
