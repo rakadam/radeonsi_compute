@@ -122,7 +122,6 @@ struct compute_context* compute_create_context(const char* drm_devfile, const ch
 	ginfo.request = RADEON_INFO_RING_WORKING;
 	ginfo.value = (uintptr_t)&ring_working;
 	
-	
 	if (drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo))) ///We only need to auth if we are disallowed to access the DRM
 	{
 		drm_magic_t magic = 0;
@@ -140,14 +139,17 @@ struct compute_context* compute_create_context(const char* drm_devfile, const ch
 		if (drmCommandWriteRead(ctx->fd, DRM_RADEON_INFO, &ginfo, sizeof(ginfo)))
 		{
 			ctx->display = XOpenDisplay(NULL);
-			ctx->window = DefaultRootWindow(ctx->display);
 			
-			printf("display: %p window: %p\n", ctx->display, ctx->window);
-			
-			ret=VA_DRI2Authenticate(ctx->display, ctx->window, magic);
+			if (ctx->display)
+			{
+				ctx->window = DefaultRootWindow(ctx->display);
+				
+				printf("display: %p window: %p\n", ctx->display, ctx->window);
+				
+				ret=VA_DRI2Authenticate(ctx->display, ctx->window, magic);
+			}
 		}
 	}
-	
 	
 	memset(&ginfo, 0, sizeof(ginfo));
 	ginfo.request = RADEON_INFO_RING_WORKING;
