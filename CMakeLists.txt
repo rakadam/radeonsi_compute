@@ -28,7 +28,7 @@ add_library(radeonsi_compute SHARED ${SRCs})
 target_link_libraries(radeonsi_compute drm_radeon drm pciaccess va-x11 udev)
 
 install(TARGETS radeonsi_compute LIBRARY DESTINATION lib)
-install(FILES computesi.h compute_interface.hpp code_helper.h sid.h DESTINATION include)
+install(FILES ati_chip.h ati_pciids_gen.def computesi.h compute_interface.hpp code_helper.h sid.h DESTINATION include)
 
 add_executable(drm_master drm_master.cpp)
 add_executable(test main.cpp)
