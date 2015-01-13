@@ -127,7 +127,6 @@ std::vector< AtiDeviceData > getAllAtiDevices()
 			
 			char buf[1024];
 			sprintf(buf, "pci:%04x:%02x:%02x.%d", device->domain, device->bus, device->dev, device->func);
-// 			sprintf(buf, "PCI:%d:%d:%d", device->bus, device->dev, device->func);
 			devData.busid = buf;
 			
 			for (auto p: busidTable)
@@ -138,14 +137,14 @@ std::vector< AtiDeviceData > getAllAtiDevices()
 				int func = 0;
 				int ret = 0;
 				
-				ret = sscanf(p.first.c_str(), "%i:%i:%i.%i", &domain, &bus, &dev, &func);
-				
+				//std::cout << p.first << " " << p.second << std::endl;
+				ret = sscanf(p.first.c_str(), "%x:%x:%x.%d", &domain, &bus, &dev, &func);
 				assert(ret == 3 or ret == 4);
 				
 				if (ret == 3)
 				{
 					domain = 0;
-					ret = sscanf(p.first.c_str(), "%i:%i:%i", &bus, &dev, &func);
+					ret = sscanf(p.first.c_str(), "%d:%d:%d", &bus, &dev, &func);
 					assert(ret == 3);
 				}
 				
