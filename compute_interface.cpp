@@ -171,4 +171,5 @@ void ComputeInterface::waitBuffer(gpu_buffer* buf)
 {
 	compute_bo_wait(buf);
 	compute_flush_caches(context);
+	compute_bo_wait(buf);
 }
