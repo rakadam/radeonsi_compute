@@ -172,3 +172,8 @@ void ComputeInterface::waitBuffer(gpu_buffer* buf)
 	compute_bo_wait(buf);
 	compute_flush_caches(context);
 }
+
+size_t ComputeInterface::getHardwareMemorySize() const
+{
+	return context->vram_size;
+}

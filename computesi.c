@@ -9,6 +9,7 @@
 #include <string.h>
 #include "computesi.h"
 #include <va/va_dri2.h>
+#include <libdrm/radeon_drm.h>
 
 #define PKT3C(a, b, c) (PKT3(a, b, c) | 1 << 1)
 
@@ -205,12 +206,29 @@ struct compute_context* compute_create_context(const char* drm_devfile, const ch
 	
 	printf("reserved mem: 0x%lx vm size: 0x%lx pages\n", reserved_mem, max_vm_size);
 	
+	struct drm_radeon_gem_info gem_info;
+	
+	if ((ret=drmCommandWriteRead(ctx->fd, DRM_RADEON_GEM_INFO, &gem_info, sizeof(gem_info))))
+	{
+		printf("Failed to perform drmCommandWriteRead on %d, error: %s\n", ctx->fd, strerror(-ret));
+		if (ctx->display)
+		{
+			XCloseDisplay(ctx->display);
+		}
+		close(ctx->fd);
+		free(ctx);
+		return NULL;
+	}
+	
 	ctx->vm_pool = malloc(sizeof(struct pool_node));
 	ctx->vm_pool->va = 0;
 	ctx->vm_pool->size = reserved_mem+4096; ///reserved VM area by the driver 
 	ctx->vm_pool->prev = NULL;
 	ctx->vm_pool->next = NULL;
-
+	ctx->vram_size = gem_info.vram_size;
+	ctx->gart_size = gem_info.gart_size;
+	ctx->vram_visible = gem_info.vram_visible;
+	
 	return ctx;
 }
 

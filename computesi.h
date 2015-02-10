@@ -45,7 +45,9 @@ struct compute_context
 	XID window;
 	
 	struct pool_node* vm_pool;
-	
+	uint64_t gart_size;
+	uint64_t vram_size;
+	uint64_t vram_visible;
 };
 
 struct compute_relocs
