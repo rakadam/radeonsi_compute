@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 	
 	for (AtiDeviceData devData : devices)
 	{
-		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " " << devData.devpath << std::endl;
+		std::cout << devData.vendorName << " : " << devData.deviceName << " : " << devData.busid << " dev:" << devData.devpath << std::endl;
 	}
 	
 	if (devices.empty())

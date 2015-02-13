@@ -161,7 +161,7 @@ std::vector< AtiDeviceData > getAllAtiDevices()
 				}
 			}
 			
-			if (int(devData.family))
+			if (int(devData.family) and not devData.devpath.empty())
 			{
 				devices.push_back(devData);
 			}
