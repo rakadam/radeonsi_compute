@@ -12,6 +12,7 @@ else()
 endif()
 
 SET(SRCs
+	amd_abi.cpp
 	ati_chip.cpp
 	computesi.c
 	compute_interface.cpp
