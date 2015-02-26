@@ -32,12 +32,14 @@ class AMDABI
 	
 	struct KernelArgument
 	{
-		KernelArgument(std::string name, std::string ctypeName);
+		KernelArgument(std::string name, std::string ctypeName, bool readOnly = false);
 		void parseCTypeName();
 		
 		std::string name;
 		std::string ctypeName;
+		bool readOnly;
 		std::string shortTypeName; ///< pointed type name if pointer
+		std::string oclTypeName;
 		int vectorLength;
 		bool isPointer;
 		int sizeInBytes; ///< pointed size in bytes if it is a pointer
@@ -68,6 +70,10 @@ class AMDABI
 	std::map<std::string, int> userElementNameToIndex;
 	std::vector<UserElementDescriptor> userElementTable;
 	
+	ScalarRegister privateMemoryBufres;
+	std::vector< AMDABI::ScalarMemoryReadTuple > abiIntro;
+	int sgprCount;
+	int vgprCount;
 public:
 	AMDABI(std::string kernelName);
 	
@@ -80,6 +86,11 @@ public:
 	void numberUAVs();
 	void allocateUserElements();
 	
+	/**
+	 * \brief Set the Register counts used by the kernel, these counts includes the predefined regs also
+	 */
+	void setRegUse(int sgprCount, int vgprCount);
+	
 	ScalarMemoryReadTuple get_local_size(int dim) const;
 	ScalarMemoryReadTuple get_global_size(int dim) const;
 	ScalarMemoryReadTuple get_num_groups(int dim) const;
@@ -90,8 +101,12 @@ public:
 	ScalarMemoryReadTuple getKernelArgument(int index) const;
 	ScalarMemoryReadTuple getKernelArgument(std::string name) const;
 	
+	void makeABIIntro();
 	std::vector<ScalarMemoryReadTuple> getABIIntro() const;
+	int getAllocatedUserRegCount() const;
+	int getPredefinedUserRegCount() const;
 	int getFirstFreeSRegAfterABIIntro() const;
+	int getFirstFreeVRegAfterABIIntro() const;
 	
 	ScalarRegister getPrivateMemoryOffsetRegsiter() const;
 	ScalarRegister getPrivateMemoryResourceDescriptorRegister() const;
@@ -100,6 +115,13 @@ public:
 	std::string makeUAVListTable();
 	std::string makeUserElementTable();
 	std::string makeRegisterResourceTable();
+	
+	std::string makeMetaKernelArgTable();
+	std::string makeMetaMisc();
+	std::string makeMetaReflectionTable();
+
+	std::string makeInnerMetaData();
+	std::string makeMetaData();
 };
 
 #endif // AMDABI_H

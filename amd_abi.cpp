@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <sstream>
 #include "amd_abi.h"
 
 const int firstUsableUAV = 12;
@@ -77,6 +78,7 @@ void AMDABI::numberUAVs()
 	{
 		if (argument.isPointer and not argument.localPointer)
 		{
+			usedUAVs.insert(UAVid);
 			argument.usedUAV = UAVid;
 			UAVid++;
 		}
@@ -138,6 +140,22 @@ void AMDABI::allocateUserElements()
 		elem.startSReg = index;
 		index += elem.regCount;
 	}
+}
+
+void AMDABI::setRegUse(int sgprCount, int vgprCount)
+{
+	while (sgprCount % 8 != 0)
+	{
+		sgprCount++;
+	}
+	
+	while (vgprCount % 4 != 0)
+	{
+		vgprCount++;
+	}
+	
+	this->sgprCount = sgprCount;
+	this->vgprCount = vgprCount;
 }
 
 AMDABI::ScalarMemoryReadTuple AMDABI::get_local_size(int dim) const
@@ -204,13 +222,13 @@ AMDABI::VectorRegister AMDABI::get_local_id(int dim) const
 
 AMDABI::ScalarRegister AMDABI::get_group_id(int dim) const
 {
-	ScalarRegister reg;
-	int base = userElementTable.back().startSReg + userElementTable.back().regCount;
-	
-	if (privateMemSize > 0)
+	if (dim >= this->dim)
 	{
-		base++;
+		throw std::runtime_error("get_group_id dimension error" + std::to_string(dim) + " is bigger than the available maximum");
 	}
+	
+	ScalarRegister reg;
+	int base = getAllocatedUserRegCount();
 	
 	reg.sreg = base + dim;
 	reg.sizeInDWords = 1;
@@ -237,15 +255,314 @@ AMDABI::ScalarMemoryReadTuple AMDABI::getKernelArgument(int index) const
 	return result;
 }
 
+void AMDABI::makeABIIntro()
+{
+	abiIntro.clear();
+	
+	if (privateMemSize > 0)
+	{
+		privateMemoryBufres.sizeInDWords = 4;
+		privateMemoryBufres.sreg = getPredefinedUserRegCount();
+		
+		ScalarMemoryReadTuple readPrivateMemoryBufres;
+		
+		readPrivateMemoryBufres.sregBase = userElementTable.at(userElementNameToIndex.at("privateMemoryBufresPtr")).startSReg;;
+		readPrivateMemoryBufres.bufferResourceAtSregBase = false;
+		readPrivateMemoryBufres.offset = 0x04;
+		readPrivateMemoryBufres.sizeInDWords = 4;
+		readPrivateMemoryBufres.targetSreg = privateMemoryBufres.sreg;
+		
+		abiIntro.push_back(readPrivateMemoryBufres);
+	}
+}
+
+std::vector< AMDABI::ScalarMemoryReadTuple > AMDABI::getABIIntro() const
+{
+	return abiIntro;
+}
+
+int AMDABI::getAllocatedUserRegCount() const
+{
+	int number = userElementTable.back().startSReg + userElementTable.back().regCount;
+	
+	return number;
+}
+
+int AMDABI::getPredefinedUserRegCount() const
+{
+	int base = getAllocatedUserRegCount();
+	
+	base += dim; ///< group_ids written by the hardware
+	
+	if (privateMemSize > 0)
+	{
+		base += 1; ///< scratch offset computed by the hardware
+	}
+	
+	return base;
+}
+
+int AMDABI::getFirstFreeSRegAfterABIIntro() const
+{
+	int base = getPredefinedUserRegCount();
+	
+	for (ScalarMemoryReadTuple read : abiIntro)
+	{
+		int n = read.targetSreg + read.sizeInDWords;
+		base = std::max(base, n);
+	}
+	
+	return base;
+}
+
+int AMDABI::getFirstFreeVRegAfterABIIntro() const
+{
+	return dim;
+}
+
+AMDABI::ScalarRegister AMDABI::getPrivateMemoryOffsetRegsiter() const
+{
+	if (privateMemSize == 0)
+	{
+		throw std::runtime_error("Private memory is turned off");
+	}
+	
+	ScalarRegister privateMemoryOffset;
+	
+	privateMemoryOffset.sizeInDWords = 1;
+	privateMemoryOffset.sreg = getPredefinedUserRegCount()-1;
+	
+	return privateMemoryOffset;
+}
+
+AMDABI::ScalarRegister AMDABI::getPrivateMemoryResourceDescriptorRegister() const
+{
+	return privateMemoryBufres;
+}
+
+std::string AMDABI::makeRegisterResourceTable()
+{
+	std::stringstream ss;
+	
+	ss << "num_vgprs " << vgprCount << std::endl;
+	ss << "num_sgprs " << sgprCount << std::endl;
+	ss << "float_mode 192" << std::endl;
+	ss << "ieee_mode 0" << std::endl;
+	
+	return ss.str();
+}
+
+std::string AMDABI::makeRSRC2Table()
+{
+	std::stringstream ss;
+	
+	ss << "rsrc2_scrach_en      "  << (privateMemSize > 0) << std::endl;
+	ss << "rsrc2_user_sgpr      "  << getPredefinedUserRegCount() << std::endl;
+	ss << "rsrc2_trap_present   0" << std::endl;
+	ss << "rsrc2_tgid_x_en      "  << (dim > 0) << std::endl;
+	ss << "rsrc2_tgid_y_en      "  << (dim > 1) << std::endl;
+	ss << "rsrc2_tgid_z_en      "  << (dim > 2) << std::endl;
+	ss << "rsrc2_tg_size_en     0" << std::endl;
+	ss << "rsrc2_tidig_comp_cnt "  << (dim > 0 ? dim-1 : 0) << std::endl;
+	ss << "rsrc2_excp_en_msb    0" << std::endl;
+	ss << "rsrc2_lds_size       "  << localMemSize / 256 << std::endl;
+	ss << "rsrc2_excp_en        0" << std::endl;
+	ss << "rsrc2_unknown1       0" << std::endl;
+	
+	return ss.str();
+}
+
+std::string AMDABI::makeUAVListTable()
+{
+	std::stringstream ss;
+	
+	for (int UAVID : usedUAVs)
+	{
+		ss << "uav " << UAVID << " 4 0 5" << std::endl;
+	}
+	
+	if (privateMemSize > 0)
+	{
+		ss << "uav 3 0 5" << std::endl; ///implicit UAV
+	}
+	
+	return ss.str();
+}
+
+std::string AMDABI::makeUserElementTable()
+{
+	std::stringstream ss;
+	
+	for (UserElementDescriptor elem : userElementTable)
+	{
+		ss << "user_element " << elem.dataClass << " " << elem.apiSlot << " " << elem.startSReg << " " << elem.regCount << std::endl;
+	}
+	
+	return ss.str();
+}
+
+std::string AMDABI::makeMetaKernelArgTable()
+{
+	std::stringstream ss;
+	
+	for (const KernelArgument& arg : kernelArguments)
+	{
+		ss << ";";
+		
+		if (arg.isPointer)
+		{
+			ss << "pointer:";
+		}
+		else
+		{
+			ss << "value:";
+		}
+		
+		ss << arg.name << ":" << arg.shortTypeName << ":" << arg.vectorLength << ":" << 1 << ":" << arg.startOffsetInArgTable;
+		
+		if (arg.isPointer and arg.usedUAV > 0)
+		{
+			ss << ":" << "uav" << ":" << arg.usedUAV << ":" << arg.sizeInBytes << ":" << (arg.readOnly ? "RO" : "RW") << ":" << 0 << ":" << 0;
+		}
+		else if (arg.isPointer and arg.localPointer)
+		{
+			ss << ":" << "hl" << ":" << 1 << ":" << arg.sizeInBytes << ":" << (arg.readOnly ? "RO" : "RW") << ":" << 0 << ":" << 0;
+		}
+		
+		ss << std::endl;
+	}
+	
+	return ss.str();
+}
+
+std::string AMDABI::makeMetaMisc()
+{
+	std::stringstream ss;
+	
+	ss << ";memory:datareqd" << std::endl;
+	ss << ";function:1:1033" << std::endl;
+	ss << ";uavid:11" << std::endl;
+	ss << ";cbid:10" << std::endl;
+	ss << ";privateid:8" << std::endl;
+	
+	return ss.str();
+}
+
+std::string AMDABI::makeMetaReflectionTable()
+{
+	std::stringstream ss;
+	
+	int index = 0;
+	
+	for (const KernelArgument& arg : kernelArguments)
+	{
+		ss << ";";
+		
+		ss << "reflection" << ":" << index << ":" << arg.oclTypeName;
+		ss << std::endl;
+	}
+	
+	return ss.str();
+}
+
+std::string AMDABI::makeInnerMetaData()
+{
+	std::stringstream ss;
+	
+	ss << "machine 26 4 0" << std::endl; //Tahiti GPU
+	
+	ss << makeUAVListTable();
+	ss << std::endl;
+	ss << "cb 0 0" << std::endl;
+	ss << "cb 1 0" << std::endl;
+	ss << std::endl;
+	ss << makeUserElementTable();
+	ss << std::endl;
+	ss << makeRegisterResourceTable();
+	ss << std::endl;
+	ss << makeRSRC2Table();
+	ss << std::endl;
+	
+	ss << "float_consts_begin" << std::endl;
+	
+	for (int i = 0; i < 256; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			ss << 0 << " #[" << i << "][" << j << "]" << std::endl;
+		}
+	}
+	
+	ss << "float_consts_end" << std::endl;
+	ss << std::endl;
+	ss << "int_consts_begin" << std::endl;
+	
+	for (int i = 0; i < 32; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			ss << 0 << " #[" << i << "][" << j << "]" << std::endl;
+		}
+	}
+	
+	ss << "int_consts_end" << std::endl;
+	ss << std::endl;
+	ss << "bool_consts_begin" << std::endl;
+	
+	for (int i = 0; i < 32; i++)
+	{
+		ss << 0 << " #[" << i << "]" << std::endl;
+	}
+	
+	ss << "bool_consts_end" << std::endl;
+	ss << std::endl;
+	
+	return ss.str();
+}
+
+std::string AMDABI::makeMetaData()
+{
+	std::stringstream ss;
+	
+	ss << ";ARGSTART:__OpenCL_" + kernelName << std::endl;
+	ss << ";version:3:1:111" << std::endl;
+	ss << ";device:tahiti" << std::endl;
+	ss << ";uniqueid:1024" << std::endl;
+	ss << ";memory:uavprivate:" << privateMemSize << std::endl;
+	ss << ";memory:hwlocal:" << localMemSize << std::endl;
+	ss << ";memory:hwregion:0" << std::endl;
+	
+	ss << makeMetaKernelArgTable();
+	ss << makeMetaMisc();
+	ss << makeMetaReflectionTable();
+	
+	ss << ";ARGEND:__OpenCL_" << kernelName << std::endl;
+	
+	return ss.str();
+}
 
 AMDABI::ScalarMemoryReadTuple::ScalarMemoryReadTuple() : targetSreg(-1), sregBase(-1), bufferResourceAtSregBase(false), offset(0), sizeInDWords(-1)
 {
 }
 
 
-AMDABI::KernelArgument::KernelArgument(std::string name, std::string ctypeName) : name(name), ctypeName(ctypeName), vectorLength(1), isPointer(false), sizeInBytes(0), startOffsetInArgTable(0), usedUAV(0), localPointer(false)
+AMDABI::KernelArgument::KernelArgument(std::string name, std::string ctypeName, bool readOnly)
+ : name(name), ctypeName(ctypeName), readOnly(readOnly), vectorLength(1), isPointer(false), sizeInBytes(0), startOffsetInArgTable(0), usedUAV(0), localPointer(false)
 {
 	parseCTypeName();
+	
+	if (shortTypeName != "opaque")
+	{
+		if (vectorLength)
+		{
+			oclTypeName += std::to_string(vectorLength);
+		}
+		
+		if (isPointer)
+		{
+			oclTypeName += "*";
+		}
+	}
 }
 
 void AMDABI::KernelArgument::parseCTypeName()
@@ -266,6 +583,7 @@ void AMDABI::KernelArgument::parseCTypeName()
 	if (type.find("struct") != std::string::npos)
 	{
 		shortTypeName = "opaque";
+		oclTypeName = ctypeName;
 		sizeInBytes = 4; ///should set it manually!
 		return;
 	}
@@ -292,6 +610,7 @@ void AMDABI::KernelArgument::parseCTypeName()
 	{
 		sizeInBytes = 8;
 		shortTypeName = "double";
+		oclTypeName = "double";
 		return;
 	}
 	
@@ -299,6 +618,7 @@ void AMDABI::KernelArgument::parseCTypeName()
 	{
 		sizeInBytes = 4;
 		shortTypeName = "float";
+		oclTypeName = "float";
 		return;
 	}
 	
@@ -306,6 +626,7 @@ void AMDABI::KernelArgument::parseCTypeName()
 	{
 		sizeInBytes = 1;
 		shortTypeName = "i8";
+		oclTypeName = "char";
 		return;
 	}
 	
@@ -313,6 +634,7 @@ void AMDABI::KernelArgument::parseCTypeName()
 	{
 		sizeInBytes = 1;
 		shortTypeName = "u8";
+		oclTypeName = "uchar";
 		return;
 	}
 	
@@ -320,6 +642,7 @@ void AMDABI::KernelArgument::parseCTypeName()
 	{
 		sizeInBytes = 2;
 		shortTypeName = "i16";
+		oclTypeName = "short";
 		return;
 	}
 	
@@ -327,6 +650,7 @@ void AMDABI::KernelArgument::parseCTypeName()
 	{
 		sizeInBytes = 2;
 		shortTypeName = "u16";
+		oclTypeName = "ushort";
 		return;
 	}
 	
@@ -334,6 +658,7 @@ void AMDABI::KernelArgument::parseCTypeName()
 	{
 		sizeInBytes = 4;
 		shortTypeName = "i32";
+		oclTypeName = "int";
 		return;
 	}
 	
@@ -341,6 +666,7 @@ void AMDABI::KernelArgument::parseCTypeName()
 	{
 		sizeInBytes = 4;
 		shortTypeName = "u32";
+		oclTypeName = "uint";
 		return;
 	}
 	
@@ -348,6 +674,7 @@ void AMDABI::KernelArgument::parseCTypeName()
 	{
 		sizeInBytes = 8;
 		shortTypeName = "i64";
+		oclTypeName = "long";
 		return;
 	}
 	
@@ -355,6 +682,7 @@ void AMDABI::KernelArgument::parseCTypeName()
 	{
 		sizeInBytes = 8;
 		shortTypeName = "u64";
+		oclTypeName = "ulong";
 		return;
 	}
 	
