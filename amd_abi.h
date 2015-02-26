@@ -74,6 +74,20 @@ class AMDABI
 	std::vector< AMDABI::ScalarMemoryReadTuple > abiIntro;
 	int sgprCount;
 	int vgprCount;
+private:
+	void computeKernelArgumentTableLayout();
+	void numberUAVs();
+	void allocateUserElements();
+	void makeABIIntro();
+	std::string makeRSRC2Table() const;
+	std::string makeUAVListTable() const;
+	std::string makeUserElementTable() const;
+	std::string makeRegisterResourceTable() const;
+	
+	std::string makeMetaKernelArgTable() const;
+	std::string makeMetaMisc() const;
+	std::string makeMetaReflectionTable() const;
+	
 public:
 	AMDABI(std::string kernelName);
 	
@@ -82,14 +96,13 @@ public:
 	void setLocalMemorySize(int sizeInBytes);
 	void addKernelArgument(std::string name, std::string ctypeName, int customSizeInBytes = -1);
 	void addKernelArgumentLocalMemory(std::string name, std::string ctypeName);
-	void computeKernelArgumentTableLayout();
-	void numberUAVs();
-	void allocateUserElements();
 	
 	/**
 	 * \brief Set the Register counts used by the kernel, these counts includes the predefined regs also
 	 */
 	void setRegUse(int sgprCount, int vgprCount);
+	
+	void buildInternalData();
 	
 	ScalarMemoryReadTuple get_local_size(int dim) const;
 	ScalarMemoryReadTuple get_global_size(int dim) const;
@@ -101,7 +114,6 @@ public:
 	ScalarMemoryReadTuple getKernelArgument(int index) const;
 	ScalarMemoryReadTuple getKernelArgument(std::string name) const;
 	
-	void makeABIIntro();
 	std::vector<ScalarMemoryReadTuple> getABIIntro() const;
 	int getAllocatedUserRegCount() const;
 	int getPredefinedUserRegCount() const;
@@ -111,17 +123,10 @@ public:
 	ScalarRegister getPrivateMemoryOffsetRegsiter() const;
 	ScalarRegister getPrivateMemoryResourceDescriptorRegister() const;
 	
-	std::string makeRSRC2Table();
-	std::string makeUAVListTable();
-	std::string makeUserElementTable();
-	std::string makeRegisterResourceTable();
+	std::string makeInnerMetaData() const;
+	std::string makeMetaData() const;
 	
-	std::string makeMetaKernelArgTable();
-	std::string makeMetaMisc();
-	std::string makeMetaReflectionTable();
-
-	std::string makeInnerMetaData();
-	std::string makeMetaData();
+	void generateIntoDirectory(std::string baseDir, std::vector<uint32_t> bytecode) const;
 };
 
 #endif // AMDABI_H

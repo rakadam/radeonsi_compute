@@ -1,5 +1,9 @@
 #include <stdexcept>
 #include <sstream>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <cstring>
+#include <fstream>
 #include "amd_abi.h"
 
 const int firstUsableUAV = 12;
@@ -9,6 +13,8 @@ AMDABI::AMDABI(std::string kernelName) : kernelName(kernelName)
 	dim = 0;
 	privateMemSize = 0;
 	localMemSize = 0;
+	sgprCount = 16;
+	vgprCount = 4;
 }
 
 void AMDABI::setDimension(int dim)
@@ -137,6 +143,11 @@ void AMDABI::allocateUserElements()
 	
 	for (UserElementDescriptor& elem : userElementTable)
 	{
+		while (index % elem.regCount != 0) ///< we need to align the start indexes
+		{
+			index++;
+		}
+		
 		elem.startSReg = index;
 		index += elem.regCount;
 	}
@@ -156,6 +167,14 @@ void AMDABI::setRegUse(int sgprCount, int vgprCount)
 	
 	this->sgprCount = sgprCount;
 	this->vgprCount = vgprCount;
+}
+
+void AMDABI::buildInternalData()
+{
+	numberUAVs();
+	computeKernelArgumentTableLayout();
+	allocateUserElements();
+	makeABIIntro();
 }
 
 AMDABI::ScalarMemoryReadTuple AMDABI::get_local_size(int dim) const
@@ -340,7 +359,7 @@ AMDABI::ScalarRegister AMDABI::getPrivateMemoryResourceDescriptorRegister() cons
 	return privateMemoryBufres;
 }
 
-std::string AMDABI::makeRegisterResourceTable()
+std::string AMDABI::makeRegisterResourceTable() const
 {
 	std::stringstream ss;
 	
@@ -352,12 +371,12 @@ std::string AMDABI::makeRegisterResourceTable()
 	return ss.str();
 }
 
-std::string AMDABI::makeRSRC2Table()
+std::string AMDABI::makeRSRC2Table() const
 {
 	std::stringstream ss;
 	
 	ss << "rsrc2_scrach_en      "  << (privateMemSize > 0) << std::endl;
-	ss << "rsrc2_user_sgpr      "  << getPredefinedUserRegCount() << std::endl;
+	ss << "rsrc2_user_sgpr      "  << getAllocatedUserRegCount() << std::endl;
 	ss << "rsrc2_trap_present   0" << std::endl;
 	ss << "rsrc2_tgid_x_en      "  << (dim > 0) << std::endl;
 	ss << "rsrc2_tgid_y_en      "  << (dim > 1) << std::endl;
@@ -372,7 +391,7 @@ std::string AMDABI::makeRSRC2Table()
 	return ss.str();
 }
 
-std::string AMDABI::makeUAVListTable()
+std::string AMDABI::makeUAVListTable() const
 {
 	std::stringstream ss;
 	
@@ -383,13 +402,13 @@ std::string AMDABI::makeUAVListTable()
 	
 	if (privateMemSize > 0)
 	{
-		ss << "uav 3 0 5" << std::endl; ///implicit UAV
+		ss << "uav 8 3 0 5" << std::endl; ///implicit UAV
 	}
 	
 	return ss.str();
 }
 
-std::string AMDABI::makeUserElementTable()
+std::string AMDABI::makeUserElementTable() const
 {
 	std::stringstream ss;
 	
@@ -401,7 +420,7 @@ std::string AMDABI::makeUserElementTable()
 	return ss.str();
 }
 
-std::string AMDABI::makeMetaKernelArgTable()
+std::string AMDABI::makeMetaKernelArgTable() const
 {
 	std::stringstream ss;
 	
@@ -435,7 +454,7 @@ std::string AMDABI::makeMetaKernelArgTable()
 	return ss.str();
 }
 
-std::string AMDABI::makeMetaMisc()
+std::string AMDABI::makeMetaMisc() const
 {
 	std::stringstream ss;
 	
@@ -448,7 +467,7 @@ std::string AMDABI::makeMetaMisc()
 	return ss.str();
 }
 
-std::string AMDABI::makeMetaReflectionTable()
+std::string AMDABI::makeMetaReflectionTable() const
 {
 	std::stringstream ss;
 	
@@ -460,12 +479,13 @@ std::string AMDABI::makeMetaReflectionTable()
 		
 		ss << "reflection" << ":" << index << ":" << arg.oclTypeName;
 		ss << std::endl;
+		index++;
 	}
 	
 	return ss.str();
 }
 
-std::string AMDABI::makeInnerMetaData()
+std::string AMDABI::makeInnerMetaData() const
 {
 	std::stringstream ss;
 	
@@ -520,7 +540,7 @@ std::string AMDABI::makeInnerMetaData()
 	return ss.str();
 }
 
-std::string AMDABI::makeMetaData()
+std::string AMDABI::makeMetaData() const
 {
 	std::stringstream ss;
 	
@@ -541,10 +561,33 @@ std::string AMDABI::makeMetaData()
 	return ss.str();
 }
 
+void AMDABI::generateIntoDirectory(std::string baseDir, std::vector< uint32_t > bytecode) const
+{
+	int retval = 0;
+	std::string dirname = baseDir + "/" + kernelName;
+	
+	retval = mkdir(dirname.c_str(), 0755);
+	
+	if (retval)
+	{
+		throw std::runtime_error(dirname + " : " + strerror(errno));
+	}
+	
+	std::ofstream(dirname + "/" + kernelName + ".metadata") << makeMetaData() << std::endl;
+	std::ofstream(dirname + "/" + kernelName + "_inner_26" + ".encoding") << makeInnerMetaData() << std::endl;
+	
+	std::vector<uint8_t> dummyHeader(32);
+	dummyHeader[20] = 1;
+	std::ofstream(dirname + "/" + kernelName + ".header", std::ofstream::binary).write((const char*)dummyHeader.data(), dummyHeader.size());
+	std::ofstream(dirname + "/" + kernelName + "_inner_26" + ".bytecode", std::ofstream::binary).write((const char*)bytecode.data(), bytecode.size()*sizeof(bytecode[0]));
+	
+	system(("elf_build_inner " + dirname + " " + kernelName + " " + dirname + "/" + kernelName + ".kernel").c_str());
+	system(("elf_build " + dirname + " " + kernelName + " " + baseDir + "/" + kernelName + ".bin").c_str());
+}
+
 AMDABI::ScalarMemoryReadTuple::ScalarMemoryReadTuple() : targetSreg(-1), sregBase(-1), bufferResourceAtSregBase(false), offset(0), sizeInDWords(-1)
 {
 }
-
 
 AMDABI::KernelArgument::KernelArgument(std::string name, std::string ctypeName, bool readOnly)
  : name(name), ctypeName(ctypeName), readOnly(readOnly), vectorLength(1), isPointer(false), sizeInBytes(0), startOffsetInArgTable(0), usedUAV(0), localPointer(false)
@@ -553,7 +596,7 @@ AMDABI::KernelArgument::KernelArgument(std::string name, std::string ctypeName, 
 	
 	if (shortTypeName != "opaque")
 	{
-		if (vectorLength)
+		if (vectorLength > 1)
 		{
 			oclTypeName += std::to_string(vectorLength);
 		}
@@ -569,6 +612,23 @@ void AMDABI::KernelArgument::parseCTypeName()
 {
 	std::string type = ctypeName;
 	
+	if (type.find("const") != std::string::npos)
+	{
+		std::string str = "const";
+		readOnly = true;
+		type.erase(type.find(str), str.length());
+	}
+	
+	while (type.length() and type.front() == ' ')
+	{
+		type.erase(0, 1);
+	}
+	
+	while (type.length() and type.back() == ' ')
+	{
+		type.resize(type.length()-1);
+	}
+	
 	if (type.back() == '*')
 	{
 		type.resize(type.length()-1);
@@ -578,6 +638,16 @@ void AMDABI::KernelArgument::parseCTypeName()
 	if (type.find("*") != std::string::npos)
 	{
 		throw std::runtime_error("Type is too complex:" + ctypeName);
+	}
+	
+	while (type.length() and type.front() == ' ')
+	{
+		type.erase(0, 1);
+	}
+	
+	while (type.length() and type.back() == ' ')
+	{
+		type.resize(type.length()-1);
 	}
 	
 	if (type.find("struct") != std::string::npos)
