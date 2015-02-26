@@ -461,6 +461,7 @@ std::string AMDABI::makeMetaMisc() const
 	ss << ";memory:datareqd" << std::endl;
 	ss << ";function:1:1033" << std::endl;
 	ss << ";uavid:11" << std::endl;
+	ss << ";printfid:9" << std::endl;
 	ss << ";cbid:10" << std::endl;
 	ss << ";privateid:8" << std::endl;
 	
@@ -544,7 +545,7 @@ std::string AMDABI::makeMetaData() const
 {
 	std::stringstream ss;
 	
-	ss << ";ARGSTART:__OpenCL_" + kernelName << std::endl;
+	ss << ";ARGSTART:__OpenCL_" + kernelName << "_kernel" << std::endl;
 	ss << ";version:3:1:111" << std::endl;
 	ss << ";device:tahiti" << std::endl;
 	ss << ";uniqueid:1024" << std::endl;
@@ -556,7 +557,7 @@ std::string AMDABI::makeMetaData() const
 	ss << makeMetaMisc();
 	ss << makeMetaReflectionTable();
 	
-	ss << ";ARGEND:__OpenCL_" << kernelName << std::endl;
+	ss << ";ARGEND:__OpenCL_" << kernelName << "_kernel" << std::endl;
 	
 	return ss.str();
 }

@@ -10,7 +10,7 @@ int main()
 	abi.addKernelArgument("array3", "int*");
 	abi.setDimension(1);
 	abi.setLocalMemorySize(1024);
-	abi.setRegUse(64, 256);
+	abi.setRegUse(64, 250);
 	abi.setPrivateMemorySizePerItem(1024);
 	
 	abi.buildInternalData();
