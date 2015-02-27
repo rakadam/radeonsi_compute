@@ -39,21 +39,31 @@ int main()
 	
 	s_load_dwordx4(p, rr.sregBase/2, array3bufresBase, rr.offset, 1);
 	s_waitcnt(p);
-	v_mov_imm32(p, 4, 1);
+	
+	int array3Ptr = array3bufresBase+4;
+	
+	{
+		AMDABI::ScalarMemoryReadTuple rr = abi.getKernelArgument("array3");
+		s_load_dword(p, rr.sregBase/2, array3Ptr, rr.offset, 1);
+	}
+	
+	v_mov_b32(p, 4, array3Ptr);
+	
+	v_mov_imm32(p, 5, 0xFFFF);
 	mtbuf(p,
 				4,//int nfmt,
 				4,//int dfmt,
 				TBUFFER_STORE_FORMAT_X,//int op,
 				0,//int addr64,
 				0,//int glc,
-				1,//int idxen,
-				0,//int offen,
+				0,//int idxen,
+				1,//int offen,
 				0,//int offset,
 				128,//int soffset, set to zero
 				0,//int tfe,
 				0,//int slc,
 				array3bufresBase/4,//int srsrc,
-				4,//int vdata,
+				5,//int vdata,
 				4//int vaddr
 	);
 	s_waitcnt(p);

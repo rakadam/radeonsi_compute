@@ -266,7 +266,7 @@ AMDABI::ScalarMemoryReadTuple AMDABI::getKernelArgument(int index) const
 	KernelArgument arg = kernelArguments.at(index);
 	
 	result.sregBase = userElementTable.at(userElementNameToIndex.at("kernelArgumentTableBufres")).startSReg;
-	result.offset = arg.startOffsetInArgTable;
+	result.offset = arg.startOffsetInArgTable / 4;
 	result.sizeInDWords = (arg.sizeInBytes+3) / 4;
 	result.bufferResourceAtSregBase = true;
 	result.targetSreg = -1;
