@@ -65,7 +65,7 @@ int main()
 				0,//int tfe,
 				0,//int slc,
 				array3bufresBase/4,//int srsrc,
-				5,//int vdata,
+				4,//int vdata,
 				4//int vaddr
 	);
 	s_waitcnt(p);
