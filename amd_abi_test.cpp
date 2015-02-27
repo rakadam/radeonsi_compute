@@ -39,21 +39,22 @@ int main()
 	
 	s_load_dwordx4(p, rr.sregBase/2, array3bufresBase, rr.offset, 1);
 	s_waitcnt(p);
+	v_mov_imm32(p, 4, 1);
 	mtbuf(p,
 				4,//int nfmt,
 				4,//int dfmt,
 				TBUFFER_STORE_FORMAT_X,//int op,
 				0,//int addr64,
 				0,//int glc,
-				0,//int idxen,
+				1,//int idxen,
 				0,//int offen,
 				0,//int offset,
 				128,//int soffset, set to zero
 				0,//int tfe,
 				0,//int slc,
 				array3bufresBase/4,//int srsrc,
-				0,//int vdata,
-				0//int vaddr
+				4,//int vdata,
+				4//int vaddr
 	);
 	s_waitcnt(p);
 	
