@@ -589,6 +589,11 @@ inline void sop2(unsigned *&p, unsigned op, unsigned sdst, unsigned ssrc1, unsig
  p++;
 }
 
+inline void s_mul_i32(unsigned *&p, int sdst, int ssrc1, int ssrc0)
+{
+	sop2(p, 38, sdst, ssrc1, ssrc0);
+}
+
 inline void s_add_i32(unsigned *&p, unsigned sdst, unsigned ssrc1, unsigned ssrc0)
 {
  sop2(p, 2, sdst, ssrc1, ssrc0);

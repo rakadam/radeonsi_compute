@@ -48,7 +48,19 @@ int main()
 		s_waitcnt(p);
 	}
 	
-	v_mul_lo_i32(p, 4, 256 + abi.get_local_id(0).vreg, 129+3);
+	int localSize = array3Ptr+1;
+	
+	{
+		AMDABI::ScalarMemoryReadTuple rr = abi.get_local_size(0);
+		s_buffer_load_dword(p, rr.sregBase/2, localSize, rr.offset, 1);
+		s_waitcnt(p);
+	}
+	
+	int gidBase = localSize+1;
+	
+	s_mul_i32(p, gidBase, abi.get_group_id(0).sreg, localSize);
+	v_add_i32(p, 4, abi.get_local_id(0).vreg, gidBase);
+	v_mul_lo_i32(p, 4, 256 + 4, 129+3);
 	v_add_i32(p, 4, 4, array3Ptr);
 	
 	v_mov_imm32(p, 5, 0xFFFF);
@@ -65,7 +77,7 @@ int main()
 				0,//int tfe,
 				0,//int slc,
 				array3bufresBase/4,//int srsrc,
-				4,//int vdata,
+				5,//int vdata,
 				4//int vaddr
 	);
 	s_waitcnt(p);
