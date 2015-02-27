@@ -45,6 +45,7 @@ int main()
 	{
 		AMDABI::ScalarMemoryReadTuple rr = abi.getKernelArgument("array3");
 		s_load_dword(p, rr.sregBase/2, array3Ptr, rr.offset, 1);
+		s_waitcnt(p);
 	}
 	
 	v_mov_b32(p, 4, array3Ptr);
