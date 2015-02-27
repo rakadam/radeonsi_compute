@@ -386,8 +386,8 @@ std::string AMDABI::makeRegisterResourceTable() const
 	ss << "num_sgprs " << sgprCount << std::endl;
 	ss << "float_mode 192" << std::endl;
 	ss << "ieee_mode 0" << std::endl;
-	ss << "lds_size " << localMemSize << std::endl;
 	ss << "private_size " << privateMemSize << std::endl;
+	ss << "lds_size " << localMemSize << std::endl;
 	
 	return ss.str();
 }
@@ -420,6 +420,8 @@ std::string AMDABI::makeUAVListTable() const
 	{
 		ss << "uav " << UAVID << " 4 0 5" << std::endl;
 	}
+	
+	ss << "uav 11 4 0 5" << std::endl;
 	
 	if (privateMemSize > 0)
 	{
@@ -480,7 +482,7 @@ std::string AMDABI::makeMetaMisc() const
 	std::stringstream ss;
 	
 	ss << ";memory:datareqd" << std::endl;
-	ss << ";function:1:1033" << std::endl;
+	ss << ";function:1:1035" << std::endl;
 	ss << ";uavid:11" << std::endl;
 	ss << ";printfid:9" << std::endl;
 	ss << ";cbid:10" << std::endl;
@@ -598,9 +600,12 @@ void AMDABI::generateIntoDirectory(std::string baseDir, std::vector< uint32_t > 
 	std::ofstream(dirname + "/" + kernelName + ".metadata") << makeMetaData() << std::endl;
 	std::ofstream(dirname + "/" + kernelName + "_inner_26" + ".encoding") << makeInnerMetaData() << std::endl;
 	
-	std::vector<uint8_t> dummyHeader(32);
-	dummyHeader[20] = 1;
-	std::ofstream(dirname + "/" + kernelName + ".header", std::ofstream::binary).write((const char*)dummyHeader.data(), dummyHeader.size());
+	std::vector<uint32_t> dummyHeader(8);
+	dummyHeader[0] = privateMemSize;
+	dummyHeader[2] = privateMemSize;
+	dummyHeader[3] = localMemSize;
+	dummyHeader[5] = 1;
+	std::ofstream(dirname + "/" + kernelName + ".header", std::ofstream::binary).write((const char*)dummyHeader.data(), dummyHeader.size()*sizeof(dummyHeader[0]));
 	std::ofstream(dirname + "/" + kernelName + "_inner_26" + ".bytecode", std::ofstream::binary).write((const char*)bytecode.data(), bytecode.size()*sizeof(bytecode[0]));
 	
 	system(("elf_build_inner " + dirname + " " + kernelName + " " + dirname + "/" + kernelName + ".kernel").c_str());
