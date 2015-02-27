@@ -367,8 +367,8 @@ std::string AMDABI::makeRegisterResourceTable() const
 	ss << "num_sgprs " << sgprCount << std::endl;
 	ss << "float_mode 192" << std::endl;
 	ss << "ieee_mode 0" << std::endl;
-	ss << "lds_size " << localMemSize << std::endl;
 	ss << "private_size " << privateMemSize << std::endl;
+	ss << "lds_size " << localMemSize << std::endl;
 	
 	return ss.str();
 }
