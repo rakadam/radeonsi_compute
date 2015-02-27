@@ -5,13 +5,13 @@ int main()
 {
 	AMDABI abi("testkernel");
 	
-	abi.addKernelArgument("array", "const int*");
-	abi.addKernelArgument("array2", "const int*");
-	abi.addKernelArgument("array3", "int*");
+	abi.addKernelArgument("array", "const unsigned int*");
+	abi.addKernelArgument("array2", "const unsigned int*");
+	abi.addKernelArgument("array3", "unsigned int*");
 	abi.setDimension(1);
 	abi.setLocalMemorySize(1024);
 	abi.setRegUse(64, 250);
-	abi.setPrivateMemorySizePerItem(1024);
+	abi.setPrivateMemorySizePerItem(8000);
 	
 	abi.buildInternalData();
 	
