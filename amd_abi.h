@@ -7,6 +7,7 @@
 
 class AMDABI
 {
+public:
 	struct VectorRegister
 	{
 		int vreg;
@@ -122,6 +123,8 @@ public:
 	
 	ScalarRegister getPrivateMemoryOffsetRegsiter() const;
 	ScalarRegister getPrivateMemoryResourceDescriptorRegister() const;
+	ScalarMemoryReadTuple getUAVBufresForKernelArgument(int index) const;
+	ScalarMemoryReadTuple getUAVBufresForKernelArgument(std::string argName) const;
 	
 	std::string makeInnerMetaData() const;
 	std::string makeMetaData() const;

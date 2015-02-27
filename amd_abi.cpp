@@ -359,6 +359,25 @@ AMDABI::ScalarRegister AMDABI::getPrivateMemoryResourceDescriptorRegister() cons
 	return privateMemoryBufres;
 }
 
+AMDABI::ScalarMemoryReadTuple AMDABI::getUAVBufresForKernelArgument(std::string argName) const
+{
+	return getUAVBufresForKernelArgument(KernelArgumentNameToIndex.at(argName));
+}
+
+AMDABI::ScalarMemoryReadTuple AMDABI::getUAVBufresForKernelArgument(int index) const
+{
+	ScalarMemoryReadTuple result;
+	KernelArgument arg = kernelArguments.at(index);
+	
+	result.bufferResourceAtSregBase = false;
+	result.sregBase = userElementTable.at(userElementNameToIndex.at("UAVTablePtr")).startSReg;
+	result.offset = arg.usedUAV*8;
+	result.sizeInDWords = 4;
+	result.targetSreg = -1;
+	
+	return result;
+}
+
 std::string AMDABI::makeRegisterResourceTable() const
 {
 	std::stringstream ss;
