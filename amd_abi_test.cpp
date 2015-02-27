@@ -48,7 +48,8 @@ int main()
 		s_waitcnt(p);
 	}
 	
-	v_mov_b32(p, 4, array3Ptr);
+	v_mul_lo_i32(p, 4, 256 + abi.get_local_id(0).vreg, 129+3);
+	v_add_i32(p, 4, 4, array3Ptr);
 	
 	v_mov_imm32(p, 5, 0xFFFF);
 	mtbuf(p,
