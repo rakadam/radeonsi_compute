@@ -75,6 +75,7 @@ public:
 	std::vector< AMDABI::ScalarMemoryReadTuple > abiIntro;
 	int sgprCount;
 	int vgprCount;
+	std::map<int, ScalarRegister> UAVBufresInRegs; ///< argindex To bufres scalar register
 private:
 	void computeKernelArgumentTableLayout();
 	void numberUAVs();
@@ -89,6 +90,10 @@ private:
 	std::string makeMetaMisc() const;
 	std::string makeMetaReflectionTable() const;
 	
+	ScalarMemoryReadTuple readUAVBufresForKernelArgument(int index) const;
+	ScalarMemoryReadTuple readUAVBufresForKernelArgument(std::string argName) const;
+	
+	void align(int& value, int divisor) const;
 public:
 	AMDABI(std::string kernelName);
 	
@@ -123,8 +128,9 @@ public:
 	
 	ScalarRegister getPrivateMemoryOffsetRegsiter() const;
 	ScalarRegister getPrivateMemoryResourceDescriptorRegister() const;
-	ScalarMemoryReadTuple getUAVBufresForKernelArgument(int index) const;
-	ScalarMemoryReadTuple getUAVBufresForKernelArgument(std::string argName) const;
+	
+	ScalarRegister getUAVBufresForKernelArgument(int index) const;
+	ScalarRegister getUAVBufresForKernelArgument(std::string argName) const;
 	
 	std::string makeInnerMetaData() const;
 	std::string makeMetaData() const;

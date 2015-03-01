@@ -160,6 +160,21 @@ inline void s_load_dword(unsigned *&p, int sbase, int sdst, int offset, int imm)
   p += 1;
 }
 
+inline void s_load_dwordx2(unsigned *&p, int sbase, int sdst, int offset, int imm)
+{
+	p[0] = 0xC0000000; //SRMD
+	
+	unsigned op = 1; ///S_LOAD_DWORDX2
+	
+	p[0] |= offset;
+	p[0] |= imm << 8;
+	p[0] |= sbase << 9;
+	p[0] |= sdst<< 15;
+	p[0] |= op << 22;
+	
+	p += 1;
+}
+
 inline void s_load_dwordx4(unsigned *&p, int sbase, int sdst, int offset, int imm)
 {
 	p[0] = 0xC0000000; //SRMD

@@ -24,21 +24,13 @@ void AMDABI::setDimension(int dim)
 
 void AMDABI::setPrivateMemorySizePerItem(int sizeInBytes)
 {
-	if (sizeInBytes % 32 != 0)
-	{
-		sizeInBytes += (32 - sizeInBytes % 32);
-	}
-	
+	align(sizeInBytes, 32);
 	privateMemSize = sizeInBytes;
 }
 
 void AMDABI::setLocalMemorySize(int sizeInBytes)
 {
-	if (sizeInBytes % 256 != 0)
-	{
-		sizeInBytes += (256 - sizeInBytes % 256);
-	}
-	
+	align(sizeInBytes, 256);
 	localMemSize = sizeInBytes;
 }
 
@@ -143,11 +135,7 @@ void AMDABI::allocateUserElements()
 	
 	for (UserElementDescriptor& elem : userElementTable)
 	{
-		while (index % elem.regCount != 0) ///< we need to align the start indexes
-		{
-			index++;
-		}
-		
+		align(index, elem.regCount);
 		elem.startSReg = index;
 		index += elem.regCount;
 	}
@@ -155,15 +143,8 @@ void AMDABI::allocateUserElements()
 
 void AMDABI::setRegUse(int sgprCount, int vgprCount)
 {
-	while (sgprCount % 8 != 0)
-	{
-		sgprCount++;
-	}
-	
-	while (vgprCount % 4 != 0)
-	{
-		vgprCount++;
-	}
+	align(sgprCount, 8);
+	align(vgprCount, 4);
 	
 	this->sgprCount = sgprCount;
 	this->vgprCount = vgprCount;
@@ -276,12 +257,15 @@ AMDABI::ScalarMemoryReadTuple AMDABI::getKernelArgument(int index) const
 
 void AMDABI::makeABIIntro()
 {
+	int sregIndex = getPredefinedUserRegCount();
 	abiIntro.clear();
 	
 	if (privateMemSize > 0)
 	{
 		privateMemoryBufres.sizeInDWords = 4;
-		privateMemoryBufres.sreg = getPredefinedUserRegCount();
+		align(sregIndex, privateMemoryBufres.sizeInDWords);
+		privateMemoryBufres.sreg = sregIndex;
+		sregIndex += privateMemoryBufres.sizeInDWords;
 		
 		ScalarMemoryReadTuple readPrivateMemoryBufres;
 		
@@ -292,6 +276,30 @@ void AMDABI::makeABIIntro()
 		readPrivateMemoryBufres.targetSreg = privateMemoryBufres.sreg;
 		
 		abiIntro.push_back(readPrivateMemoryBufres);
+	}
+	
+	std::map<int, ScalarRegister> UAVIDs; ///< UAV ID to scalar reg
+	
+	for (KernelArgument arg : kernelArguments)
+	{
+		if (arg.isPointer and arg.usedUAV > 0 and not UAVIDs.count(arg.usedUAV))
+		{
+			ScalarMemoryReadTuple readMemoryBufres;
+			readMemoryBufres = readUAVBufresForKernelArgument(arg.name);
+			align(sregIndex, readMemoryBufres.sizeInDWords);
+			readMemoryBufres.targetSreg = sregIndex;
+			sregIndex += readMemoryBufres.sizeInDWords;
+			UAVIDs[arg.usedUAV] = ScalarRegister{readMemoryBufres.targetSreg, readMemoryBufres.sizeInDWords};
+			abiIntro.push_back(readMemoryBufres);
+		}
+	}
+	
+	for (int i = 0; i < kernelArguments.size(); i++)
+	{
+		if (kernelArguments[i].usedUAV > 0)
+		{
+			UAVBufresInRegs[i] = UAVIDs.at(kernelArguments[i].usedUAV);
+		}
 	}
 }
 
@@ -359,12 +367,20 @@ AMDABI::ScalarRegister AMDABI::getPrivateMemoryResourceDescriptorRegister() cons
 	return privateMemoryBufres;
 }
 
-AMDABI::ScalarMemoryReadTuple AMDABI::getUAVBufresForKernelArgument(std::string argName) const
+AMDABI::ScalarMemoryReadTuple AMDABI::readUAVBufresForKernelArgument(std::string argName) const
 {
-	return getUAVBufresForKernelArgument(KernelArgumentNameToIndex.at(argName));
+	return readUAVBufresForKernelArgument(KernelArgumentNameToIndex.at(argName));
 }
 
-AMDABI::ScalarMemoryReadTuple AMDABI::getUAVBufresForKernelArgument(int index) const
+void AMDABI::align(int& value, int divisor) const
+{
+	while (value % divisor != 0)
+	{
+		value++;
+	}
+}
+
+AMDABI::ScalarMemoryReadTuple AMDABI::readUAVBufresForKernelArgument(int index) const
 {
 	ScalarMemoryReadTuple result;
 	KernelArgument arg = kernelArguments.at(index);
@@ -377,6 +393,17 @@ AMDABI::ScalarMemoryReadTuple AMDABI::getUAVBufresForKernelArgument(int index) c
 	
 	return result;
 }
+
+AMDABI::ScalarRegister AMDABI::getUAVBufresForKernelArgument(std::string argName) const
+{
+	return getUAVBufresForKernelArgument(KernelArgumentNameToIndex.at(argName));
+}
+
+AMDABI::ScalarRegister AMDABI::getUAVBufresForKernelArgument(int index) const
+{
+	return UAVBufresInRegs.at(index);
+}
+
 
 std::string AMDABI::makeRegisterResourceTable() const
 {

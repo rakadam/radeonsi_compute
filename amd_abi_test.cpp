@@ -28,19 +28,37 @@ int main()
 	
 	unsigned int *p = bytecode.data();
 	
-	AMDABI::ScalarMemoryReadTuple rr = abi.getUAVBufresForKernelArgument("array3");
-	
-	int array3bufresBase = abi.getFirstFreeSRegAfterABIIntro();
-	
-	while (array3bufresBase % 4)
+	for (AMDABI::ScalarMemoryReadTuple r : abi.getABIIntro())
 	{
-		array3bufresBase++;
+		if (r.sizeInDWords == 1)
+		{
+			if (r.bufferResourceAtSregBase)
+			{
+				s_buffer_load_dword(p, r.sregBase/2, r.targetSreg, r.offset, 1);
+			}
+			else
+			{
+				s_load_dword(p, r.sregBase/2, r.targetSreg, r.offset, 1);
+			}
+			
+			s_waitcnt(p);
+		}
+		else if (r.sizeInDWords == 4)
+		{
+			if (r.bufferResourceAtSregBase)
+			{
+				s_buffer_load_dwordx4(p, r.sregBase/2, r.targetSreg, r.offset, 1);
+			}
+			else
+			{
+				s_load_dwordx4(p, r.sregBase/2, r.targetSreg, r.offset, 1);
+			}
+			
+			s_waitcnt(p);
+		}
 	}
-	
-	s_load_dwordx4(p, rr.sregBase/2, array3bufresBase, rr.offset, 1);
-	s_waitcnt(p);
-	
-	int array3Ptr = array3bufresBase+4;
+		
+	int array3Ptr =  abi.getFirstFreeSRegAfterABIIntro();
 	
 	{
 		AMDABI::ScalarMemoryReadTuple rr = abi.getKernelArgument("array3");
@@ -76,12 +94,11 @@ int main()
 				128,//int soffset, set to zero
 				0,//int tfe,
 				0,//int slc,
-				array3bufresBase/4,//int srsrc,
+				abi.getUAVBufresForKernelArgument("array3").sreg/4,//int srsrc,
 				5,//int vdata,
 				4//int vaddr
 	);
 	s_waitcnt(p);
-	
 	
 	s_endpgm(p);
 	
