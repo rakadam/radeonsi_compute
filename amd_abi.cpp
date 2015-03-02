@@ -432,7 +432,27 @@ std::string AMDABI::makeRSRC2Table() const
 	ss << "rsrc2_tg_size_en     0" << std::endl;
 	ss << "rsrc2_tidig_comp_cnt "  << (dim > 0 ? dim-1 : 0) << std::endl;
 	ss << "rsrc2_excp_en_msb    0" << std::endl;
-	ss << "rsrc2_lds_size       "  << localMemSize / 256 << std::endl;
+	
+	bool hasDynamicLocal = false;
+	
+	for (const KernelArgument& arg : kernelArguments)
+	{
+		if (arg.localPointer)
+		{
+			hasDynamicLocal = true;
+		}
+	}
+	
+	if (not hasDynamicLocal)
+	{
+		ss << "rsrc2_lds_size       "  << localMemSize / 256 << std::endl;
+	}
+	else
+	{
+		int maxLocalSize = 32*1024;
+		ss << "rsrc2_lds_size       "  << maxLocalSize / 256 << std::endl;
+	}
+	
 	ss << "rsrc2_excp_en        0" << std::endl;
 	ss << "rsrc2_unknown1       0" << std::endl;
 	

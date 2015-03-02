@@ -94,13 +94,39 @@ private:
 	ScalarMemoryReadTuple readUAVBufresForKernelArgument(std::string argName) const;
 	
 	void align(int& value, int divisor) const;
+	
+	std::string makeInnerMetaData() const;
+	std::string makeMetaData() const;
 public:
 	AMDABI(std::string kernelName);
 	
+	/**
+	 * \brief Dimension of the thread ids, [0..3]
+	 */
 	void setDimension(int dim);
+	
+	/**
+	 * \brief Set the size of the private memory in bytes used by the kernel
+	 * 
+	 * This can be used for explicitly or for register spilling
+	 */
 	void setPrivateMemorySizePerItem(int sizeInBytes);
+	
+	/**
+	 * \brief Set the size of the local memory statically used by the kernel
+	 */
 	void setLocalMemorySize(int sizeInBytes);
+	
+	/**
+	 * \brief Add a kernel argument with a unique name
+	 * 
+	 * \param customSizeInBytes If the argument is an opaque type, the actualy size needs to be set manually
+	 */
 	void addKernelArgument(std::string name, std::string ctypeName, int customSizeInBytes = -1);
+	
+	/**
+	 * \brief Add a kernel argument representing a dynamical local memory allocation
+	 */
 	void addKernelArgumentLocalMemory(std::string name, std::string ctypeName);
 	
 	/**
@@ -108,33 +134,138 @@ public:
 	 */
 	void setRegUse(int sgprCount, int vgprCount);
 	
+	/**
+	 * \brief Build all the internal data structures after everything was set
+	 * 
+	 * This must be called before querying anything
+	 */
 	void buildInternalData();
 	
+	/**
+	 * \brief Query information about the memory where the local size is stored
+	 * 
+	 * Seel also in OpenCL standard
+	 */
 	ScalarMemoryReadTuple get_local_size(int dim) const;
+	
+	/**
+	 * \brief Query information about the memory where the global size is stored
+	 * 
+	 * Seel also in OpenCL standard
+	 */
 	ScalarMemoryReadTuple get_global_size(int dim) const;
+	
+	/**
+	 * \brief Query information about the memory where the number of groups is stored
+	 * 
+	 * Seel also in OpenCL standard
+	 */
 	ScalarMemoryReadTuple get_num_groups(int dim) const;
+	
+	/**
+	 * \brief Query information about the memory where the global offset is stored
+	 * 
+	 * Seel also in OpenCL 2.0 standard
+	 */
 	ScalarMemoryReadTuple get_global_offset(int dim) const;
+	
+	/**
+	 * \brief Query information about the vector register where the local id is stored
+	 * 
+	 * Seel also in OpenCL standard
+	 */
 	VectorRegister get_local_id(int dim) const;
+	
+	/**
+	 * \brief Query information about the scalar register where the group id is stored
+	 * 
+	 * Seel also in OpenCL standard
+	 */
 	ScalarRegister get_group_id(int dim) const;
 	
+	/**
+	 * \brief Query information about the memory where the value of the kernel argument is stored
+	 * 
+	 * \param index Index of the kernel argument
+	 */
 	ScalarMemoryReadTuple getKernelArgument(int index) const;
+	
+	/**
+	 * \brief Query information about the memory where the value of the kernel argument is stored
+	 * 
+	 * \param name Name of the kernel argument
+	 */
 	ScalarMemoryReadTuple getKernelArgument(std::string name) const;
 	
+	/**
+	 * \brief Query information about the ABI specific memory reads which need to happen at the beginning of the kernel executable
+	 * 
+	 * This is mandatory for correct operation
+	 */
 	std::vector<ScalarMemoryReadTuple> getABIIntro() const;
+	
+	/**
+	 * \brief Get the number of user scalar registers (max 16) which will be pre-initialized before the kernel execution
+	 * 
+	 * These registers are numbered continuously from zero
+	 * See \ref{getFirstFreeSRegAfterABIIntro} and \ref{getFirstFreeVRegAfterABIIntro}
+	 */
 	int getAllocatedUserRegCount() const;
+	
+	/**
+	 * \brief Get the number of scalar registers which will be pre-initialized by the hardware or the software before kernel execution
+	 * 
+	 * These registers are numbered continuously from zero
+	 * See \ref{getFirstFreeSRegAfterABIIntro} and \ref{getFirstFreeVRegAfterABIIntro}
+	 */
 	int getPredefinedUserRegCount() const;
+	
+	/**
+	 * \brief Index of the first scalar register which is not used by the ABI.
+	 * 
+	 * The kernel scalar register allocation should be started from this
+	 */
 	int getFirstFreeSRegAfterABIIntro() const;
+	
+	/**
+	 * \brief Index of the first vector register which is not used by the ABI
+	 * 
+	 * The kernel scalar register allocation could be started from this offset,
+	 * optionally these vector registers can be reused if local_id is no longer necessary
+	 */
 	int getFirstFreeVRegAfterABIIntro() const;
 	
+	/**
+	 * \brief Query the scalar register which stores the private memory offset of the current vector core
+	 * 
+	 * This offset is calculated by the hardware based on the running wavefronts
+	 */
 	ScalarRegister getPrivateMemoryOffsetRegsiter() const;
+	
+	/**
+	 * \brief Query the scalar registers which store the buffer resource descriptor for the private memory
+	 */
 	ScalarRegister getPrivateMemoryResourceDescriptorRegister() const;
 	
+	/**
+	 * \brief Query the scalar registers which store the buffer resource descriptor associated with the kernel argument if the kernel argument is a pointer
+	 * 
+	 * This only makes sense for global pointer kernel arguments
+	 * \param index Index of the kernel argument
+	 */
 	ScalarRegister getUAVBufresForKernelArgument(int index) const;
+	
+	/**
+	 * \brief Query the scalar registers which store the buffer resource descriptor associated with the kernel argument if the kernel argument is a pointer
+	 * 
+	 * This only makes sense for global pointer kernel arguments
+	 * \param name Name of the kernel argument
+	 */
 	ScalarRegister getUAVBufresForKernelArgument(std::string argName) const;
 	
-	std::string makeInnerMetaData() const;
-	std::string makeMetaData() const;
-	
+	/**
+	 * \brief Generate the executable file
+	 */
 	void generateIntoDirectory(std::string baseDir, std::vector<uint32_t> bytecode) const;
 };
 
